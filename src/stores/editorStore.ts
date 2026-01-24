@@ -16,6 +16,7 @@ interface EditorState {
   edges: DiagramEdge[]
   selectedNodes: string[]
   selectedEdges: string[]
+  clipboard: DiagramNode[]
   zoom: number
   gridEnabled: boolean
   snapToGrid: boolean
@@ -37,6 +38,8 @@ interface EditorActions {
   deleteSelected: () => void
   selectNodes: (ids: string[]) => void
   selectEdges: (ids: string[]) => void
+  copyNodes: () => void
+  pasteNodes: () => void
   setZoom: (zoom: number) => void
   toggleGrid: () => void
   toggleSnapToGrid: () => void
@@ -56,6 +59,7 @@ const initialState: EditorState = {
   edges: [],
   selectedNodes: [],
   selectedEdges: [],
+  clipboard: [],
   zoom: 1,
   gridEnabled: true,
   snapToGrid: true,
@@ -175,6 +179,46 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   selectNodes: (ids) => set({ selectedNodes: ids }),
   selectEdges: (ids) => set({ selectedEdges: ids }),
+
+  copyNodes: () => {
+    const { nodes, selectedNodes } = get()
+    if (selectedNodes.length === 0) return
+
+    const nodesToCopy = nodes.filter((n) => selectedNodes.includes(n.id))
+    set({ clipboard: nodesToCopy })
+  },
+
+  pasteNodes: () => {
+    const { clipboard, nodes } = get()
+    if (clipboard.length === 0) return
+
+    get().pushHistory()
+
+    // Create new nodes with offset positions and new IDs
+    const offset = 50
+    const idMap = new Map<string, string>()
+
+    const newNodes = clipboard.map((node) => {
+      const newId = nanoid()
+      idMap.set(node.id, newId)
+      return {
+        ...node,
+        id: newId,
+        position: {
+          x: node.position.x + offset,
+          y: node.position.y + offset,
+        },
+        data: { ...node.data },
+      }
+    })
+
+    set({
+      nodes: [...nodes, ...newNodes],
+      selectedNodes: newNodes.map((n) => n.id),
+      isDirty: true,
+    })
+  },
+
   setZoom: (zoom) => set({ zoom }),
   toggleGrid: () => set({ gridEnabled: !get().gridEnabled }),
   toggleSnapToGrid: () => set({ snapToGrid: !get().snapToGrid }),
@@ -236,6 +280,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       future: [],
       selectedNodes: [],
       selectedEdges: [],
+      clipboard: [],
       isDirty: false,
     })
   },

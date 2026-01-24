@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef } from 'react'
 import {
   ReactFlow,
   Background,
-  Controls,
   MiniMap,
   BackgroundVariant,
   useReactFlow,
@@ -14,6 +13,12 @@ import type { Diagram, ShapeType } from '@/types'
 import { nodeTypes } from './nodes'
 import { ShapePanel } from './ShapePanel'
 import { PropertiesPanel } from './PropertiesPanel'
+import { ZoomControls } from './ZoomControls'
+
+const defaultEdgeOptions = {
+  type: 'smoothstep',
+  animated: false,
+}
 
 interface DiagramEditorProps {
   diagram: Diagram
@@ -95,7 +100,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   return (
     <div className="flex-1 flex overflow-hidden">
       <ShapePanel />
-      <div ref={reactFlowWrapper} className="flex-1">
+      <div ref={reactFlowWrapper} className="flex-1 relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -107,6 +112,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           onDrop={onDrop}
           onMoveEnd={(_, viewport) => setZoom(viewport.zoom)}
           nodeTypes={nodeTypes}
+          defaultEdgeOptions={defaultEdgeOptions}
           snapToGrid={snapToGrid}
           snapGrid={[gridSize, gridSize]}
           fitView
@@ -121,13 +127,13 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
               color="#d1d5db"
             />
           )}
-          <Controls />
           <MiniMap
             nodeStrokeColor="#374151"
             nodeColor="#ffffff"
             nodeBorderRadius={4}
           />
         </ReactFlow>
+        <ZoomControls />
       </div>
       <PropertiesPanel />
     </div>

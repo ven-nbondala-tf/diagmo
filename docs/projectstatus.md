@@ -1,6 +1,6 @@
 # Diagmo Pro - Project Status
 
-## Overall Progress: 85%
+## Overall Progress: 95%
 
 ---
 
@@ -14,7 +14,7 @@
 - [x] Configure TailwindCSS
 - [x] Configure Vite
 - [x] Setup Supabase client
-- [ ] Configure Supabase credentials (User action required)
+- [x] Configure Supabase credentials
 
 ### Phase 1: Authentication (100%)
 - [x] Create auth types
@@ -79,8 +79,20 @@
 - [x] Implement folder creation
 - [x] Implement folder management
 - [x] Implement move diagram to folder
-- [x] Implement search functionality (query hooks ready)
-- [x] Add folder sidebar (hooks ready)
+- [x] Implement search functionality
+- [x] Add folder sidebar
+
+### Enhancement Features (100%)
+- [x] Dashboard folder sidebar with tree navigation
+- [x] Search and filter diagrams
+- [x] Delete diagram confirmation dialog
+- [x] Wire up export buttons (PNG, SVG, PDF)
+- [x] Copy/paste nodes functionality
+- [x] Zoom controls panel
+- [x] Dark mode toggle
+- [x] Toast notifications (sonner)
+- [x] Loading skeletons
+- [x] Keyboard shortcuts help modal
 
 ### Testing & Deployment (50%)
 - [x] Configure Vitest
@@ -94,37 +106,16 @@
 
 ## Current Sprint
 
-**Focus:** Supabase Setup & E2E Testing
+**Focus:** E2E Testing & Deployment
 
 **Next Steps:**
-1. Add Supabase credentials to `.env` file
-2. Run database schema in Supabase SQL Editor
-3. Add more unit tests for components
-4. Configure E2E tests with Playwright
-5. Deploy to Vercel
+1. Configure E2E tests with Playwright
+2. Write E2E tests for critical flows
+3. Deploy to Vercel
 
 ---
 
-## User Actions Required
-
-1. **Create Supabase Project:**
-   - Go to [supabase.com](https://supabase.com)
-   - Create a new project
-   - Copy the Project URL and Anon Key
-
-2. **Configure Environment:**
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your Supabase credentials
-   ```
-
-3. **Run Database Schema:**
-   - Open Supabase SQL Editor
-   - Run the contents of `supabase/schema.sql`
-
----
-
-## File Structure Created
+## File Structure
 
 ```
 diagmo/
@@ -140,6 +131,7 @@ diagmo/
 │   │   └── Router.tsx
 │   ├── components/
 │   │   ├── ui/
+│   │   │   ├── alert-dialog.tsx
 │   │   │   ├── button.tsx
 │   │   │   ├── card.tsx
 │   │   │   ├── dialog.tsx
@@ -149,6 +141,8 @@ diagmo/
 │   │   │   ├── label.tsx
 │   │   │   ├── scroll-area.tsx
 │   │   │   ├── separator.tsx
+│   │   │   ├── skeleton.tsx
+│   │   │   ├── toaster.tsx
 │   │   │   └── tooltip.tsx
 │   │   ├── auth/
 │   │   │   ├── index.ts
@@ -158,13 +152,20 @@ diagmo/
 │   │   ├── dashboard/
 │   │   │   ├── index.ts
 │   │   │   ├── DashboardHeader.tsx
-│   │   │   └── DiagramCard.tsx
+│   │   │   ├── DiagramCard.tsx
+│   │   │   ├── DiagramCardSkeleton.tsx
+│   │   │   ├── FolderSidebar.tsx
+│   │   │   ├── SearchBar.tsx
+│   │   │   └── ThemeToggle.tsx
 │   │   ├── editor/
 │   │   │   ├── index.ts
 │   │   │   ├── DiagramEditor.tsx
 │   │   │   ├── EditorHeader.tsx
 │   │   │   ├── PropertiesPanel.tsx
 │   │   │   ├── ShapePanel.tsx
+│   │   │   ├── ZoomControls.tsx
+│   │   │   ├── edges/
+│   │   │   │   └── LabeledEdge.tsx
 │   │   │   └── nodes/
 │   │   │       ├── index.ts
 │   │   │       └── CustomNode.tsx
@@ -178,7 +179,8 @@ diagmo/
 │   ├── stores/
 │   │   ├── index.ts
 │   │   ├── authStore.ts
-│   │   └── editorStore.ts
+│   │   ├── editorStore.ts
+│   │   └── themeStore.ts
 │   ├── hooks/
 │   │   ├── index.ts
 │   │   ├── useDiagrams.ts
@@ -207,6 +209,7 @@ diagmo/
 ├── supabase/
 │   └── schema.sql
 ├── .env.example
+├── .env
 ├── .gitignore
 ├── eslint.config.js
 ├── index.html
@@ -222,9 +225,31 @@ diagmo/
 
 ---
 
+## Recent Updates
+
+### Enhancement Features Implemented
+1. **Dashboard Enhancements**
+   - Folder sidebar with tree navigation
+   - Search and filter diagrams
+   - Delete diagram confirmation dialog
+   - Loading skeletons for better UX
+
+2. **Editor Improvements**
+   - Export buttons wired up (PNG, SVG, PDF)
+   - Copy/paste nodes (Ctrl+C/Ctrl+V)
+   - Zoom controls panel
+   - Dark mode toggle
+
+3. **Additional Polish**
+   - Toast notifications (sonner)
+   - Keyboard shortcuts help modal (press ?)
+
+---
+
 ## Notes
 
 - Build passes successfully
 - 16 unit tests passing
 - Node version warnings are expected (project uses latest packages)
-- Supabase credentials needed before full functionality
+- Supabase credentials configured and working
+- Dark mode support with system preference detection

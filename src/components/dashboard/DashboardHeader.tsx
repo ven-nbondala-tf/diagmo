@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui'
+import { ThemeToggle } from './ThemeToggle'
 import { User, LogOut, Settings } from 'lucide-react'
 
 export function DashboardHeader() {
@@ -28,6 +29,7 @@ export function DashboardHeader() {
         </div>
 
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">

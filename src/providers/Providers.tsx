@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
-import { TooltipProvider } from '@/components/ui'
+import { TooltipProvider, Toaster } from '@/components/ui'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,7 +30,10 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthInitializer>{children}</AuthInitializer>
+        <AuthInitializer>
+          {children}
+          <Toaster />
+        </AuthInitializer>
       </TooltipProvider>
     </QueryClientProvider>
   )
