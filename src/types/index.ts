@@ -38,6 +38,8 @@ export interface DiagramNode extends Node {
     label: string
     type: ShapeType
     style?: NodeStyle
+    locked?: boolean
+    groupId?: string
   }
 }
 

@@ -94,6 +94,14 @@
 - [x] Loading skeletons
 - [x] Keyboard shortcuts help modal
 
+### Advanced Editing Tools (100%)
+- [x] Align nodes (left, center, right, top, middle, bottom)
+- [x] Distribute nodes evenly (horizontal, vertical)
+- [x] Group/ungroup multiple nodes (Ctrl+G / Ctrl+Shift+G)
+- [x] Lock/unlock nodes to prevent edits (Ctrl+L)
+- [x] Duplicate diagram functionality
+- [x] Move diagrams between folders
+
 ### Testing & Deployment (50%)
 - [x] Configure Vitest
 - [x] Write unit tests (16 tests passing)

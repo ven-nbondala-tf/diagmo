@@ -2,11 +2,12 @@ import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { DiagramNode } from '@/types'
 import { cn } from '@/utils'
+import { Lock, Group } from 'lucide-react'
 
 type CustomNodeProps = NodeProps<DiagramNode>
 
 export const CustomNode = memo(function CustomNode({ data, selected }: CustomNodeProps) {
-  const { label, type, style } = data
+  const { label, type, style, locked, groupId } = data
 
   const baseStyle = {
     backgroundColor: style?.backgroundColor || '#ffffff',
@@ -24,7 +25,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
           <div
             className={cn(
               'min-w-[120px] min-h-[80px] rounded-full flex items-center justify-center px-4 py-2',
-              selected && 'ring-2 ring-primary ring-offset-2'
+              selected && 'ring-2 ring-primary ring-offset-2',
+              locked && 'opacity-75'
             )}
             style={{
               ...baseStyle,
@@ -41,7 +43,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
             <div
               className={cn(
                 'absolute inset-0 rotate-45 flex items-center justify-center',
-                selected && 'ring-2 ring-primary ring-offset-2'
+                selected && 'ring-2 ring-primary ring-offset-2',
+                locked && 'opacity-75'
               )}
               style={{
                 ...baseStyle,
@@ -63,7 +66,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
           <div
             className={cn(
               'min-w-[100px] min-h-[80px] flex items-center justify-center',
-              selected && 'ring-2 ring-primary ring-offset-2'
+              selected && 'ring-2 ring-primary ring-offset-2',
+              locked && 'opacity-75'
             )}
             style={{
               ...baseStyle,
@@ -80,7 +84,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
           <div
             className={cn(
               'min-w-[120px] min-h-[80px] flex items-center justify-center px-4 py-2',
-              selected && 'ring-2 ring-primary ring-offset-2'
+              selected && 'ring-2 ring-primary ring-offset-2',
+              locked && 'opacity-75'
             )}
             style={{
               ...baseStyle,
@@ -97,7 +102,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
           <div
             className={cn(
               'min-w-[100px] min-h-[100px] flex items-center justify-center px-4 py-6',
-              selected && 'ring-2 ring-primary ring-offset-2'
+              selected && 'ring-2 ring-primary ring-offset-2',
+              locked && 'opacity-75'
             )}
             style={{
               ...baseStyle,
@@ -114,7 +120,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
           <div
             className={cn(
               'min-w-[120px] min-h-[60px] flex items-center justify-center px-6 py-2',
-              selected && 'ring-2 ring-primary ring-offset-2'
+              selected && 'ring-2 ring-primary ring-offset-2',
+              locked && 'opacity-75'
             )}
             style={{
               ...baseStyle,
@@ -132,7 +139,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
           <div
             className={cn(
               'min-w-[140px] min-h-[90px] flex items-center justify-center px-4 py-2',
-              selected && 'ring-2 ring-primary ring-offset-2'
+              selected && 'ring-2 ring-primary ring-offset-2',
+              locked && 'opacity-75'
             )}
             style={{
               ...baseStyle,
@@ -149,7 +157,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
           <div
             className={cn(
               'min-w-[120px] min-h-[50px] rounded-full flex items-center justify-center px-6 py-2',
-              selected && 'ring-2 ring-primary ring-offset-2'
+              selected && 'ring-2 ring-primary ring-offset-2',
+              locked && 'opacity-75'
             )}
             style={{
               ...baseStyle,
@@ -165,7 +174,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
           <div
             className={cn(
               'min-w-[120px] min-h-[60px] flex items-center justify-center px-6 py-2',
-              selected && 'ring-2 ring-primary ring-offset-2'
+              selected && 'ring-2 ring-primary ring-offset-2',
+              locked && 'opacity-75'
             )}
             style={{
               ...baseStyle,
@@ -183,7 +193,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
           <div
             className={cn(
               'min-w-[120px] min-h-[80px] flex items-center justify-center px-4 py-2',
-              selected && 'ring-2 ring-primary ring-offset-2'
+              selected && 'ring-2 ring-primary ring-offset-2',
+              locked && 'opacity-75'
             )}
             style={{
               ...baseStyle,
@@ -201,7 +212,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
           <div
             className={cn(
               'min-w-[80px] min-h-[40px] flex items-center justify-center px-2 py-1',
-              selected && 'ring-2 ring-primary ring-offset-2'
+              selected && 'ring-2 ring-primary ring-offset-2',
+              locked && 'opacity-75'
             )}
             style={{
               color: baseStyle.color,
@@ -225,7 +237,8 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
           <div
             className={cn(
               'min-w-[120px] min-h-[60px] flex items-center justify-center px-4 py-2',
-              selected && 'ring-2 ring-primary ring-offset-2'
+              selected && 'ring-2 ring-primary ring-offset-2',
+              locked && 'opacity-75'
             )}
             style={{
               ...baseStyle,
@@ -251,7 +264,22 @@ export const CustomNode = memo(function CustomNode({ data, selected }: CustomNod
         position={Position.Left}
         className="!bg-primary !w-3 !h-3"
       />
-      {renderShape()}
+      <div className="relative">
+        {renderShape()}
+        {/* Status indicators */}
+        <div className="absolute -top-2 -right-2 flex gap-1">
+          {locked && (
+            <div className="bg-amber-500 text-white rounded-full p-0.5" title="Locked">
+              <Lock className="h-3 w-3" />
+            </div>
+          )}
+          {groupId && (
+            <div className="bg-blue-500 text-white rounded-full p-0.5" title="Grouped">
+              <Group className="h-3 w-3" />
+            </div>
+          )}
+        </div>
+      </div>
       <Handle
         type="source"
         position={Position.Bottom}

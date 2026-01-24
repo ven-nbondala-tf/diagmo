@@ -15,9 +15,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui'
-import { FileImage, Trash2, Loader2 } from 'lucide-react'
-import { useDeleteDiagram } from '@/hooks'
+import { FileImage, MoreVertical, Copy, FolderInput, Trash2, Loader2, Home } from 'lucide-react'
+import { useDeleteDiagram, useDuplicateDiagram, useMoveDiagramToFolder, useFolders } from '@/hooks'
 import { toast } from 'sonner'
 
 interface DiagramCardProps {
@@ -28,8 +36,11 @@ interface DiagramCardProps {
 export function DiagramCard({ diagram, onClick }: DiagramCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const deleteDiagram = useDeleteDiagram()
+  const duplicateDiagram = useDuplicateDiagram()
+  const moveDiagram = useMoveDiagramToFolder()
+  const { data: folders } = useFolders()
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
     setShowDeleteDialog(true)
   }
@@ -44,18 +55,88 @@ export function DiagramCard({ diagram, onClick }: DiagramCardProps) {
     setShowDeleteDialog(false)
   }
 
+  const handleDuplicate = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      await duplicateDiagram.mutateAsync(diagram.id)
+      toast.success('Diagram duplicated')
+    } catch (error) {
+      toast.error('Failed to duplicate diagram')
+    }
+  }
+
+  const handleMoveToFolder = async (folderId: string | null) => {
+    try {
+      await moveDiagram.mutateAsync({ id: diagram.id, folderId })
+      toast.success(folderId ? 'Moved to folder' : 'Moved to All Diagrams')
+    } catch (error) {
+      toast.error('Failed to move diagram')
+    }
+  }
+
   return (
     <>
       <Card
         className="cursor-pointer hover:shadow-md transition-shadow group relative"
         onClick={onClick}
       >
-        <button
-          onClick={handleDelete}
-          className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-background/80 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <div className="absolute top-2 right-2 z-10">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              onClick={(e) => e.stopPropagation()}
+              className="p-1.5 rounded-md bg-background/80 opacity-0 group-hover:opacity-100 hover:bg-accent transition-all"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={handleDuplicate} disabled={duplicateDiagram.isPending}>
+                {duplicateDiagram.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Copy className="h-4 w-4 mr-2" />
+                )}
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <FolderInput className="h-4 w-4 mr-2" />
+                  Move to folder
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem
+                    onClick={() => handleMoveToFolder(null)}
+                    disabled={!diagram.folderId}
+                  >
+                    <Home className="h-4 w-4 mr-2" />
+                    All Diagrams
+                  </DropdownMenuItem>
+                  {folders && folders.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      {folders.map((folder) => (
+                        <DropdownMenuItem
+                          key={folder.id}
+                          onClick={() => handleMoveToFolder(folder.id)}
+                          disabled={diagram.folderId === folder.id}
+                        >
+                          {folder.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </>
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleDelete}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         <CardHeader className="pb-2">
           <div className="aspect-video bg-muted rounded-md flex items-center justify-center mb-2 overflow-hidden">
             {diagram.thumbnail ? (

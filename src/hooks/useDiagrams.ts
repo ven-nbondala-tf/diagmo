@@ -83,3 +83,27 @@ export function useDiagramsByFolder(folderId: string | null) {
     queryFn: () => diagramService.getByFolder(folderId),
   })
 }
+
+export function useDuplicateDiagram() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => diagramService.duplicate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: diagramKeys.lists() })
+    },
+  })
+}
+
+export function useMoveDiagramToFolder() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, folderId }: { id: string; folderId: string | null }) =>
+      diagramService.moveToFolder(id, folderId),
+    onSuccess: (data) => {
+      queryClient.setQueryData(diagramKeys.detail(data.id), data)
+      queryClient.invalidateQueries({ queryKey: diagramKeys.lists() })
+    },
+  })
+}

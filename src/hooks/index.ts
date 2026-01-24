@@ -5,6 +5,8 @@ export {
   useUpdateDiagram,
   useDeleteDiagram,
   useDiagramsByFolder,
+  useDuplicateDiagram,
+  useMoveDiagramToFolder,
 } from './useDiagrams'
 
 export {

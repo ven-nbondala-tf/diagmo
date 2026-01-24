@@ -125,4 +125,23 @@ export const diagramService = {
     if (error) throw error
     return (data || []).map(mapDiagramFromDB)
   },
+
+  async duplicate(id: string): Promise<Diagram> {
+    // First get the original diagram
+    const original = await this.getById(id)
+    if (!original) throw new Error('Diagram not found')
+
+    // Create a copy with a new name
+    return this.create({
+      name: `${original.name} (Copy)`,
+      description: original.description,
+      folderId: original.folderId,
+      nodes: original.nodes,
+      edges: original.edges,
+    })
+  },
+
+  async moveToFolder(id: string, folderId: string | null): Promise<Diagram> {
+    return this.update(id, { folderId: folderId || undefined })
+  },
 }

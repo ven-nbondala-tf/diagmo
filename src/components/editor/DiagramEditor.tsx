@@ -14,6 +14,7 @@ import { nodeTypes } from './nodes'
 import { ShapePanel } from './ShapePanel'
 import { PropertiesPanel } from './PropertiesPanel'
 import { ZoomControls } from './ZoomControls'
+import { EditorToolbar } from './EditorToolbar'
 
 const defaultEdgeOptions = {
   type: 'smoothstep',
@@ -42,6 +43,9 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const gridSize = useEditorStore((state) => state.gridSize)
   const loadDiagram = useEditorStore((state) => state.loadDiagram)
   const setZoom = useEditorStore((state) => state.setZoom)
+  const groupNodes = useEditorStore((state) => state.groupNodes)
+  const ungroupNodes = useEditorStore((state) => state.ungroupNodes)
+  const toggleLockNodes = useEditorStore((state) => state.toggleLockNodes)
 
   // Load diagram on mount
   useEffect(() => {
@@ -81,21 +85,40 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in inputs
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return
+      }
+
       if (event.key === 'Delete' || event.key === 'Backspace') {
-        // Don't delete if user is typing in an input
-        if (
-          event.target instanceof HTMLInputElement ||
-          event.target instanceof HTMLTextAreaElement
-        ) {
-          return
-        }
         deleteSelected()
+      }
+
+      // Group: Ctrl+G
+      if ((event.metaKey || event.ctrlKey) && event.key === 'g' && !event.shiftKey) {
+        event.preventDefault()
+        groupNodes()
+      }
+
+      // Ungroup: Ctrl+Shift+G
+      if ((event.metaKey || event.ctrlKey) && event.key === 'g' && event.shiftKey) {
+        event.preventDefault()
+        ungroupNodes()
+      }
+
+      // Lock/Unlock: Ctrl+L
+      if ((event.metaKey || event.ctrlKey) && event.key === 'l') {
+        event.preventDefault()
+        toggleLockNodes()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [deleteSelected])
+  }, [deleteSelected, groupNodes, ungroupNodes, toggleLockNodes])
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -133,6 +156,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             nodeBorderRadius={4}
           />
         </ReactFlow>
+        <EditorToolbar />
         <ZoomControls />
       </div>
       <PropertiesPanel />
