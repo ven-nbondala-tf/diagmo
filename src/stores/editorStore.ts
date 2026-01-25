@@ -8,7 +8,7 @@ import {
   addEdge,
 } from '@xyflow/react'
 import { nanoid } from 'nanoid'
-import type { DiagramNode, DiagramEdge, ShapeType, NodeStyle, HistoryEntry } from '@/types'
+import type { DiagramNode, DiagramEdge, ShapeType, NodeStyle, EdgeStyle, HistoryEntry } from '@/types'
 import { DEFAULT_NODE_STYLE, MAX_HISTORY_LENGTH } from '@/constants'
 
 type AlignType = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom'
@@ -38,6 +38,7 @@ interface EditorActions {
   addNode: (type: ShapeType, position: { x: number; y: number }) => void
   updateNode: (id: string, data: Partial<DiagramNode['data']>) => void
   updateNodeStyle: (id: string, style: Partial<NodeStyle>) => void
+  updateEdgeStyle: (id: string, style: Partial<EdgeStyle>) => void
   deleteSelected: () => void
   selectNodes: (ids: string[]) => void
   selectEdges: (ids: string[]) => void
@@ -139,10 +140,13 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   addNode: (type, position) => {
     get().pushHistory()
+    // Set initial dimensions based on shape type
+    const dimensions = getDefaultDimensions(type)
     const newNode: DiagramNode = {
       id: nanoid(),
       type: 'custom',
       position,
+      style: { width: dimensions.width, height: dimensions.height },
       data: {
         label: getDefaultLabel(type),
         type,
@@ -179,6 +183,23 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
               },
             }
           : node
+      ),
+      isDirty: true,
+    })
+  },
+
+  updateEdgeStyle: (id, style) => {
+    set({
+      edges: get().edges.map((edge) =>
+        edge.id === id
+          ? {
+              ...edge,
+              data: {
+                ...edge.data,
+                style: { ...edge.data?.style, ...style },
+              },
+            }
+          : edge
       ),
       isDirty: true,
     })
@@ -560,30 +581,62 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
 function getDefaultLabel(type: ShapeType): string {
   const labels: Record<ShapeType, string> = {
+    // Basic shapes
     rectangle: 'Rectangle',
+    'rounded-rectangle': 'Rounded',
     ellipse: 'Ellipse',
+    circle: 'Circle',
     diamond: 'Diamond',
     parallelogram: 'Parallelogram',
+    trapezoid: 'Trapezoid',
     cylinder: 'Cylinder',
     triangle: 'Triangle',
+    pentagon: 'Pentagon',
     hexagon: 'Hexagon',
+    octagon: 'Octagon',
+    star: 'Star',
+    arrow: 'Arrow',
+    'double-arrow': 'Arrow',
     cloud: 'Cloud',
+    callout: 'Callout',
+    note: 'Note',
     text: 'Text',
+    // Flowchart
     process: 'Process',
     decision: 'Decision',
     terminator: 'Start/End',
     data: 'Data',
     document: 'Document',
-    'predefined-process': 'Predefined Process',
-    'manual-input': 'Manual Input',
+    'multi-document': 'Documents',
+    'predefined-process': 'Predefined',
+    'manual-input': 'Input',
     preparation: 'Preparation',
     delay: 'Delay',
+    database: 'Database',
+    merge: 'Merge',
+    or: 'Or',
+    'summing-junction': 'Sum',
+    // UML
     'uml-class': 'ClassName',
     'uml-interface': 'Interface',
     'uml-actor': 'Actor',
     'uml-usecase': 'Use Case',
     'uml-component': 'Component',
     'uml-package': 'Package',
+    'uml-state': 'State',
+    'uml-note': 'Note',
+    // Network
+    server: 'Server',
+    router: 'Router',
+    switch: 'Switch',
+    firewall: 'Firewall',
+    'load-balancer': 'LB',
+    user: 'User',
+    users: 'Users',
+    laptop: 'Laptop',
+    mobile: 'Mobile',
+    internet: 'Internet',
+    // Cloud
     'aws-ec2': 'EC2',
     'aws-s3': 'S3',
     'aws-lambda': 'Lambda',
@@ -596,4 +649,24 @@ function getDefaultLabel(type: ShapeType): string {
     'gcp-functions': 'Functions',
   }
   return labels[type] || 'Node'
+}
+
+function getDefaultDimensions(type: ShapeType): { width: number; height: number } {
+  // Different shapes have different default dimensions
+  const dimensions: Partial<Record<ShapeType, { width: number; height: number }>> = {
+    text: { width: 100, height: 40 },
+    ellipse: { width: 120, height: 80 },
+    diamond: { width: 100, height: 100 },
+    triangle: { width: 100, height: 80 },
+    hexagon: { width: 120, height: 80 },
+    cylinder: { width: 100, height: 100 },
+    cloud: { width: 140, height: 90 },
+    terminator: { width: 120, height: 50 },
+    parallelogram: { width: 120, height: 60 },
+    data: { width: 120, height: 60 },
+    document: { width: 120, height: 80 },
+    'uml-class': { width: 150, height: 100 },
+    'uml-actor': { width: 80, height: 120 },
+  }
+  return dimensions[type] || { width: 120, height: 60 }
 }

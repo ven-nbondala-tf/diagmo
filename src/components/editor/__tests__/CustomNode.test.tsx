@@ -15,6 +15,9 @@ vi.mock('@xyflow/react', () => ({
     Left: 'left',
     Right: 'right',
   },
+  NodeResizer: ({ isVisible }: { isVisible: boolean }) => (
+    isVisible ? <div data-testid="node-resizer" /> : null
+  ),
 }))
 
 // Mock lucide-react

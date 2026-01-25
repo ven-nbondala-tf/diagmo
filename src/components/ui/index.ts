@@ -1,3 +1,4 @@
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './accordion'
 export { Button, buttonVariants } from './button'
 export { Input } from './input'
 export { Label } from './label'
@@ -55,4 +56,5 @@ export {
   AlertDialogCancel,
 } from './alert-dialog'
 export { Skeleton } from './skeleton'
+export { Slider } from './slider'
 export { Toaster } from './toaster'

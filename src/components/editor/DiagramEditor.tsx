@@ -46,6 +46,12 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const groupNodes = useEditorStore((state) => state.groupNodes)
   const ungroupNodes = useEditorStore((state) => state.ungroupNodes)
   const toggleLockNodes = useEditorStore((state) => state.toggleLockNodes)
+  const copyNodes = useEditorStore((state) => state.copyNodes)
+  const pasteNodes = useEditorStore((state) => state.pasteNodes)
+  const undo = useEditorStore((state) => state.undo)
+  const redo = useEditorStore((state) => state.redo)
+  const toggleGrid = useEditorStore((state) => state.toggleGrid)
+  const toggleSnapToGrid = useEditorStore((state) => state.toggleSnapToGrid)
 
   // Load diagram on mount
   useEffect(() => {
@@ -93,32 +99,97 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         return
       }
 
+      const isMod = event.metaKey || event.ctrlKey
+
+      // Delete: Delete or Backspace
       if (event.key === 'Delete' || event.key === 'Backspace') {
         deleteSelected()
       }
 
+      // Copy: Ctrl+C
+      if (isMod && event.key === 'c') {
+        event.preventDefault()
+        copyNodes()
+      }
+
+      // Paste: Ctrl+V
+      if (isMod && event.key === 'v') {
+        event.preventDefault()
+        pasteNodes()
+      }
+
+      // Duplicate: Ctrl+D
+      if (isMod && event.key === 'd') {
+        event.preventDefault()
+        copyNodes()
+        pasteNodes()
+      }
+
+      // Undo: Ctrl+Z
+      if (isMod && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault()
+        undo()
+      }
+
+      // Redo: Ctrl+Shift+Z or Ctrl+Y
+      if ((isMod && event.key === 'z' && event.shiftKey) || (isMod && event.key === 'y')) {
+        event.preventDefault()
+        redo()
+      }
+
+      // Select All: Ctrl+A
+      if (isMod && event.key === 'a') {
+        event.preventDefault()
+        selectNodes(nodes.map((n) => n.id))
+      }
+
       // Group: Ctrl+G
-      if ((event.metaKey || event.ctrlKey) && event.key === 'g' && !event.shiftKey) {
+      if (isMod && event.key === 'g' && !event.shiftKey) {
         event.preventDefault()
         groupNodes()
       }
 
       // Ungroup: Ctrl+Shift+G
-      if ((event.metaKey || event.ctrlKey) && event.key === 'g' && event.shiftKey) {
+      if (isMod && event.key === 'g' && event.shiftKey) {
         event.preventDefault()
         ungroupNodes()
       }
 
       // Lock/Unlock: Ctrl+L
-      if ((event.metaKey || event.ctrlKey) && event.key === 'l') {
+      if (isMod && event.key === 'l') {
         event.preventDefault()
         toggleLockNodes()
+      }
+
+      // Toggle Grid: Ctrl+' (quote)
+      if (isMod && event.key === "'") {
+        event.preventDefault()
+        toggleGrid()
+      }
+
+      // Toggle Snap to Grid: Ctrl+Shift+'
+      if (isMod && event.shiftKey && event.key === '"') {
+        event.preventDefault()
+        toggleSnapToGrid()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [deleteSelected, groupNodes, ungroupNodes, toggleLockNodes])
+  }, [
+    deleteSelected,
+    copyNodes,
+    pasteNodes,
+    undo,
+    redo,
+    selectNodes,
+    nodes,
+    groupNodes,
+    ungroupNodes,
+    toggleLockNodes,
+    toggleGrid,
+    toggleSnapToGrid,
+  ])
 
   return (
     <div className="flex-1 flex overflow-hidden">

@@ -58,25 +58,42 @@ export interface NodeStyle {
   textColor?: string
   fontSize?: number
   fontWeight?: string
+  fontStyle?: string
+  textDecoration?: string
+  textAlign?: 'left' | 'center' | 'right'
 }
 
 export interface EdgeStyle {
   strokeColor?: string
   strokeWidth?: number
   strokeDasharray?: string
+  lineType?: 'solid' | 'dashed' | 'dotted'
   animated?: boolean
+  markerStart?: 'none' | 'arrow' | 'arrowClosed' | 'circle' | 'diamond'
+  markerEnd?: 'none' | 'arrow' | 'arrowClosed' | 'circle' | 'diamond'
 }
 
 // Shape types
 export type ShapeType =
+  // Basic shapes
   | 'rectangle'
+  | 'rounded-rectangle'
   | 'ellipse'
+  | 'circle'
   | 'diamond'
   | 'parallelogram'
+  | 'trapezoid'
   | 'cylinder'
   | 'triangle'
+  | 'pentagon'
   | 'hexagon'
+  | 'octagon'
+  | 'star'
+  | 'arrow'
+  | 'double-arrow'
   | 'cloud'
+  | 'callout'
+  | 'note'
   | 'text'
   // Flowchart shapes
   | 'process'
@@ -84,10 +101,15 @@ export type ShapeType =
   | 'terminator'
   | 'data'
   | 'document'
+  | 'multi-document'
   | 'predefined-process'
   | 'manual-input'
   | 'preparation'
   | 'delay'
+  | 'database'
+  | 'merge'
+  | 'or'
+  | 'summing-junction'
   // UML shapes
   | 'uml-class'
   | 'uml-interface'
@@ -95,6 +117,19 @@ export type ShapeType =
   | 'uml-usecase'
   | 'uml-component'
   | 'uml-package'
+  | 'uml-state'
+  | 'uml-note'
+  // Network shapes
+  | 'server'
+  | 'router'
+  | 'switch'
+  | 'firewall'
+  | 'load-balancer'
+  | 'user'
+  | 'users'
+  | 'laptop'
+  | 'mobile'
+  | 'internet'
   // Cloud icons
   | 'aws-ec2'
   | 'aws-s3'
