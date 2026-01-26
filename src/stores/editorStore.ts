@@ -6,6 +6,7 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
+  MarkerType,
 } from '@xyflow/react'
 import { nanoid } from 'nanoid'
 import type { DiagramNode, DiagramEdge, ShapeType, NodeStyle, EdgeStyle, HistoryEntry } from '@/types'
@@ -39,6 +40,7 @@ interface EditorActions {
   updateNode: (id: string, data: Partial<DiagramNode['data']>) => void
   updateNodeStyle: (id: string, style: Partial<NodeStyle>) => void
   updateEdgeStyle: (id: string, style: Partial<EdgeStyle>) => void
+  updateEdge: (id: string, updates: Partial<DiagramEdge>) => void
   deleteSelected: () => void
   selectNodes: (ids: string[]) => void
   selectEdges: (ids: string[]) => void
@@ -130,7 +132,17 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       target: connection.target!,
       sourceHandle: connection.sourceHandle,
       targetHandle: connection.targetHandle,
-      type: 'smoothstep',
+      type: 'straight',
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 16,
+        height: 16,
+        color: '#9ca3af',
+      },
+      style: {
+        strokeWidth: 1,
+        stroke: '#9ca3af',
+      },
     }
     set({
       edges: addEdge(newEdge, get().edges) as DiagramEdge[],
@@ -200,6 +212,15 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
               },
             }
           : edge
+      ),
+      isDirty: true,
+    })
+  },
+
+  updateEdge: (id, updates) => {
+    set({
+      edges: get().edges.map((edge) =>
+        edge.id === id ? { ...edge, ...updates } : edge
       ),
       isDirty: true,
     })
@@ -579,76 +600,9 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   },
 }))
 
-function getDefaultLabel(type: ShapeType): string {
-  const labels: Record<ShapeType, string> = {
-    // Basic shapes
-    rectangle: 'Rectangle',
-    'rounded-rectangle': 'Rounded',
-    ellipse: 'Ellipse',
-    circle: 'Circle',
-    diamond: 'Diamond',
-    parallelogram: 'Parallelogram',
-    trapezoid: 'Trapezoid',
-    cylinder: 'Cylinder',
-    triangle: 'Triangle',
-    pentagon: 'Pentagon',
-    hexagon: 'Hexagon',
-    octagon: 'Octagon',
-    star: 'Star',
-    arrow: 'Arrow',
-    'double-arrow': 'Arrow',
-    cloud: 'Cloud',
-    callout: 'Callout',
-    note: 'Note',
-    text: 'Text',
-    // Flowchart
-    process: 'Process',
-    decision: 'Decision',
-    terminator: 'Start/End',
-    data: 'Data',
-    document: 'Document',
-    'multi-document': 'Documents',
-    'predefined-process': 'Predefined',
-    'manual-input': 'Input',
-    preparation: 'Preparation',
-    delay: 'Delay',
-    database: 'Database',
-    merge: 'Merge',
-    or: 'Or',
-    'summing-junction': 'Sum',
-    // UML
-    'uml-class': 'ClassName',
-    'uml-interface': 'Interface',
-    'uml-actor': 'Actor',
-    'uml-usecase': 'Use Case',
-    'uml-component': 'Component',
-    'uml-package': 'Package',
-    'uml-state': 'State',
-    'uml-note': 'Note',
-    // Network
-    server: 'Server',
-    router: 'Router',
-    switch: 'Switch',
-    firewall: 'Firewall',
-    'load-balancer': 'LB',
-    user: 'User',
-    users: 'Users',
-    laptop: 'Laptop',
-    mobile: 'Mobile',
-    internet: 'Internet',
-    // Cloud
-    'aws-ec2': 'EC2',
-    'aws-s3': 'S3',
-    'aws-lambda': 'Lambda',
-    'aws-rds': 'RDS',
-    'azure-vm': 'VM',
-    'azure-storage': 'Storage',
-    'azure-functions': 'Functions',
-    'gcp-compute': 'Compute',
-    'gcp-storage': 'Storage',
-    'gcp-functions': 'Functions',
-  }
-  return labels[type] || 'Node'
+function getDefaultLabel(_type: ShapeType): string {
+  // Return empty string - no default text on shapes
+  return ''
 }
 
 function getDefaultDimensions(type: ShapeType): { width: number; height: number } {

@@ -149,11 +149,19 @@ describe('CustomNode', () => {
   })
 
   it('should render handles for connections', () => {
+    // Pass selected: true to show source handles (they are hidden by default)
     const props = createNodeProps()
+    props.selected = true
     render(<CustomNode {...props} />)
 
+    // Target handles are always present (but invisible for receiving connections)
     expect(screen.getByTestId('handle-target-top')).toBeInTheDocument()
     expect(screen.getByTestId('handle-target-left')).toBeInTheDocument()
+    expect(screen.getByTestId('handle-target-bottom')).toBeInTheDocument()
+    expect(screen.getByTestId('handle-target-right')).toBeInTheDocument()
+    // Source handles appear when node is selected
+    expect(screen.getByTestId('handle-source-top')).toBeInTheDocument()
+    expect(screen.getByTestId('handle-source-left')).toBeInTheDocument()
     expect(screen.getByTestId('handle-source-bottom')).toBeInTheDocument()
     expect(screen.getByTestId('handle-source-right')).toBeInTheDocument()
   })

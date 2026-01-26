@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { MarkerType } from '@xyflow/react'
 import { useEditorStore } from '@/stores/editorStore'
 import {
   Input,
@@ -36,20 +37,50 @@ export function PropertiesPanel() {
   const selectedEdges = useEditorStore((state) => state.selectedEdges)
   const updateNode = useEditorStore((state) => state.updateNode)
   const updateNodeStyle = useEditorStore((state) => state.updateNodeStyle)
-  const updateEdgeStyle = useEditorStore((state) => state.updateEdgeStyle)
+  const updateEdge = useEditorStore((state) => state.updateEdge)
   const deleteSelected = useEditorStore((state) => state.deleteSelected)
   const copyNodes = useEditorStore((state) => state.copyNodes)
   const pasteNodes = useEditorStore((state) => state.pasteNodes)
 
-  // Default expanded sections
-  const [expandedSections, setExpandedSections] = useState<string[]>(['style', 'text', 'line', 'arrows'])
+  // All sections collapsed by default
+  const [expandedSections, setExpandedSections] = useState<string[]>([])
 
   const selectedNode = nodes.find((n) => selectedNodes.includes(n.id))
   const selectedEdge = edges.find((e) => selectedEdges.includes(e.id))
 
+  // Helper to get current marker type
+  const getMarkerType = (marker: unknown): 'none' | 'arrow' | 'arrowClosed' => {
+    if (!marker) return 'none'
+    if (typeof marker === 'object' && marker !== null && 'type' in marker) {
+      const m = marker as { type: MarkerType }
+      if (m.type === MarkerType.Arrow) return 'arrow'
+      if (m.type === MarkerType.ArrowClosed) return 'arrowClosed'
+    }
+    return 'none'
+  }
+
+  // Helper to create marker object
+  const createMarker = (type: 'none' | 'arrow' | 'arrowClosed', color: string) => {
+    if (type === 'none') return undefined
+    return {
+      type: type === 'arrow' ? MarkerType.Arrow : MarkerType.ArrowClosed,
+      width: 20,
+      height: 20,
+      color,
+    }
+  }
+
   // Show edge properties if an edge is selected
   if (selectedEdge && !selectedNode) {
-    const edgeStyle = selectedEdge.data?.style || {}
+    const strokeColor = (selectedEdge.style?.stroke as string) || '#9ca3af'
+    const strokeWidth = (selectedEdge.style?.strokeWidth as number) || 1
+    const edgeType = selectedEdge.type || 'straight'
+    const markerStartType = getMarkerType(selectedEdge.markerStart)
+    const markerEndType = getMarkerType(selectedEdge.markerEnd)
+
+    // Get stroke dasharray for line style detection
+    const strokeDasharray = (selectedEdge.style?.strokeDasharray as string) || ''
+    const lineStyle = strokeDasharray.includes('2') ? 'dotted' : strokeDasharray.includes('8') ? 'dashed' : 'solid'
 
     return (
       <div className="w-64 border-l bg-background flex flex-col h-full overflow-hidden">
@@ -73,38 +104,39 @@ export function PropertiesPanel() {
                 Line Style
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4 space-y-4">
-                {/* Line Type */}
+                {/* Path Type */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Line Type</Label>
-                  <div className="flex gap-1">
-                    <Button
-                      variant={(edgeStyle.lineType || 'solid') === 'solid' ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-8 flex-1 text-xs"
-                      onClick={() => updateEdgeStyle(selectedEdge.id, { lineType: 'solid' })}
-                    >
-                      <Minus className="w-4 h-4 mr-1" />
-                      Solid
-                    </Button>
-                    <Button
-                      variant={edgeStyle.lineType === 'dashed' ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-8 flex-1 text-xs"
-                      onClick={() => updateEdgeStyle(selectedEdge.id, { lineType: 'dashed' })}
-                    >
-                      <span className="mr-1">- -</span>
-                      Dashed
-                    </Button>
-                    <Button
-                      variant={edgeStyle.lineType === 'dotted' ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-8 flex-1 text-xs"
-                      onClick={() => updateEdgeStyle(selectedEdge.id, { lineType: 'dotted' })}
-                    >
-                      <span className="mr-1">...</span>
-                      Dotted
-                    </Button>
-                  </div>
+                  <Label className="text-xs">Path Type</Label>
+                  <select
+                    value={edgeType}
+                    onChange={(e) => updateEdge(selectedEdge.id, { type: e.target.value })}
+                    className="w-full h-8 text-sm border rounded px-2 bg-background"
+                  >
+                    <option value="straight">Straight</option>
+                    <option value="smoothstep">Smooth Step</option>
+                    <option value="step">Step (Right Angles)</option>
+                    <option value="bezier">Curved</option>
+                  </select>
+                </div>
+
+                {/* Line Style */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Line Style</Label>
+                  <select
+                    value={lineStyle}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      const dasharray = value === 'dashed' ? '8 4' : value === 'dotted' ? '2 4' : undefined
+                      updateEdge(selectedEdge.id, {
+                        style: { ...selectedEdge.style, strokeDasharray: dasharray }
+                      })
+                    }}
+                    className="w-full h-8 text-sm border rounded px-2 bg-background"
+                  >
+                    <option value="solid">Solid</option>
+                    <option value="dashed">Dashed</option>
+                    <option value="dotted">Dotted</option>
+                  </select>
                 </div>
 
                 {/* Stroke Color */}
@@ -113,17 +145,27 @@ export function PropertiesPanel() {
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
-                      value={edgeStyle.strokeColor || '#374151'}
-                      onChange={(e) =>
-                        updateEdgeStyle(selectedEdge.id, { strokeColor: e.target.value })
-                      }
+                      value={strokeColor}
+                      onChange={(e) => {
+                        const color = e.target.value
+                        updateEdge(selectedEdge.id, {
+                          style: { ...selectedEdge.style, stroke: color },
+                          markerStart: markerStartType !== 'none' ? createMarker(markerStartType, color) : undefined,
+                          markerEnd: markerEndType !== 'none' ? createMarker(markerEndType, color) : undefined,
+                        })
+                      }}
                       className="w-8 h-8 rounded border cursor-pointer"
                     />
                     <Input
-                      value={edgeStyle.strokeColor || '#374151'}
-                      onChange={(e) =>
-                        updateEdgeStyle(selectedEdge.id, { strokeColor: e.target.value })
-                      }
+                      value={strokeColor}
+                      onChange={(e) => {
+                        const color = e.target.value
+                        updateEdge(selectedEdge.id, {
+                          style: { ...selectedEdge.style, stroke: color },
+                          markerStart: markerStartType !== 'none' ? createMarker(markerStartType, color) : undefined,
+                          markerEnd: markerEndType !== 'none' ? createMarker(markerEndType, color) : undefined,
+                        })
+                      }}
                       className="h-8 text-xs font-mono flex-1"
                     />
                   </div>
@@ -131,11 +173,13 @@ export function PropertiesPanel() {
 
                 {/* Stroke Width */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Stroke Width: {edgeStyle.strokeWidth || 2}px</Label>
+                  <Label className="text-xs">Stroke Width: {strokeWidth}px</Label>
                   <Slider
-                    value={[edgeStyle.strokeWidth || 2]}
+                    value={[strokeWidth]}
                     onValueChange={([value]) =>
-                      updateEdgeStyle(selectedEdge.id, { strokeWidth: value })
+                      updateEdge(selectedEdge.id, {
+                        style: { ...selectedEdge.style, strokeWidth: value }
+                      })
                     }
                     min={1}
                     max={10}
@@ -148,14 +192,12 @@ export function PropertiesPanel() {
                 <div className="space-y-1.5">
                   <Label className="text-xs">Animation</Label>
                   <Button
-                    variant={edgeStyle.animated ? 'default' : 'outline'}
+                    variant={selectedEdge.animated ? 'default' : 'outline'}
                     size="sm"
                     className="w-full h-8 text-xs"
-                    onClick={() =>
-                      updateEdgeStyle(selectedEdge.id, { animated: !edgeStyle.animated })
-                    }
+                    onClick={() => updateEdge(selectedEdge.id, { animated: !selectedEdge.animated })}
                   >
-                    {edgeStyle.animated ? 'Animated' : 'Static'}
+                    {selectedEdge.animated ? 'Animated' : 'Static'}
                   </Button>
                 </div>
               </AccordionContent>
@@ -170,37 +212,33 @@ export function PropertiesPanel() {
                 {/* Arrow Start */}
                 <div className="space-y-1.5">
                   <Label className="text-xs">Start Arrow</Label>
-                  <div className="flex gap-1 flex-wrap">
-                    {(['none', 'arrow', 'arrowClosed'] as const).map((type) => (
-                      <Button
-                        key={type}
-                        variant={(edgeStyle.markerStart || 'none') === type ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-8 text-xs flex-1"
-                        onClick={() => updateEdgeStyle(selectedEdge.id, { markerStart: type })}
-                      >
-                        {type === 'none' ? 'None' : type === 'arrow' ? 'Open' : 'Closed'}
-                      </Button>
-                    ))}
-                  </div>
+                  <select
+                    value={markerStartType}
+                    onChange={(e) => updateEdge(selectedEdge.id, {
+                      markerStart: createMarker(e.target.value as 'none' | 'arrow' | 'arrowClosed', strokeColor)
+                    })}
+                    className="w-full h-8 text-sm border rounded px-2 bg-background"
+                  >
+                    <option value="none">None</option>
+                    <option value="arrow">Open Arrow</option>
+                    <option value="arrowClosed">Filled Arrow</option>
+                  </select>
                 </div>
 
                 {/* Arrow End */}
                 <div className="space-y-1.5">
                   <Label className="text-xs">End Arrow</Label>
-                  <div className="flex gap-1 flex-wrap">
-                    {(['none', 'arrow', 'arrowClosed'] as const).map((type) => (
-                      <Button
-                        key={type}
-                        variant={(edgeStyle.markerEnd || 'arrowClosed') === type ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-8 text-xs flex-1"
-                        onClick={() => updateEdgeStyle(selectedEdge.id, { markerEnd: type })}
-                      >
-                        {type === 'none' ? 'None' : type === 'arrow' ? 'Open' : 'Closed'}
-                      </Button>
-                    ))}
-                  </div>
+                  <select
+                    value={markerEndType}
+                    onChange={(e) => updateEdge(selectedEdge.id, {
+                      markerEnd: createMarker(e.target.value as 'none' | 'arrow' | 'arrowClosed', strokeColor)
+                    })}
+                    className="w-full h-8 text-sm border rounded px-2 bg-background"
+                  >
+                    <option value="none">None</option>
+                    <option value="arrow">Open Arrow</option>
+                    <option value="arrowClosed">Filled Arrow</option>
+                  </select>
                 </div>
 
                 {/* Quick Presets */}
@@ -211,12 +249,11 @@ export function PropertiesPanel() {
                       variant="outline"
                       size="sm"
                       className="h-8 flex-1 text-xs"
-                      onClick={() =>
-                        updateEdgeStyle(selectedEdge.id, {
-                          markerStart: 'none',
-                          markerEnd: 'arrowClosed',
-                        })
-                      }
+                      onClick={() => updateEdge(selectedEdge.id, {
+                        markerStart: undefined,
+                        markerEnd: createMarker('arrowClosed', strokeColor),
+                      })}
+                      title="One-way arrow"
                     >
                       <ArrowRight className="w-4 h-4" />
                     </Button>
@@ -224,12 +261,11 @@ export function PropertiesPanel() {
                       variant="outline"
                       size="sm"
                       className="h-8 flex-1 text-xs"
-                      onClick={() =>
-                        updateEdgeStyle(selectedEdge.id, {
-                          markerStart: 'arrowClosed',
-                          markerEnd: 'arrowClosed',
-                        })
-                      }
+                      onClick={() => updateEdge(selectedEdge.id, {
+                        markerStart: createMarker('arrowClosed', strokeColor),
+                        markerEnd: createMarker('arrowClosed', strokeColor),
+                      })}
+                      title="Bidirectional"
                     >
                       <ArrowLeftRight className="w-4 h-4" />
                     </Button>
@@ -237,12 +273,11 @@ export function PropertiesPanel() {
                       variant="outline"
                       size="sm"
                       className="h-8 flex-1 text-xs"
-                      onClick={() =>
-                        updateEdgeStyle(selectedEdge.id, {
-                          markerStart: 'none',
-                          markerEnd: 'none',
-                        })
-                      }
+                      onClick={() => updateEdge(selectedEdge.id, {
+                        markerStart: undefined,
+                        markerEnd: undefined,
+                      })}
+                      title="No arrows"
                     >
                       <Minus className="w-4 h-4" />
                     </Button>
@@ -340,14 +375,14 @@ export function PropertiesPanel() {
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
-                    value={style.borderColor || '#374151'}
+                    value={style.borderColor || '#9ca3af'}
                     onChange={(e) =>
                       updateNodeStyle(selectedNode.id, { borderColor: e.target.value })
                     }
                     className="w-8 h-8 rounded border cursor-pointer"
                   />
                   <Input
-                    value={style.borderColor || '#374151'}
+                    value={style.borderColor || '#9ca3af'}
                     onChange={(e) =>
                       updateNodeStyle(selectedNode.id, { borderColor: e.target.value })
                     }
@@ -358,9 +393,9 @@ export function PropertiesPanel() {
 
               {/* Stroke Width */}
               <div className="space-y-1.5">
-                <Label className="text-xs">Stroke Width: {style.borderWidth || 2}px</Label>
+                <Label className="text-xs">Stroke Width: {style.borderWidth || 1}px</Label>
                 <Slider
-                  value={[style.borderWidth || 2]}
+                  value={[style.borderWidth || 1]}
                   onValueChange={([value]) =>
                     updateNodeStyle(selectedNode.id, { borderWidth: value })
                   }

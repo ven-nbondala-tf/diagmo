@@ -5,6 +5,8 @@ import {
   MiniMap,
   BackgroundVariant,
   useReactFlow,
+  ConnectionLineType,
+  MarkerType,
   type OnSelectionChangeParams,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
@@ -17,8 +19,18 @@ import { ZoomControls } from './ZoomControls'
 import { EditorToolbar } from './EditorToolbar'
 
 const defaultEdgeOptions = {
-  type: 'smoothstep',
+  type: 'straight',
   animated: false,
+  markerEnd: {
+    type: MarkerType.ArrowClosed,
+    width: 16,
+    height: 16,
+    color: '#9ca3af',
+  },
+  style: {
+    strokeWidth: 1,
+    stroke: '#9ca3af',
+  },
 }
 
 interface DiagramEditorProps {
@@ -207,6 +219,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           onMoveEnd={(_, viewport) => setZoom(viewport.zoom)}
           nodeTypes={nodeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
+          connectionLineType={ConnectionLineType.Straight}
           snapToGrid={snapToGrid}
           snapGrid={[gridSize, gridSize]}
           fitView

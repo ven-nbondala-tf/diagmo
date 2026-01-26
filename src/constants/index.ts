@@ -4,8 +4,8 @@ export const GRID_SIZE = 20
 
 export const DEFAULT_NODE_STYLE = {
   backgroundColor: '#ffffff',
-  borderColor: '#374151',
-  borderWidth: 2,
+  borderColor: '#9ca3af',
+  borderWidth: 1,
   borderRadius: 8,
   textColor: '#1f2937',
   fontSize: 14,
@@ -13,8 +13,8 @@ export const DEFAULT_NODE_STYLE = {
 }
 
 export const DEFAULT_EDGE_STYLE = {
-  strokeColor: '#374151',
-  strokeWidth: 2,
+  strokeColor: '#9ca3af',
+  strokeWidth: 1,
   strokeDasharray: '',
   animated: false,
 }

@@ -11,16 +11,20 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
   const { label, type, style, locked, groupId } = data
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(label)
+  const [isHovered, setIsHovered] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const updateNode = useEditorStore((state) => state.updateNode)
+
+  // Show handles only when selected or hovered
+  const showHandles = selected || isHovered
 
   const minWidth = type === 'text' ? 40 : 60
   const minHeight = type === 'text' ? 20 : 40
 
   const baseStyle = {
     backgroundColor: style?.backgroundColor || '#ffffff',
-    borderColor: style?.borderColor || '#374151',
-    borderWidth: style?.borderWidth || 2,
+    borderColor: style?.borderColor || '#9ca3af',
+    borderWidth: style?.borderWidth || 1,
     color: style?.textColor || '#1f2937',
     fontSize: style?.fontSize || 14,
     fontWeight: style?.fontWeight || 'normal',
@@ -792,7 +796,11 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
   }
 
   return (
-    <>
+    <div
+      className="w-full h-full"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* NodeResizer must be first child for proper resize handles */}
       <NodeResizer
         isVisible={selected && !locked}
@@ -810,16 +818,67 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
           borderColor: '#3b82f6',
         }}
       />
+
+      {/* Hidden target handles - always present for receiving connections */}
       <Handle
         type="target"
         position={Position.Top}
-        className="!bg-primary !w-3 !h-3"
+        id="top-target"
+        style={{ opacity: 0, pointerEvents: 'all' }}
       />
       <Handle
         type="target"
         position={Position.Left}
-        className="!bg-primary !w-3 !h-3"
+        id="left-target"
+        style={{ opacity: 0, pointerEvents: 'all' }}
       />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id="bottom-target"
+        style={{ opacity: 0, pointerEvents: 'all' }}
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="right-target"
+        style={{ opacity: 0, pointerEvents: 'all' }}
+      />
+
+      {/* Visible handles - only shown on hover or selection */}
+      {showHandles && (
+        <>
+          <Handle
+            type="source"
+            position={Position.Top}
+            id="top"
+            className="!w-2.5 !h-2.5 !border !border-white !rounded-full"
+            style={{ backgroundColor: '#60a5fa' }}
+          />
+          <Handle
+            type="source"
+            position={Position.Left}
+            id="left"
+            className="!w-2.5 !h-2.5 !border !border-white !rounded-full"
+            style={{ backgroundColor: '#60a5fa' }}
+          />
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="bottom"
+            className="!w-2.5 !h-2.5 !border !border-white !rounded-full"
+            style={{ backgroundColor: '#60a5fa' }}
+          />
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="right"
+            className="!w-2.5 !h-2.5 !border !border-white !rounded-full"
+            style={{ backgroundColor: '#60a5fa' }}
+          />
+        </>
+      )}
+
       <div
         className="relative w-full h-full"
         onDoubleClick={handleDoubleClick}
@@ -858,16 +917,6 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
           )}
         </div>
       </div>
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!bg-primary !w-3 !h-3"
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!bg-primary !w-3 !h-3"
-      />
-    </>
+    </div>
   )
 })
