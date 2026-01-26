@@ -606,21 +606,78 @@ function getDefaultLabel(_type: ShapeType): string {
 }
 
 function getDefaultDimensions(type: ShapeType): { width: number; height: number } {
-  // Different shapes have different default dimensions
+  // Complete dimensions for all shapes
   const dimensions: Partial<Record<ShapeType, { width: number; height: number }>> = {
-    text: { width: 100, height: 40 },
+    // Basic shapes
+    rectangle: { width: 120, height: 60 },
+    'rounded-rectangle': { width: 120, height: 60 },
     ellipse: { width: 120, height: 80 },
+    circle: { width: 80, height: 80 },
     diamond: { width: 100, height: 100 },
     triangle: { width: 100, height: 80 },
+    pentagon: { width: 100, height: 90 },
     hexagon: { width: 120, height: 80 },
+    octagon: { width: 90, height: 90 },
+    star: { width: 100, height: 100 },
+    parallelogram: { width: 120, height: 60 },
+    trapezoid: { width: 120, height: 60 },
     cylinder: { width: 100, height: 100 },
     cloud: { width: 140, height: 90 },
+    arrow: { width: 100, height: 50 },
+    'double-arrow': { width: 120, height: 50 },
+    callout: { width: 140, height: 80 },
+    note: { width: 120, height: 100 },
+    text: { width: 100, height: 40 },
+
+    // Flowchart shapes
     terminator: { width: 120, height: 50 },
-    parallelogram: { width: 120, height: 60 },
+    process: { width: 120, height: 60 },
+    decision: { width: 100, height: 100 },
     data: { width: 120, height: 60 },
     document: { width: 120, height: 80 },
-    'uml-class': { width: 150, height: 100 },
-    'uml-actor': { width: 80, height: 120 },
+    'multi-document': { width: 130, height: 90 },
+    'predefined-process': { width: 120, height: 60 },
+    'manual-input': { width: 120, height: 60 },
+    preparation: { width: 120, height: 60 },
+    database: { width: 80, height: 100 },
+    delay: { width: 100, height: 60 },
+    merge: { width: 80, height: 60 },
+    or: { width: 60, height: 60 },
+    'summing-junction': { width: 60, height: 60 },
+
+    // UML shapes
+    'uml-class': { width: 150, height: 120 },
+    'uml-interface': { width: 150, height: 100 },
+    'uml-actor': { width: 60, height: 100 },
+    'uml-usecase': { width: 140, height: 80 },
+    'uml-component': { width: 140, height: 80 },
+    'uml-package': { width: 140, height: 100 },
+    'uml-state': { width: 120, height: 60 },
+    'uml-note': { width: 120, height: 80 },
+
+    // Network shapes
+    server: { width: 80, height: 100 },
+    router: { width: 100, height: 60 },
+    switch: { width: 100, height: 50 },
+    firewall: { width: 80, height: 80 },
+    'load-balancer': { width: 100, height: 60 },
+    user: { width: 60, height: 80 },
+    users: { width: 80, height: 80 },
+    laptop: { width: 100, height: 70 },
+    mobile: { width: 50, height: 90 },
+    internet: { width: 80, height: 80 },
+
+    // Cloud provider shapes
+    'aws-ec2': { width: 100, height: 70 },
+    'aws-s3': { width: 100, height: 70 },
+    'aws-lambda': { width: 100, height: 70 },
+    'aws-rds': { width: 100, height: 70 },
+    'azure-vm': { width: 100, height: 70 },
+    'azure-storage': { width: 100, height: 70 },
+    'azure-functions': { width: 100, height: 70 },
+    'gcp-compute': { width: 100, height: 70 },
+    'gcp-storage': { width: 100, height: 70 },
+    'gcp-functions': { width: 100, height: 70 },
   }
   return dimensions[type] || { width: 120, height: 60 }
 }
