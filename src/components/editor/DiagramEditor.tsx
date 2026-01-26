@@ -20,17 +20,22 @@ import { ZoomControls } from './ZoomControls'
 import { EditorToolbar } from './EditorToolbar'
 
 const defaultEdgeOptions = {
-  type: 'straight',
+  type: 'smoothstep', // Better connection to shapes than straight
   animated: false,
   markerEnd: {
     type: MarkerType.ArrowClosed,
-    width: 12,
-    height: 12,
+    width: 20, // Larger for better visibility
+    height: 20,
     color: '#6b7280',
   },
   style: {
-    strokeWidth: 1.5,
+    strokeWidth: 2,
     stroke: '#6b7280',
+  },
+  // Path options for better edge routing
+  pathOptions: {
+    offset: 0,
+    borderRadius: 8,
   },
 }
 
@@ -227,7 +232,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           onMoveEnd={(_, viewport) => setZoom(viewport.zoom)}
           nodeTypes={nodeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
-          connectionLineType={ConnectionLineType.Straight}
+          connectionLineType={ConnectionLineType.SmoothStep}
           connectionLineStyle={connectionLineStyle}
           connectionMode={ConnectionMode.Loose}
           connectionRadius={30}

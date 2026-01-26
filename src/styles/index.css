@@ -200,3 +200,58 @@
 .react-flow__node {
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
+
+/* ========== EDGE CONNECTION & ARROW FIXES ========== */
+
+/* Ensure edges connect properly to nodes */
+.react-flow__edge-path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Make arrow markers more visible */
+.react-flow__arrowhead {
+  fill: currentColor;
+}
+
+/* Ensure markers don't get clipped */
+.react-flow svg {
+  overflow: visible;
+}
+
+/* ========== RESIZE HANDLES ========== */
+
+/* Ensure all resize handles are visible */
+.react-flow__resize-control {
+  position: absolute !important;
+  width: 10px !important;
+  height: 10px !important;
+  background: white !important;
+  border: 2px solid #3b82f6 !important;
+  border-radius: 2px !important;
+  z-index: 10 !important;
+}
+
+.react-flow__resize-control.top-left { top: -5px !important; left: -5px !important; cursor: nwse-resize !important; }
+.react-flow__resize-control.top { top: -5px !important; left: 50% !important; transform: translateX(-50%) !important; cursor: ns-resize !important; }
+.react-flow__resize-control.top-right { top: -5px !important; right: -5px !important; left: auto !important; cursor: nesw-resize !important; }
+.react-flow__resize-control.right { top: 50% !important; right: -5px !important; left: auto !important; transform: translateY(-50%) !important; cursor: ew-resize !important; }
+.react-flow__resize-control.bottom-right { bottom: -5px !important; right: -5px !important; left: auto !important; top: auto !important; cursor: nwse-resize !important; }
+.react-flow__resize-control.bottom { bottom: -5px !important; left: 50% !important; top: auto !important; transform: translateX(-50%) !important; cursor: ns-resize !important; }
+.react-flow__resize-control.bottom-left { bottom: -5px !important; left: -5px !important; top: auto !important; cursor: nesw-resize !important; }
+.react-flow__resize-control.left { top: 50% !important; left: -5px !important; transform: translateY(-50%) !important; cursor: ew-resize !important; }
+
+/* Resize line/border */
+.react-flow__resize-control.line {
+  border: 1px dashed #3b82f6 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+  background: transparent !important;
+}
+
+/* Resize handle hover effect */
+.react-flow__resize-control:hover {
+  background: #3b82f6 !important;
+  border-color: #2563eb !important;
+}

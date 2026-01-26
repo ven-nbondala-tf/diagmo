@@ -1,17 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useEditorStore } from '@/stores/editorStore'
-import { useUpdateDiagram, useExport } from '@/hooks'
+import { useUpdateDiagram } from '@/hooks'
 import { exportService } from '@/services/exportService'
 import type { Diagram } from '@/types'
 import {
   Button,
   Input,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -23,20 +18,12 @@ import {
 } from '@/components/ui'
 import {
   ArrowLeft,
-  Save,
-  Undo2,
-  Redo2,
-  Download,
-  Grid3X3,
   Loader2,
   Check,
-  MoreHorizontal,
-  Keyboard,
-  Copy,
-  Clipboard,
 } from 'lucide-react'
 import { AUTO_SAVE_INTERVAL } from '@/constants'
 import { toast } from 'sonner'
+import { MenuBar } from './MenuBar'
 
 interface EditorHeaderProps {
   diagram: Diagram
@@ -73,17 +60,11 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
   const setDirty = useEditorStore((state) => state.setDirty)
   const undo = useEditorStore((state) => state.undo)
   const redo = useEditorStore((state) => state.redo)
-  const past = useEditorStore((state) => state.past)
-  const future = useEditorStore((state) => state.future)
-  const gridEnabled = useEditorStore((state) => state.gridEnabled)
-  const toggleGrid = useEditorStore((state) => state.toggleGrid)
   const zoom = useEditorStore((state) => state.zoom)
   const copyNodes = useEditorStore((state) => state.copyNodes)
   const pasteNodes = useEditorStore((state) => state.pasteNodes)
-  const clipboard = useEditorStore((state) => state.clipboard)
 
   const updateDiagram = useUpdateDiagram()
-  const { exporting } = useExport()
 
   const handleSave = useCallback(async () => {
     if (!isDirty && name === diagram.name) return
@@ -107,7 +88,28 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
     }
   }, [diagram.id, diagram.name, name, nodes, edges, isDirty, updateDiagram, setDirty])
 
-  const handleExport = async (format: 'png' | 'svg' | 'pdf') => {
+  const handleExport = async (format: 'png' | 'svg' | 'json') => {
+    // JSON export doesn't need the viewport
+    if (format === 'json') {
+      try {
+        const data = { name, nodes, edges }
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${name}.json`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        toast.success('Exported as JSON')
+      } catch (error) {
+        toast.error('Export failed')
+        console.error('Export error:', error)
+      }
+      return
+    }
+
     const viewport = document.querySelector('.react-flow__viewport') as HTMLElement
     if (!viewport) {
       toast.error('Failed to export: canvas not found')
@@ -125,11 +127,6 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
         case 'svg': {
           const dataUrl = await exportService.exportToSvg(viewport)
           exportService.downloadFile(dataUrl, `${name}.svg`)
-          break
-        }
-        case 'pdf': {
-          const blob = await exportService.exportToPdf(viewport)
-          exportService.downloadFile(blob, `${name}.pdf`)
           break
         }
       }
@@ -200,156 +197,55 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
 
   return (
     <>
-      <header className="h-14 border-b bg-background flex items-center px-4 gap-4">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Back to Dashboard</TooltipContent>
-        </Tooltip>
+      <header className="border-b bg-background flex flex-col">
+        {/* Menu Bar */}
+        <MenuBar
+          diagramName={name}
+          onSave={handleSave}
+          onExport={handleExport}
+          saving={saving}
+        />
 
-        <div className="flex-1 flex items-center gap-4">
+        {/* Status Bar */}
+        <div className="h-10 flex items-center px-4 gap-4 border-t bg-muted/30">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => navigate('/dashboard')}>
+                <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+                Dashboard
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Back to Dashboard</TooltipContent>
+          </Tooltip>
+
+          <div className="w-px h-5 bg-border" />
+
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={handleSave}
-            className="max-w-xs font-medium"
+            className="max-w-[200px] h-7 text-sm font-medium bg-transparent border-none focus:bg-background"
           />
+
+          <div className="flex-1" />
+
           {saving ? (
-            <span className="text-sm text-muted-foreground flex items-center gap-1">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" />
               Saving...
             </span>
           ) : lastSaved ? (
-            <span className="text-sm text-muted-foreground flex items-center gap-1">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Check className="h-3 w-3" />
               Saved
             </span>
           ) : isDirty ? (
-            <span className="text-sm text-muted-foreground">Unsaved changes</span>
+            <span className="text-xs text-muted-foreground">Unsaved changes</span>
           ) : null}
-        </div>
 
-        <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={undo} disabled={past.length === 0}>
-                <Undo2 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Undo (Ctrl+Z)</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={redo} disabled={future.length === 0}>
-                <Redo2 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Redo (Ctrl+Y)</TooltipContent>
-          </Tooltip>
-
-          <div className="w-px h-6 bg-border mx-2" />
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={copyNodes}>
-                <Copy className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Copy (Ctrl+C)</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={pasteNodes} disabled={clipboard.length === 0}>
-                <Clipboard className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Paste (Ctrl+V)</TooltipContent>
-          </Tooltip>
-
-          <div className="w-px h-6 bg-border mx-2" />
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={gridEnabled ? 'secondary' : 'ghost'}
-                size="icon"
-                onClick={toggleGrid}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Toggle Grid</TooltipContent>
-          </Tooltip>
-
-          <span className="text-sm text-muted-foreground px-2">
+          <span className="text-xs text-muted-foreground ml-4">
             {Math.round(zoom * 100)}%
           </span>
-
-          <div className="w-px h-6 bg-border mx-2" />
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={handleSave} disabled={saving}>
-                {saving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Save (Ctrl+S)</TooltipContent>
-          </Tooltip>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" disabled={exporting}>
-                {exporting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleExport('png')}>
-                Export as PNG
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('svg')}>
-                Export as SVG
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('pdf')}>
-                Export as PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={() => setShowShortcuts(true)}>
-                <Keyboard className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Keyboard Shortcuts (?)</TooltipContent>
-          </Tooltip>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Rename</DropdownMenuItem>
-              <DropdownMenuItem>Duplicate</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
 

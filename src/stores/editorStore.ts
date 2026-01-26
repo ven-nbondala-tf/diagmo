@@ -186,15 +186,15 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       target: connection.target!,
       sourceHandle: connection.sourceHandle,
       targetHandle: connection.targetHandle,
-      type: 'straight',
+      type: 'smoothstep', // Better connection to shapes
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        width: 12,
-        height: 12,
+        width: 20, // Larger for better visibility
+        height: 20,
         color: '#6b7280',
       },
       style: {
-        strokeWidth: 1.5,
+        strokeWidth: 2,
         stroke: '#6b7280',
       },
     }
@@ -306,8 +306,28 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     })
   },
 
-  selectNodes: (ids) => set({ selectedNodes: ids }),
-  selectEdges: (ids) => set({ selectedEdges: ids }),
+  selectNodes: (ids) => {
+    // Mark all nodes with their selection state for React Flow
+    const newNodes = get().nodes.map(node => ({
+      ...node,
+      selected: ids.includes(node.id),
+    }))
+    set({
+      selectedNodes: ids,
+      nodes: newNodes,
+    })
+  },
+  selectEdges: (ids) => {
+    // Mark all edges with their selection state for React Flow
+    const newEdges = get().edges.map(edge => ({
+      ...edge,
+      selected: ids.includes(edge.id),
+    }))
+    set({
+      selectedEdges: ids,
+      edges: newEdges,
+    })
+  },
 
   copyNodes: () => {
     const { nodes, selectedNodes } = get()
