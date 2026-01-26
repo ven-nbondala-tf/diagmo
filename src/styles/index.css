@@ -234,9 +234,10 @@
 .react-flow__resize-control.bottom-left { bottom: -5px !important; left: -5px !important; top: auto !important; cursor: nesw-resize !important; }
 .react-flow__resize-control.left { top: 50% !important; left: -5px !important; transform: translateY(-50%) !important; cursor: ew-resize !important; }
 
-/* Resize line/border - hidden to avoid multiple borders */
+/* Resize line/border - show dashed selection border */
 .react-flow__resize-control.line {
-  display: none !important;
+  border: 1px dashed #3b82f6 !important;
+  border-radius: 2px !important;
 }
 
 /* Resize handle hover effect */

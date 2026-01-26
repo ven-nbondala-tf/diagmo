@@ -169,17 +169,42 @@ export type ShapeType =
   | 'laptop'
   | 'mobile'
   | 'internet'
-  // Cloud icons
+  // AWS Cloud icons
   | 'aws-ec2'
   | 'aws-s3'
   | 'aws-lambda'
   | 'aws-rds'
+  | 'aws-dynamodb'
+  | 'aws-api-gateway'
+  | 'aws-sns'
+  | 'aws-sqs'
+  | 'aws-cloudfront'
+  | 'aws-route53'
+  | 'aws-vpc'
+  | 'aws-iam'
+  | 'aws-ecs'
+  | 'aws-eks'
+  // Azure Cloud icons
   | 'azure-vm'
   | 'azure-storage'
   | 'azure-functions'
+  | 'azure-sql'
+  | 'azure-cosmos'
+  | 'azure-app-service'
+  | 'azure-aks'
+  | 'azure-cdn'
+  | 'azure-vnet'
+  | 'azure-keyvault'
+  // GCP Cloud icons
   | 'gcp-compute'
   | 'gcp-storage'
   | 'gcp-functions'
+  | 'gcp-bigquery'
+  | 'gcp-pubsub'
+  | 'gcp-gke'
+  | 'gcp-cloud-run'
+  | 'gcp-firestore'
+  | 'gcp-cloud-sql'
 
 // Folder types
 export interface Folder {

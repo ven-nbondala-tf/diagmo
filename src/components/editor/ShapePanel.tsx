@@ -393,21 +393,338 @@ const ShapePreview = ({ type }: { type: ShapeType }) => {
         </svg>
       )
 
-    // ===== CLOUD PROVIDERS =====
+    // ===== AWS ICONS =====
     case 'aws-ec2':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#FF9900" />
+          <rect x="8" y="8" width="16" height="4" rx="0.5" fill="white" />
+          <rect x="8" y="14" width="16" height="4" rx="0.5" fill="white" />
+          <rect x="8" y="20" width="16" height="4" rx="0.5" fill="white" />
+          <circle cx="11" cy="10" r="1" fill="#FF9900" />
+          <circle cx="11" cy="16" r="1" fill="#FF9900" />
+          <circle cx="11" cy="22" r="1" fill="#FF9900" />
+        </svg>
+      )
+
     case 'aws-s3':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#569A31" />
+          <path d="M10,10 L22,10 L20,24 L12,24 Z" fill="white" />
+          <ellipse cx="16" cy="10" rx="6" ry="2" fill="white" />
+        </svg>
+      )
+
     case 'aws-lambda':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#FF9900" />
+          <path d="M10,24 L16,8 L18,8 L14,18 L22,18 L22,20 L13,20 L10,24 Z" fill="white" />
+        </svg>
+      )
+
     case 'aws-rds':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#3B48CC" />
+          <ellipse cx="16" cy="10" rx="7" ry="3" fill="white" />
+          <path d="M9,10 L9,22 C9,24 12,26 16,26 C20,26 23,24 23,22 L23,10" fill="none" stroke="white" strokeWidth="2" />
+        </svg>
+      )
+
+    case 'aws-dynamodb':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#4053D6" />
+          <ellipse cx="16" cy="10" rx="7" ry="2.5" fill="white" />
+          <ellipse cx="16" cy="16" rx="7" ry="2.5" fill="none" stroke="white" strokeWidth="1.5" />
+          <ellipse cx="16" cy="22" rx="7" ry="2.5" fill="white" />
+          <line x1="9" y1="10" x2="9" y2="22" stroke="white" strokeWidth="1.5" />
+          <line x1="23" y1="10" x2="23" y2="22" stroke="white" strokeWidth="1.5" />
+        </svg>
+      )
+
+    case 'aws-api-gateway':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#FF4F8B" />
+          <rect x="12" y="8" width="8" height="16" rx="1" fill="white" />
+          <path d="M8,12 L12,12" stroke="white" strokeWidth="2" />
+          <path d="M8,16 L12,16" stroke="white" strokeWidth="2" />
+          <path d="M8,20 L12,20" stroke="white" strokeWidth="2" />
+          <path d="M20,12 L24,12" stroke="white" strokeWidth="2" />
+          <path d="M20,16 L24,16" stroke="white" strokeWidth="2" />
+          <path d="M20,20 L24,20" stroke="white" strokeWidth="2" />
+        </svg>
+      )
+
+    case 'aws-sns':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#FF4F8B" />
+          <circle cx="16" cy="16" r="4" fill="white" />
+          <path d="M16,8 L16,12" stroke="white" strokeWidth="2" />
+          <path d="M16,20 L16,24" stroke="white" strokeWidth="2" />
+          <path d="M8,16 L12,16" stroke="white" strokeWidth="2" />
+          <path d="M20,16 L24,16" stroke="white" strokeWidth="2" />
+        </svg>
+      )
+
+    case 'aws-sqs':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#FF4F8B" />
+          <rect x="8" y="10" width="6" height="12" rx="1" fill="white" />
+          <rect x="16" y="10" width="8" height="12" rx="1" fill="none" stroke="white" strokeWidth="1.5" />
+          <path d="M14,16 L16,16" stroke="white" strokeWidth="2" />
+        </svg>
+      )
+
+    case 'aws-cloudfront':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#8C4FFF" />
+          <circle cx="16" cy="16" r="8" fill="none" stroke="white" strokeWidth="2" />
+          <circle cx="16" cy="16" r="4" fill="white" />
+          <path d="M16,4 L16,8" stroke="white" strokeWidth="2" />
+          <path d="M16,24 L16,28" stroke="white" strokeWidth="2" />
+        </svg>
+      )
+
+    case 'aws-route53':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#8C4FFF" />
+          <circle cx="16" cy="16" r="8" fill="none" stroke="white" strokeWidth="2" />
+          <ellipse cx="16" cy="16" rx="4" ry="8" fill="none" stroke="white" strokeWidth="1.5" />
+          <line x1="8" y1="16" x2="24" y2="16" stroke="white" strokeWidth="1.5" />
+        </svg>
+      )
+
+    case 'aws-vpc':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#8C4FFF" />
+          <rect x="8" y="8" width="16" height="16" rx="2" fill="none" stroke="white" strokeWidth="2" />
+          <rect x="11" y="11" width="10" height="10" rx="1" fill="none" stroke="white" strokeWidth="1.5" strokeDasharray="2,2" />
+        </svg>
+      )
+
+    case 'aws-iam':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#DD344C" />
+          <circle cx="16" cy="12" r="4" fill="white" />
+          <path d="M10,24 C10,20 12,18 16,18 C20,18 22,20 22,24" fill="white" />
+          <rect x="14" y="20" width="4" height="6" fill="#DD344C" />
+        </svg>
+      )
+
+    case 'aws-ecs':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#FF9900" />
+          <rect x="8" y="8" width="7" height="7" rx="1" fill="white" />
+          <rect x="17" y="8" width="7" height="7" rx="1" fill="white" />
+          <rect x="8" y="17" width="7" height="7" rx="1" fill="white" />
+          <rect x="17" y="17" width="7" height="7" rx="1" fill="white" />
+        </svg>
+      )
+
+    case 'aws-eks':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#FF9900" />
+          <circle cx="16" cy="16" r="8" fill="none" stroke="white" strokeWidth="2" />
+          <path d="M16,8 L16,24 M8,16 L24,16 M10,10 L22,22 M22,10 L10,22" stroke="white" strokeWidth="1.5" />
+        </svg>
+      )
+
+    // ===== AZURE ICONS =====
     case 'azure-vm':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#0078D4" />
+          <rect x="8" y="8" width="16" height="12" rx="1" fill="white" />
+          <rect x="12" y="21" width="8" height="1.5" fill="white" />
+          <rect x="10" y="23" width="12" height="1.5" fill="white" />
+        </svg>
+      )
+
     case 'azure-storage':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#0078D4" />
+          <rect x="8" y="8" width="16" height="4" rx="0.5" fill="white" />
+          <rect x="8" y="14" width="16" height="4" rx="0.5" fill="white" />
+          <rect x="8" y="20" width="16" height="4" rx="0.5" fill="white" />
+        </svg>
+      )
+
     case 'azure-functions':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#0062AD" />
+          <path d="M18,6 L12,16 L16,16 L14,26 L22,14 L17,14 L20,6 Z" fill="#FFC107" />
+        </svg>
+      )
+
+    case 'azure-sql':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#0078D4" />
+          <ellipse cx="16" cy="10" rx="7" ry="3" fill="white" />
+          <path d="M9,10 L9,22 C9,24 12,26 16,26 C20,26 23,24 23,22 L23,10" fill="none" stroke="white" strokeWidth="2" />
+        </svg>
+      )
+
+    case 'azure-cosmos':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#0078D4" />
+          <circle cx="16" cy="16" r="7" fill="none" stroke="white" strokeWidth="2" />
+          <circle cx="16" cy="16" r="3" fill="white" />
+          <circle cx="11" cy="12" r="2" fill="white" />
+          <circle cx="21" cy="20" r="2" fill="white" />
+        </svg>
+      )
+
+    case 'azure-app-service':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#0078D4" />
+          <rect x="8" y="8" width="16" height="16" rx="2" fill="white" />
+          <path d="M12,14 L20,14 M12,18 L18,18 M12,22 L16,22" stroke="#0078D4" strokeWidth="1.5" />
+        </svg>
+      )
+
+    case 'azure-aks':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#326CE5" />
+          <circle cx="16" cy="16" r="8" fill="none" stroke="white" strokeWidth="2" />
+          <path d="M16,8 L16,24 M8,16 L24,16 M10,10 L22,22 M22,10 L10,22" stroke="white" strokeWidth="1.5" />
+        </svg>
+      )
+
+    case 'azure-cdn':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#0078D4" />
+          <circle cx="16" cy="16" r="8" fill="none" stroke="white" strokeWidth="2" />
+          <circle cx="16" cy="16" r="4" fill="none" stroke="white" strokeWidth="1.5" />
+          <circle cx="16" cy="16" r="1" fill="white" />
+        </svg>
+      )
+
+    case 'azure-vnet':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#0078D4" />
+          <rect x="8" y="8" width="16" height="16" rx="2" fill="none" stroke="white" strokeWidth="2" />
+          <line x1="8" y1="16" x2="24" y2="16" stroke="white" strokeWidth="1.5" />
+          <line x1="16" y1="8" x2="16" y2="24" stroke="white" strokeWidth="1.5" />
+        </svg>
+      )
+
+    case 'azure-keyvault':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#0078D4" />
+          <circle cx="16" cy="14" r="4" fill="none" stroke="white" strokeWidth="2" />
+          <rect x="14" y="18" width="4" height="8" fill="white" />
+          <rect x="13" y="22" width="6" height="2" fill="white" />
+        </svg>
+      )
+
+    // ===== GCP ICONS =====
     case 'gcp-compute':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#4285F4" />
+          <rect x="8" y="10" width="16" height="12" rx="1" fill="white" />
+          <rect x="10" y="12" width="4" height="3" fill="#4285F4" />
+          <rect x="10" y="17" width="4" height="3" fill="#4285F4" />
+          <rect x="16" y="12" width="6" height="8" fill="#4285F4" />
+        </svg>
+      )
+
     case 'gcp-storage':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#4285F4" />
+          <ellipse cx="16" cy="10" rx="8" ry="3" fill="white" />
+          <path d="M8,10 L8,22 C8,24 11,26 16,26 C21,26 24,24 24,22 L24,10" fill="white" />
+          <line x1="8" y1="14" x2="24" y2="14" stroke="#4285F4" strokeWidth="1" />
+          <line x1="8" y1="18" x2="24" y2="18" stroke="#4285F4" strokeWidth="1" />
+        </svg>
+      )
+
     case 'gcp-functions':
       return (
         <svg width={size} height={size} viewBox="0 0 32 32">
-          <path d="M8,20 C4,20 2,17 2,14 C2,11 4,8 8,8 C8,4 12,2 16,2 C20,2 24,4 26,8 C30,8 30,12 30,14 C30,18 28,20 24,20 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
-          <text x="16" y="15" textAnchor="middle" fontSize="6" fill={stroke}>{type.split('-')[1]?.toUpperCase().slice(0, 3)}</text>
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#4285F4" />
+          <text x="16" y="21" textAnchor="middle" fontSize="16" fontWeight="bold" fill="white">ƒ</text>
+        </svg>
+      )
+
+    case 'gcp-bigquery':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#4285F4" />
+          <rect x="8" y="8" width="4" height="16" fill="white" />
+          <rect x="14" y="12" width="4" height="12" fill="white" />
+          <rect x="20" y="16" width="4" height="8" fill="white" />
+        </svg>
+      )
+
+    case 'gcp-pubsub':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#4285F4" />
+          <circle cx="10" cy="16" r="3" fill="white" />
+          <circle cx="22" cy="10" r="3" fill="white" />
+          <circle cx="22" cy="22" r="3" fill="white" />
+          <line x1="13" y1="15" x2="19" y2="11" stroke="white" strokeWidth="2" />
+          <line x1="13" y1="17" x2="19" y2="21" stroke="white" strokeWidth="2" />
+        </svg>
+      )
+
+    case 'gcp-gke':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#4285F4" />
+          <circle cx="16" cy="16" r="8" fill="none" stroke="white" strokeWidth="2" />
+          <path d="M16,8 L16,24 M8,16 L24,16 M10,10 L22,22 M22,10 L10,22" stroke="white" strokeWidth="1.5" />
+        </svg>
+      )
+
+    case 'gcp-cloud-run':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#4285F4" />
+          <path d="M10,20 L16,8 L22,20 Z" fill="none" stroke="white" strokeWidth="2" />
+          <path d="M14,20 L16,24 L18,20" fill="white" />
+        </svg>
+      )
+
+    case 'gcp-firestore':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#FFCA28" />
+          <path d="M10,8 L16,20 L10,24 Z" fill="white" />
+          <path d="M22,8 L16,20 L22,24 Z" fill="white" opacity="0.7" />
+        </svg>
+      )
+
+    case 'gcp-cloud-sql':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill="#4285F4" />
+          <ellipse cx="16" cy="10" rx="7" ry="3" fill="white" />
+          <path d="M9,10 L9,22 C9,24 12,26 16,26 C20,26 23,24 23,22 L23,10" fill="none" stroke="white" strokeWidth="2" />
+          <ellipse cx="16" cy="16" rx="7" ry="2" fill="none" stroke="white" strokeWidth="1" />
         </svg>
       )
 
