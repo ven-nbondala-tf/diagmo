@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, type CSSProperties } from 'react'
 import {
   BaseEdge,
   EdgeLabelRenderer,
+  getStraightPath,
   getSmoothStepPath,
   type EdgeProps,
   type Edge,
@@ -56,11 +57,17 @@ export function LabeledEdge({
   markerEnd: defaultMarkerEnd,
   markerStart: defaultMarkerStart,
   data,
+  selected,
 }: EdgeProps<LabeledEdgeType>) {
   const edgeData = data as LabeledEdgeData | undefined
   const edgeStyle = edgeData?.style
   const [isEditing, setIsEditing] = useState(false)
   const [labelText, setLabelText] = useState(edgeData?.label || '')
+  const [isHovered, setIsHovered] = useState(false)
+
+  // Only show label UI if there's actual text or if editing
+  const hasLabel = labelText.trim().length > 0
+  const showLabelUI = hasLabel || isEditing || (selected && isHovered)
 
   // Compute effective styles
   const effectiveStyle = useMemo<CSSProperties>(() => {
@@ -88,14 +95,23 @@ export function LabeledEdge({
     return typeof defaultMarkerStart === 'string' ? defaultMarkerStart : undefined
   }, [edgeStyle?.markerStart, defaultMarkerStart])
 
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  })
+  // Smart edge routing: use straight path if shapes are aligned, smoothstep otherwise
+  const ALIGNMENT_THRESHOLD = 15 // pixels
+  const isHorizontallyAligned = Math.abs(sourceY - targetY) < ALIGNMENT_THRESHOLD
+  const isVerticallyAligned = Math.abs(sourceX - targetX) < ALIGNMENT_THRESHOLD
+  const usesStraightPath = isHorizontallyAligned || isVerticallyAligned
+
+  const [edgePath, labelX, labelY] = usesStraightPath
+    ? getStraightPath({ sourceX, sourceY, targetX, targetY })
+    : getSmoothStepPath({
+        sourceX,
+        sourceY,
+        sourcePosition,
+        targetX,
+        targetY,
+        targetPosition,
+        borderRadius: 5,
+      })
 
   const handleDoubleClick = useCallback(() => {
     setIsEditing(true)
@@ -121,45 +137,48 @@ export function LabeledEdge({
   )
 
   return (
-    <>
+    <g
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <BaseEdge
         path={edgePath}
         markerEnd={effectiveMarkerEnd}
         markerStart={effectiveMarkerStart}
         style={effectiveStyle}
+        interactionWidth={20}
       />
-      <EdgeLabelRenderer>
-        <div
-          style={{
-            position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-            pointerEvents: 'all',
-          }}
-          className="nodrag nopan"
-        >
-          {isEditing ? (
-            <Input
-              value={labelText}
-              onChange={(e) => setLabelText(e.target.value)}
-              onBlur={handleBlur}
-              onKeyDown={handleKeyDown}
-              className="h-6 w-24 text-xs text-center px-1"
-              autoFocus
-            />
-          ) : (
-            <div
-              onDoubleClick={handleDoubleClick}
-              className="px-2 py-0.5 text-xs bg-background border rounded cursor-pointer hover:bg-accent min-w-[20px] text-center"
-            >
-              {labelText || (
-                <span className="text-muted-foreground italic">
-                  Double-click to add label
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      </EdgeLabelRenderer>
-    </>
+      {/* Only show label UI if there's text, editing, or selected+hovered */}
+      {showLabelUI && (
+        <EdgeLabelRenderer>
+          <div
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: 'all',
+            }}
+            className="nodrag nopan"
+          >
+            {isEditing ? (
+              <Input
+                value={labelText}
+                onChange={(e) => setLabelText(e.target.value)}
+                onBlur={handleBlur}
+                onKeyDown={handleKeyDown}
+                className="h-6 w-24 text-xs text-center px-1"
+                autoFocus
+              />
+            ) : (
+              <div
+                onDoubleClick={handleDoubleClick}
+                className="px-2 py-0.5 text-xs bg-background border rounded cursor-pointer hover:bg-accent min-w-[20px] text-center"
+              >
+                {labelText}
+              </div>
+            )}
+          </div>
+        </EdgeLabelRenderer>
+      )}
+    </g>
   )
 }
