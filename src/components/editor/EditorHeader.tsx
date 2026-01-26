@@ -49,6 +49,13 @@ const SHORTCUTS = [
   { keys: ['Ctrl', 'Shift', 'Z'], description: 'Redo (alternative)' },
   { keys: ['Ctrl', 'C'], description: 'Copy selected nodes' },
   { keys: ['Ctrl', 'V'], description: 'Paste nodes' },
+  { keys: ['Ctrl', 'D'], description: 'Duplicate selected' },
+  { keys: ['Ctrl', 'A'], description: 'Select all nodes' },
+  { keys: ['Ctrl', 'G'], description: 'Group selected nodes' },
+  { keys: ['Ctrl', 'Shift', 'G'], description: 'Ungroup nodes' },
+  { keys: ['Ctrl', 'L'], description: 'Lock/Unlock selected' },
+  { keys: ['Ctrl', "'"], description: 'Toggle grid' },
+  { keys: ['Ctrl', 'Shift', "'"], description: 'Toggle snap to grid' },
   { keys: ['Delete'], description: 'Delete selected' },
   { keys: ['Backspace'], description: 'Delete selected' },
 ]
