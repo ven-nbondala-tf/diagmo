@@ -116,13 +116,80 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       isTarget && 'ring-2 ring-green-500 ring-offset-2'
     )
 
+    // Helper function to build complete style object that respects user settings
+    const getShapeStyle = (overrides: Record<string, unknown> = {}) => ({
+      backgroundColor: baseStyle.backgroundColor,
+      borderColor: baseStyle.borderColor,
+      borderWidth: baseStyle.borderWidth,
+      borderStyle: baseStyle.borderStyle, // Use user's choice, not hardcoded
+      borderRadius: style?.borderRadius ?? 8,
+      color: baseStyle.color,
+      fontSize: baseStyle.fontSize,
+      fontFamily: baseStyle.fontFamily,
+      fontWeight: baseStyle.fontWeight,
+      fontStyle: baseStyle.fontStyle,
+      textDecoration: baseStyle.textDecoration,
+      textAlign: baseStyle.textAlign,
+      opacity: baseStyle.opacity,
+      boxShadow: baseStyle.boxShadow,
+      transform: baseStyle.transform,
+      ...overrides,
+    })
+
+    // Get drop-shadow filter for clip-path shapes (box-shadow doesn't work with clip-path)
+    const getDropShadowFilter = () => {
+      if (!style?.shadowEnabled) return undefined
+      return `drop-shadow(${style.shadowOffsetX || 4}px ${style.shadowOffsetY || 4}px ${style.shadowBlur || 10}px ${style.shadowColor || 'rgba(0,0,0,0.2)'})`
+    }
+
+    // Wrapper component for clip-path shapes to preserve shadow using filter
+    const ClipPathWrapper = ({
+      children,
+      clipPath,
+      className = ''
+    }: {
+      children: React.ReactNode
+      clipPath: string
+      className?: string
+    }) => (
+      <div
+        className="w-full h-full"
+        style={{
+          filter: getDropShadowFilter(),
+          transform: style?.rotation ? `rotate(${style.rotation}deg)` : undefined,
+        }}
+      >
+        <div
+          className={cn(shapeClass, className)}
+          style={{
+            ...getShapeStyle({ boxShadow: 'none', transform: undefined }), // Don't apply box-shadow inside clip-path
+            clipPath,
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    )
+
     switch (type) {
-      // Basic shapes
+      // ===== BASIC SHAPES (no clip-path, can use box-shadow directly) =====
+
+      case 'rectangle':
+      case 'process':
+        return (
+          <div
+            className={cn(shapeClass, 'px-4 py-2')}
+            style={getShapeStyle()}
+          >
+            {label}
+          </div>
+        )
+
       case 'ellipse':
         return (
           <div
             className={cn(shapeClass, 'rounded-full px-4 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid' }}
+            style={getShapeStyle({ borderRadius: '50%' })}
           >
             {label}
           </div>
@@ -132,7 +199,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn(shapeClass, 'rounded-full px-2 py-2 aspect-square')}
-            style={{ ...baseStyle, borderStyle: 'solid' }}
+            style={getShapeStyle({ borderRadius: '50%' })}
           >
             {label}
           </div>
@@ -142,23 +209,31 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn(shapeClass, 'px-4 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 16 }}
+            style={getShapeStyle({ borderRadius: style?.borderRadius ?? 16 })}
           >
             {label}
           </div>
         )
 
+      // ===== CLIP-PATH SHAPES (use filter drop-shadow instead of box-shadow) =====
+
       case 'diamond':
       case 'decision':
         return (
-          <div className="relative w-full h-full">
+          <div
+            className="relative w-full h-full"
+            style={{
+              filter: getDropShadowFilter(),
+              transform: style?.rotation ? `rotate(${style.rotation}deg)` : undefined,
+            }}
+          >
             <div
               className={cn('absolute inset-[10%] rotate-45', locked && 'opacity-75')}
-              style={{ ...baseStyle, borderStyle: 'solid', borderRadius: style?.borderRadius || 4 }}
+              style={getShapeStyle({ borderRadius: style?.borderRadius || 4, boxShadow: 'none', transform: undefined })}
             />
             <div
               className="absolute inset-0 flex items-center justify-center"
-              style={{ color: baseStyle.color, fontSize: baseStyle.fontSize }}
+              style={{ color: baseStyle.color, fontSize: baseStyle.fontSize, fontFamily: baseStyle.fontFamily }}
             >
               {label}
             </div>
@@ -167,109 +242,62 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'triangle':
         return (
-          <div
-            className={shapeClass}
-            style={{ ...baseStyle, clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)', borderStyle: 'solid' }}
-          >
+          <ClipPathWrapper clipPath="polygon(50% 0%, 0% 100%, 100% 100%)">
             <span className="mt-[30%]">{label}</span>
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'pentagon':
         return (
-          <div
-            className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)" className="px-4 py-2">
             {label}
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'hexagon':
       case 'preparation':
         return (
-          <div
-            className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)" className="px-4 py-2">
             {label}
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'octagon':
         return (
-          <div
-            className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)" className="px-4 py-2">
             {label}
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'star':
         return (
-          <div
-            className={cn(shapeClass, 'px-2 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)" className="px-2 py-2">
             {label}
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'arrow':
         return (
-          <div
-            className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(0% 20%, 60% 20%, 60% 0%, 100% 50%, 60% 100%, 60% 80%, 0% 80%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(0% 20%, 60% 20%, 60% 0%, 100% 50%, 60% 100%, 60% 80%, 0% 80%)" className="px-4 py-2">
             {label}
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'double-arrow':
         return (
-          <div
-            className={cn(shapeClass, 'px-6 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(0% 50%, 15% 0%, 15% 25%, 85% 25%, 85% 0%, 100% 50%, 85% 100%, 85% 75%, 15% 75%, 15% 100%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(0% 50%, 15% 0%, 15% 25%, 85% 25%, 85% 0%, 100% 50%, 85% 100%, 85% 75%, 15% 75%, 15% 100%)" className="px-6 py-2">
             {label}
-          </div>
+          </ClipPathWrapper>
         )
+
+      // ===== SPECIAL SHAPES (complex rendering) =====
 
       case 'cylinder':
       case 'database':
         return (
           <div
             className={cn(shapeClass, 'px-4 py-6')}
-            style={{
-              ...baseStyle,
-              borderRadius: '10px 10px 50% 50% / 10px 10px 20px 20px',
-              borderStyle: 'solid',
-            }}
+            style={getShapeStyle({ borderRadius: '10px 10px 50% 50% / 10px 10px 20px 20px' })}
           >
             {label}
           </div>
@@ -279,41 +307,36 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'data':
         return (
           <div
-            className={cn(shapeClass, 'px-6 py-2')}
+            className="w-full h-full"
             style={{
-              ...baseStyle,
-              transform: 'skewX(-15deg)',
-              borderStyle: 'solid',
-              borderRadius: style?.borderRadius || 4,
+              filter: getDropShadowFilter(),
             }}
           >
-            <span style={{ transform: 'skewX(15deg)' }}>{label}</span>
+            <div
+              className={cn(shapeClass, 'px-6 py-2')}
+              style={{
+                ...getShapeStyle({ boxShadow: 'none' }),
+                transform: `skewX(-15deg)${style?.rotation ? ` rotate(${style.rotation}deg)` : ''}`,
+                borderRadius: style?.borderRadius || 4,
+              }}
+            >
+              <span style={{ transform: 'skewX(15deg)' }}>{label}</span>
+            </div>
           </div>
         )
 
       case 'trapezoid':
         return (
-          <div
-            className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)" className="px-4 py-2">
             {label}
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'cloud':
         return (
           <div
             className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              borderStyle: 'solid',
-            }}
+            style={getShapeStyle({ borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%' })}
           >
             {label}
           </div>
@@ -321,39 +344,26 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'callout':
         return (
-          <div
-            className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(0% 0%, 100% 0%, 100% 75%, 25% 75%, 10% 100%, 20% 75%, 0% 75%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(0% 0%, 100% 0%, 100% 75%, 25% 75%, 10% 100%, 20% 75%, 0% 75%)" className="px-4 py-2">
             <span className="mb-[10%]">{label}</span>
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'note':
       case 'uml-note':
         return (
-          <div
-            className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(0% 0%, 85% 0%, 100% 15%, 100% 100%, 0% 100%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(0% 0%, 85% 0%, 100% 15%, 100% 100%, 0% 100%)" className="px-4 py-2">
             {label}
-          </div>
+          </ClipPathWrapper>
         )
 
-      // Flowchart shapes
+      // ===== FLOWCHART SHAPES =====
+
       case 'terminator':
         return (
           <div
             className={cn(shapeClass, 'rounded-full px-6 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid' }}
+            style={getShapeStyle({ borderRadius: 9999 })}
           >
             {label}
           </div>
@@ -361,33 +371,28 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'document':
         return (
-          <div
-            className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              borderRadius: '4px 4px 0 0',
-              borderStyle: 'solid',
-              clipPath: 'polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%)',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%)" className="px-4 py-2">
             {label}
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'multi-document':
         return (
-          <div className="relative w-full h-full">
+          <div
+            className="relative w-full h-full"
+            style={{ filter: getDropShadowFilter(), transform: baseStyle.transform }}
+          >
             <div
               className={cn('absolute inset-0 translate-x-[8%] translate-y-[-8%]', locked && 'opacity-75')}
-              style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4 }}
+              style={getShapeStyle({ borderRadius: 4, boxShadow: 'none', transform: undefined })}
             />
             <div
               className={cn('absolute inset-0 translate-x-[4%] translate-y-[-4%]', locked && 'opacity-75')}
-              style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4 }}
+              style={getShapeStyle({ borderRadius: 4, boxShadow: 'none', transform: undefined })}
             />
             <div
               className={cn(shapeClass, 'absolute inset-0 px-4 py-2')}
-              style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4 }}
+              style={getShapeStyle({ borderRadius: 4, boxShadow: 'none', transform: undefined })}
             >
               {label}
             </div>
@@ -396,10 +401,10 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'predefined-process':
         return (
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full" style={{ transform: baseStyle.transform }}>
             <div
               className={cn(shapeClass, 'px-4 py-2')}
-              style={{ ...baseStyle, borderStyle: 'solid', borderRadius: style?.borderRadius || 4 }}
+              style={getShapeStyle({ borderRadius: style?.borderRadius || 4, transform: undefined })}
             >
               {label}
             </div>
@@ -416,27 +421,16 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'manual-input':
         return (
-          <div
-            className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(0% 20%, 100% 0%, 100% 100%, 0% 100%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(0% 20%, 100% 0%, 100% 100%, 0% 100%)" className="px-4 py-2">
             <span className="mt-[10%]">{label}</span>
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'delay':
         return (
           <div
             className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              borderRadius: '0 50% 50% 0',
-              borderStyle: 'solid',
-            }}
+            style={getShapeStyle({ borderRadius: '0 50% 50% 0' })}
           >
             {label}
           </div>
@@ -444,24 +438,17 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'merge':
         return (
-          <div
-            className={shapeClass}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(0% 0%, 100% 0%, 50% 100%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(0% 0%, 100% 0%, 50% 100%)">
             <span className="mb-[20%]">{label}</span>
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'or':
         return (
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full" style={{ transform: baseStyle.transform }}>
             <div
               className={cn(shapeClass, 'rounded-full')}
-              style={{ ...baseStyle, borderStyle: 'solid' }}
+              style={getShapeStyle({ borderRadius: '50%', transform: undefined })}
             />
             <div
               className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2"
@@ -471,7 +458,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
               className="absolute top-1/2 left-0 right-0 h-px -translate-y-1/2"
               style={{ backgroundColor: baseStyle.borderColor }}
             />
-            <div className="absolute inset-0 flex items-center justify-center" style={{ color: baseStyle.color }}>
+            <div className="absolute inset-0 flex items-center justify-center" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>
               {label}
             </div>
           </div>
@@ -479,10 +466,10 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'summing-junction':
         return (
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full" style={{ transform: baseStyle.transform }}>
             <div
               className={cn(shapeClass, 'rounded-full')}
-              style={{ ...baseStyle, borderStyle: 'solid' }}
+              style={getShapeStyle({ borderRadius: '50%', transform: undefined })}
             />
             <div
               className="absolute left-1/2 top-[15%] bottom-[15%] w-px -translate-x-1/2 rotate-45 origin-center"
@@ -492,27 +479,39 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
               className="absolute left-1/2 top-[15%] bottom-[15%] w-px -translate-x-1/2 -rotate-45 origin-center"
               style={{ backgroundColor: baseStyle.borderColor }}
             />
-            <div className="absolute inset-0 flex items-center justify-center" style={{ color: baseStyle.color }}>
+            <div className="absolute inset-0 flex items-center justify-center" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>
               {label}
             </div>
           </div>
         )
 
-      // UML shapes
+      // ===== UML SHAPES =====
+
       case 'uml-class':
         return (
           <div
             className={cn('w-full h-full flex flex-col', locked && 'opacity-75')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4 }}
+            style={getShapeStyle({ borderRadius: 4 })}
           >
-            <div className="border-b px-2 py-1 font-bold text-center" style={{ borderColor: baseStyle.borderColor }}>
-              {label}
+            <div
+              className="border-b px-2 py-1 font-bold text-center"
+              style={{ borderColor: baseStyle.borderColor, color: baseStyle.color, fontFamily: baseStyle.fontFamily }}
+            >
+              {label || 'ClassName'}
             </div>
-            <div className="flex-1 border-b px-2 py-1 text-xs" style={{ borderColor: baseStyle.borderColor }}>
-              + attribute: Type
+            <div
+              className="flex-1 border-b px-2 py-1 text-xs text-left"
+              style={{ borderColor: baseStyle.borderColor, color: baseStyle.color, fontFamily: baseStyle.fontFamily }}
+            >
+              <div>+ attribute: Type</div>
+              <div>- privateAttr: Type</div>
             </div>
-            <div className="flex-1 px-2 py-1 text-xs">
-              + method(): void
+            <div
+              className="flex-1 px-2 py-1 text-xs text-left"
+              style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}
+            >
+              <div>+ method(): void</div>
+              <div>- privateMethod()</div>
             </div>
           </div>
         )
@@ -521,15 +520,24 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn('w-full h-full flex flex-col', locked && 'opacity-75')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4 }}
+            style={getShapeStyle({ borderRadius: 4 })}
           >
-            <div className="border-b px-2 py-1 text-center text-xs italic" style={{ borderColor: baseStyle.borderColor }}>
+            <div
+              className="border-b px-2 py-1 text-center text-xs italic"
+              style={{ borderColor: baseStyle.borderColor, color: baseStyle.color, fontFamily: baseStyle.fontFamily }}
+            >
               «interface»
             </div>
-            <div className="border-b px-2 py-1 font-bold text-center" style={{ borderColor: baseStyle.borderColor }}>
+            <div
+              className="border-b px-2 py-1 font-bold text-center"
+              style={{ borderColor: baseStyle.borderColor, color: baseStyle.color, fontFamily: baseStyle.fontFamily }}
+            >
               {label}
             </div>
-            <div className="flex-1 px-2 py-1 text-xs">
+            <div
+              className="flex-1 px-2 py-1 text-xs"
+              style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}
+            >
               + method(): void
             </div>
           </div>
@@ -537,11 +545,14 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'uml-actor':
         return (
-          <div className={cn('w-full h-full flex flex-col items-center justify-center', locked && 'opacity-75')}>
+          <div
+            className={cn('w-full h-full flex flex-col items-center justify-center', locked && 'opacity-75')}
+            style={{ transform: baseStyle.transform }}
+          >
             <div className="flex flex-col items-center">
               <div
                 className="w-6 h-6 rounded-full mb-1"
-                style={{ backgroundColor: baseStyle.backgroundColor, border: `${baseStyle.borderWidth}px solid ${baseStyle.borderColor}` }}
+                style={{ backgroundColor: baseStyle.backgroundColor, border: `${baseStyle.borderWidth}px ${baseStyle.borderStyle} ${baseStyle.borderColor}` }}
               />
               <div
                 className="w-px h-6"
@@ -568,7 +579,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
                 />
               </div>
             </div>
-            <div className="mt-2 text-xs" style={{ color: baseStyle.color }}>
+            <div className="mt-2 text-xs" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>
               {label}
             </div>
           </div>
@@ -578,7 +589,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn(shapeClass, 'rounded-full px-4 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid' }}
+            style={getShapeStyle({ borderRadius: '50%' })}
           >
             {label}
           </div>
@@ -586,36 +597,36 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'uml-component':
         return (
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full" style={{ transform: baseStyle.transform }}>
             <div
               className={cn(shapeClass, 'px-4 py-2')}
-              style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4 }}
+              style={getShapeStyle({ borderRadius: 4, transform: undefined })}
             >
               {label}
             </div>
             <div
               className="absolute -left-2 top-[20%] w-4 h-3"
-              style={{ backgroundColor: baseStyle.backgroundColor, border: `${baseStyle.borderWidth}px solid ${baseStyle.borderColor}` }}
+              style={{ backgroundColor: baseStyle.backgroundColor, border: `${baseStyle.borderWidth}px ${baseStyle.borderStyle} ${baseStyle.borderColor}` }}
             />
             <div
               className="absolute -left-2 top-[50%] w-4 h-3"
-              style={{ backgroundColor: baseStyle.backgroundColor, border: `${baseStyle.borderWidth}px solid ${baseStyle.borderColor}` }}
+              style={{ backgroundColor: baseStyle.backgroundColor, border: `${baseStyle.borderWidth}px ${baseStyle.borderStyle} ${baseStyle.borderColor}` }}
             />
           </div>
         )
 
       case 'uml-package':
         return (
-          <div className={cn('w-full h-full flex flex-col', locked && 'opacity-75')}>
+          <div className={cn('w-full h-full flex flex-col', locked && 'opacity-75')} style={{ transform: baseStyle.transform }}>
             <div
               className="w-1/3 px-2 py-0.5 text-xs rounded-t"
-              style={{ ...baseStyle, borderStyle: 'solid', borderBottom: 'none' }}
+              style={{ ...getShapeStyle({ transform: undefined }), borderBottom: 'none' }}
             >
               pkg
             </div>
             <div
               className="flex-1 px-4 py-2 flex items-center justify-center"
-              style={{ ...baseStyle, borderStyle: 'solid', borderRadius: '0 4px 4px 4px' }}
+              style={{ ...getShapeStyle({ borderRadius: '0 4px 4px 4px', transform: undefined }) }}
             >
               {label}
             </div>
@@ -626,48 +637,51 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn(shapeClass, 'px-4 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 16 }}
+            style={getShapeStyle({ borderRadius: 16 })}
           >
             {label}
           </div>
         )
 
-      // Network shapes
+      // ===== NETWORK SHAPES (CSS-based icons) =====
+
       case 'server':
         return (
           <div
             className={cn('w-full h-full flex flex-col', locked && 'opacity-75')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4 }}
+            style={getShapeStyle({ borderRadius: 4 })}
           >
-            <div className="h-1/3 border-b flex items-center px-2" style={{ borderColor: baseStyle.borderColor }}>
-              <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className={cn('flex-1 flex items-center px-2', i < 2 && 'border-b')}
+                style={{ borderColor: baseStyle.borderColor }}
+              >
+                <div className="flex gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                </div>
+                {i === 1 && <span className="ml-auto text-xs" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>{label}</span>}
               </div>
-            </div>
-            <div className="h-1/3 border-b flex items-center px-2" style={{ borderColor: baseStyle.borderColor }}>
-              <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              </div>
-            </div>
-            <div className="h-1/3 flex items-center justify-center text-xs">
-              {label}
-            </div>
+            ))}
           </div>
         )
 
       case 'router':
         return (
           <div
-            className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-              borderStyle: 'solid',
-            }}
+            className={cn(shapeClass, 'px-2 py-2')}
+            style={getShapeStyle({ borderRadius: 8 })}
           >
-            {label}
+            <div className="flex flex-col items-center">
+              <div className="flex gap-1 mb-1">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="w-1 h-3 rounded-full" style={{ backgroundColor: baseStyle.borderColor }} />
+                ))}
+              </div>
+              <div className="w-full h-4 rounded" style={{ backgroundColor: baseStyle.borderColor, opacity: 0.3 }} />
+              <span className="text-xs mt-1" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>{label}</span>
+            </div>
           </div>
         )
 
@@ -675,15 +689,15 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn(shapeClass, 'px-4 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 8 }}
+            style={getShapeStyle({ borderRadius: 8 })}
           >
             <div className="flex flex-col items-center">
               <div className="flex gap-1 mb-1">
-                {[...Array(4)].map((_, i) => (
+                {[0, 1, 2, 3].map((i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-sm bg-green-500" />
                 ))}
               </div>
-              <span className="text-xs">{label}</span>
+              <span className="text-xs" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>{label}</span>
             </div>
           </div>
         )
@@ -692,38 +706,45 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn(shapeClass, 'px-2 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4, borderColor: '#dc2626' }}
+            style={getShapeStyle({ borderRadius: 4, borderColor: '#dc2626' })}
           >
             <div className="flex flex-col items-center">
-              <div className="text-red-600 text-lg mb-0.5">🛡️</div>
-              <span className="text-xs">{label}</span>
+              <div className="grid grid-cols-3 gap-0.5 mb-1">
+                {[...Array(9)].map((_, i) => (
+                  <div key={i} className="w-2 h-2" style={{ backgroundColor: i % 2 === 0 ? '#dc2626' : 'transparent' }} />
+                ))}
+              </div>
+              <span className="text-xs" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>{label}</span>
             </div>
           </div>
         )
 
       case 'load-balancer':
         return (
-          <div
-            className={cn(shapeClass, 'px-4 py-2')}
-            style={{
-              ...baseStyle,
-              clipPath: 'polygon(0% 50%, 25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%)',
-              borderStyle: 'solid',
-            }}
-          >
+          <ClipPathWrapper clipPath="polygon(0% 50%, 25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%)" className="px-4 py-2">
             {label}
-          </div>
+          </ClipPathWrapper>
         )
 
       case 'user':
         return (
           <div
             className={cn(shapeClass, 'px-2 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4 }}
+            style={getShapeStyle({ borderRadius: 4 })}
           >
             <div className="flex flex-col items-center">
-              <div className="text-lg mb-0.5">👤</div>
-              <span className="text-xs">{label}</span>
+              {/* CSS User Icon */}
+              <div className="relative w-6 h-6 mb-1">
+                <div
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full"
+                  style={{ backgroundColor: baseStyle.borderColor }}
+                />
+                <div
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-3 rounded-t-full"
+                  style={{ backgroundColor: baseStyle.borderColor }}
+                />
+              </div>
+              <span className="text-xs" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>{label}</span>
             </div>
           </div>
         )
@@ -732,11 +753,29 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn(shapeClass, 'px-2 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4 }}
+            style={getShapeStyle({ borderRadius: 4 })}
           >
             <div className="flex flex-col items-center">
-              <div className="text-lg mb-0.5">👥</div>
-              <span className="text-xs">{label}</span>
+              {/* CSS Users Icon */}
+              <div className="relative w-8 h-6 mb-1">
+                <div
+                  className="absolute top-0 left-2 w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: baseStyle.borderColor }}
+                />
+                <div
+                  className="absolute bottom-0 left-1 w-4 h-2.5 rounded-t-full"
+                  style={{ backgroundColor: baseStyle.borderColor }}
+                />
+                <div
+                  className="absolute top-0 right-1 w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: baseStyle.borderColor, opacity: 0.6 }}
+                />
+                <div
+                  className="absolute bottom-0 right-0 w-4 h-2.5 rounded-t-full"
+                  style={{ backgroundColor: baseStyle.borderColor, opacity: 0.6 }}
+                />
+              </div>
+              <span className="text-xs" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>{label}</span>
             </div>
           </div>
         )
@@ -745,11 +784,21 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn(shapeClass, 'px-2 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4 }}
+            style={getShapeStyle({ borderRadius: 4 })}
           >
             <div className="flex flex-col items-center">
-              <div className="text-lg mb-0.5">💻</div>
-              <span className="text-xs">{label}</span>
+              {/* CSS Laptop Icon */}
+              <div className="relative w-8 h-5 mb-1">
+                <div
+                  className="absolute top-0 left-0.5 right-0.5 h-4 rounded-t"
+                  style={{ border: `1.5px solid ${baseStyle.borderColor}`, backgroundColor: baseStyle.backgroundColor }}
+                />
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-1 rounded-b"
+                  style={{ backgroundColor: baseStyle.borderColor }}
+                />
+              </div>
+              <span className="text-xs" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>{label}</span>
             </div>
           </div>
         )
@@ -758,11 +807,20 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn(shapeClass, 'px-2 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 4 }}
+            style={getShapeStyle({ borderRadius: 4 })}
           >
             <div className="flex flex-col items-center">
-              <div className="text-lg mb-0.5">📱</div>
-              <span className="text-xs">{label}</span>
+              {/* CSS Mobile Icon */}
+              <div
+                className="relative w-4 h-6 rounded mb-1"
+                style={{ border: `1.5px solid ${baseStyle.borderColor}`, backgroundColor: baseStyle.backgroundColor }}
+              >
+                <div
+                  className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-2 h-0.5 rounded-full"
+                  style={{ backgroundColor: baseStyle.borderColor }}
+                />
+              </div>
+              <span className="text-xs" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>{label}</span>
             </div>
           </div>
         )
@@ -771,16 +829,28 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn(shapeClass, 'px-2 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: '50%' }}
+            style={getShapeStyle({ borderRadius: '50%' })}
           >
             <div className="flex flex-col items-center">
-              <div className="text-lg mb-0.5">🌐</div>
-              <span className="text-xs">{label}</span>
+              {/* CSS Globe Icon */}
+              <div
+                className="relative w-6 h-6 rounded-full mb-1 overflow-hidden"
+                style={{ border: `1.5px solid ${baseStyle.borderColor}`, backgroundColor: baseStyle.backgroundColor }}
+              >
+                <div className="absolute top-1/2 left-0 right-0 h-px" style={{ backgroundColor: baseStyle.borderColor }} />
+                <div className="absolute top-0 bottom-0 left-1/2 w-px" style={{ backgroundColor: baseStyle.borderColor }} />
+                <div
+                  className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-3 rounded-full"
+                  style={{ border: `1px solid ${baseStyle.borderColor}` }}
+                />
+              </div>
+              <span className="text-xs" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>{label}</span>
             </div>
           </div>
         )
 
-      // Cloud providers - placeholder shapes
+      // ===== CLOUD PROVIDER SHAPES =====
+
       case 'aws-ec2':
       case 'aws-s3':
       case 'aws-lambda':
@@ -794,16 +864,31 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div
             className={cn(shapeClass, 'px-3 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: 8 }}
+            style={getShapeStyle({ borderRadius: 8 })}
           >
             <div className="flex flex-col items-center">
-              <div className="text-lg mb-0.5">☁️</div>
-              <span className="text-xs font-medium">{label}</span>
+              {/* CSS Cloud Icon */}
+              <div className="relative w-8 h-5 mb-1">
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-3 rounded-b-lg rounded-t"
+                  style={{ backgroundColor: baseStyle.borderColor, opacity: 0.3 }}
+                />
+                <div
+                  className="absolute top-0 left-2 w-4 h-4 rounded-full"
+                  style={{ backgroundColor: baseStyle.borderColor, opacity: 0.3 }}
+                />
+                <div
+                  className="absolute top-1 right-1 w-3 h-3 rounded-full"
+                  style={{ backgroundColor: baseStyle.borderColor, opacity: 0.3 }}
+                />
+              </div>
+              <span className="text-xs font-medium" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>{label}</span>
             </div>
           </div>
         )
 
-      // Text
+      // ===== TEXT SHAPE =====
+
       case 'text':
         return (
           <div
@@ -815,20 +900,21 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
               fontStyle: baseStyle.fontStyle,
               textDecoration: baseStyle.textDecoration,
               textAlign: baseStyle.textAlign,
+              fontFamily: baseStyle.fontFamily,
+              transform: baseStyle.transform,
             }}
           >
             {label}
           </div>
         )
 
-      // Default rectangle
-      case 'rectangle':
-      case 'process':
+      // ===== DEFAULT SHAPE =====
+
       default:
         return (
           <div
             className={cn(shapeClass, 'px-4 py-2')}
-            style={{ ...baseStyle, borderStyle: 'solid', borderRadius: style?.borderRadius || 8 }}
+            style={getShapeStyle()}
           >
             {label}
           </div>

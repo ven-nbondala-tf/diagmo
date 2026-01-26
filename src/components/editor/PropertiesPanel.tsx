@@ -697,6 +697,8 @@ export function PropertiesPanel() {
                       onClick={() =>
                         updateNodeStyle(selectedNode.id, {
                           borderStyle: s.value as 'solid' | 'dashed' | 'dotted' | 'none',
+                          // When "none", also set borderWidth to 0 to fully hide the border
+                          ...(s.value === 'none' ? { borderWidth: 0 } : {}),
                         })
                       }
                     >
