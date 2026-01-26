@@ -1045,12 +1045,10 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
           height: 8,
           borderRadius: 2,
           backgroundColor: 'white',
-          border: '1px solid #3b82f6',
+          border: '2px solid #3b82f6',
         }}
         lineStyle={{
-          borderWidth: 1,
-          borderColor: '#3b82f6',
-          borderStyle: 'dashed',
+          border: 'none',
         }}
       />
 

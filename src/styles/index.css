@@ -138,12 +138,12 @@
   cursor: pointer;
 }
 
-/* Node selection outline */
-.react-flow__node.selected {
+/* Node selection outline - disabled since NodeResizer provides visual feedback */
+/* .react-flow__node.selected {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
   border-radius: 4px;
-}
+} */
 
 /* Node being dragged */
 .react-flow__node.dragging {
@@ -155,13 +155,6 @@
 .react-flow__node.dragging > div {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   transform: scale(1.02);
-}
-
-/* Multi-selection indicator (multiple nodes selected) */
-.react-flow__node.selected ~ .react-flow__node.selected,
-.react-flow__node.selected:has(~ .react-flow__node.selected) {
-  outline: 2px dashed #3b82f6;
-  outline-offset: 4px;
 }
 
 /* Source node during connection - show subtle highlight */
@@ -241,13 +234,9 @@
 .react-flow__resize-control.bottom-left { bottom: -5px !important; left: -5px !important; top: auto !important; cursor: nesw-resize !important; }
 .react-flow__resize-control.left { top: 50% !important; left: -5px !important; transform: translateY(-50%) !important; cursor: ew-resize !important; }
 
-/* Resize line/border */
+/* Resize line/border - hidden to avoid multiple borders */
 .react-flow__resize-control.line {
-  border: 1px dashed #3b82f6 !important;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none;
-  background: transparent !important;
+  display: none !important;
 }
 
 /* Resize handle hover effect */
