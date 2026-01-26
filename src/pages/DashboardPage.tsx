@@ -8,13 +8,16 @@ import { DiagramCardSkeleton } from '@/components/dashboard/DiagramCardSkeleton'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { FolderSidebar } from '@/components/dashboard/FolderSidebar'
 import { SearchBar } from '@/components/dashboard/SearchBar'
-import { Plus, Loader2, FolderOpen } from 'lucide-react'
+import { TemplateGallery } from '@/components/dashboard/TemplateGallery'
+import type { DiagramTemplate } from '@/constants/templates'
+import { Plus, FolderOpen } from 'lucide-react'
 
 export function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showTemplateGallery, setShowTemplateGallery] = useState(false)
 
   const { data: diagrams, isLoading, error } = useDiagramsByFolder(selectedFolderId)
   const createDiagram = useCreateDiagram()
@@ -31,18 +34,23 @@ export function DashboardPage() {
     )
   }, [diagrams, searchQuery])
 
-  const handleCreateDiagram = async () => {
+  const handleCreateDiagram = async (template?: DiagramTemplate) => {
     try {
       const newDiagram = await createDiagram.mutateAsync({
-        name: 'Untitled Diagram',
-        nodes: [],
-        edges: [],
+        name: template?.id === 'blank' ? 'Untitled Diagram' : template?.name || 'Untitled Diagram',
+        nodes: template?.nodes || [],
+        edges: template?.edges || [],
         folderId: selectedFolderId || undefined,
       })
+      setShowTemplateGallery(false)
       navigate(`/editor/${newDiagram.id}`)
     } catch (err) {
       console.error('Failed to create diagram:', err)
     }
+  }
+
+  const handleOpenTemplateGallery = () => {
+    setShowTemplateGallery(true)
   }
 
   return (
@@ -62,12 +70,8 @@ export function DashboardPage() {
                   Welcome back{user?.email ? `, ${user.email}` : ''}
                 </p>
               </div>
-              <Button onClick={handleCreateDiagram} disabled={createDiagram.isPending}>
-                {createDiagram.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="mr-2 h-4 w-4" />
-                )}
+              <Button onClick={handleOpenTemplateGallery}>
+                <Plus className="mr-2 h-4 w-4" />
                 New Diagram
               </Button>
             </div>
@@ -126,12 +130,8 @@ export function DashboardPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex justify-center">
-                  <Button onClick={handleCreateDiagram} disabled={createDiagram.isPending}>
-                    {createDiagram.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Plus className="mr-2 h-4 w-4" />
-                    )}
+                  <Button onClick={handleOpenTemplateGallery}>
+                    <Plus className="mr-2 h-4 w-4" />
                     Create Diagram
                   </Button>
                 </CardContent>
@@ -140,6 +140,14 @@ export function DashboardPage() {
           </div>
         </main>
       </div>
+
+      {/* Template Gallery Dialog */}
+      <TemplateGallery
+        open={showTemplateGallery}
+        onOpenChange={setShowTemplateGallery}
+        onSelectTemplate={handleCreateDiagram}
+        isLoading={createDiagram.isPending}
+      />
     </div>
   )
 }
