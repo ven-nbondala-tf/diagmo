@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { MarkerType } from '@xyflow/react'
 import { useEditorStore } from '@/stores/editorStore'
 import {
@@ -12,6 +12,77 @@ import {
   AccordionTrigger,
   Slider,
 } from '@/components/ui'
+
+// Slider with inline number input component
+interface SliderWithInputProps {
+  label: string
+  value: number
+  onChange: (value: number) => void
+  min: number
+  max: number
+  step?: number
+  unit?: string
+}
+
+function SliderWithInput({ label, value, onChange, min, max, step = 1, unit = '' }: SliderWithInputProps) {
+  const [inputValue, setInputValue] = useState(String(value))
+
+  const handleSliderChange = useCallback(([val]: number[]) => {
+    setInputValue(String(val))
+    onChange(val)
+  }, [onChange])
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setInputValue(val)
+    const num = parseFloat(val)
+    if (!isNaN(num) && num >= min && num <= max) {
+      onChange(num)
+    }
+  }, [onChange, min, max])
+
+  const handleInputBlur = useCallback(() => {
+    let num = parseFloat(inputValue)
+    if (isNaN(num)) num = min
+    num = Math.max(min, Math.min(max, num))
+    setInputValue(String(num))
+    onChange(num)
+  }, [inputValue, min, max, onChange])
+
+  // Sync input with value when it changes externally
+  if (parseFloat(inputValue) !== value && document.activeElement?.tagName !== 'INPUT') {
+    setInputValue(String(value))
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-medium">{label}</Label>
+        <div className="flex items-center gap-1">
+          <Input
+            type="number"
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={handleInputBlur}
+            min={min}
+            max={max}
+            step={step}
+            className="h-6 w-14 text-xs text-center px-1"
+          />
+          {unit && <span className="text-xs text-muted-foreground w-4">{unit}</span>}
+        </div>
+      </div>
+      <Slider
+        value={[value]}
+        onValueChange={handleSliderChange}
+        min={min}
+        max={max}
+        step={step}
+        className="w-full"
+      />
+    </div>
+  )
+}
 import {
   Trash2,
   Copy,
@@ -608,21 +679,15 @@ export function PropertiesPanel() {
               </div>
 
               {/* Background Opacity */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">
-                  Opacity: {Math.round((style.backgroundOpacity ?? 1) * 100)}%
-                </Label>
-                <Slider
-                  value={[(style.backgroundOpacity ?? 1) * 100]}
-                  onValueChange={([value]) =>
-                    updateNodeStyle(selectedNode.id, { backgroundOpacity: value / 100 })
-                  }
-                  min={0}
-                  max={100}
-                  step={5}
-                  className="w-full"
-                />
-              </div>
+              <SliderWithInput
+                label="Opacity"
+                value={Math.round((style.backgroundOpacity ?? 1) * 100)}
+                onChange={(val) => updateNodeStyle(selectedNode.id, { backgroundOpacity: val / 100 })}
+                min={0}
+                max={100}
+                step={5}
+                unit="%"
+              />
             </AccordionContent>
           </AccordionItem>
 
@@ -667,17 +732,15 @@ export function PropertiesPanel() {
               </div>
 
               {/* Border Width */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Border Width: {style.borderWidth || 1}px</Label>
-                <Slider
-                  value={[style.borderWidth || 1]}
-                  onValueChange={([value]) => updateNodeStyle(selectedNode.id, { borderWidth: value })}
-                  min={0}
-                  max={8}
-                  step={1}
-                  className="w-full"
-                />
-              </div>
+              <SliderWithInput
+                label="Border Width"
+                value={style.borderWidth || 1}
+                onChange={(val) => updateNodeStyle(selectedNode.id, { borderWidth: val })}
+                min={0}
+                max={8}
+                step={1}
+                unit="px"
+              />
 
               {/* Border Style */}
               <div className="space-y-2">
@@ -709,17 +772,15 @@ export function PropertiesPanel() {
               </div>
 
               {/* Border Radius */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Corner Radius: {style.borderRadius || 8}px</Label>
-                <Slider
-                  value={[style.borderRadius || 8]}
-                  onValueChange={([value]) => updateNodeStyle(selectedNode.id, { borderRadius: value })}
-                  min={0}
-                  max={50}
-                  step={1}
-                  className="w-full"
-                />
-              </div>
+              <SliderWithInput
+                label="Corner Radius"
+                value={style.borderRadius || 8}
+                onChange={(val) => updateNodeStyle(selectedNode.id, { borderRadius: val })}
+                min={0}
+                max={50}
+                step={1}
+                unit="px"
+              />
             </AccordionContent>
           </AccordionItem>
 
@@ -763,17 +824,15 @@ export function PropertiesPanel() {
                   </div>
 
                   {/* Shadow Blur */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">Blur: {style.shadowBlur || 10}px</Label>
-                    <Slider
-                      value={[style.shadowBlur || 10]}
-                      onValueChange={([value]) => updateNodeStyle(selectedNode.id, { shadowBlur: value })}
-                      min={0}
-                      max={50}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
+                  <SliderWithInput
+                    label="Blur"
+                    value={style.shadowBlur || 10}
+                    onChange={(val) => updateNodeStyle(selectedNode.id, { shadowBlur: val })}
+                    min={0}
+                    max={50}
+                    step={1}
+                    unit="px"
+                  />
 
                   {/* Shadow Offset */}
                   <div className="grid grid-cols-2 gap-2">
@@ -841,17 +900,15 @@ export function PropertiesPanel() {
               </div>
 
               {/* Font Size */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Font Size: {style.fontSize || 14}px</Label>
-                <Slider
-                  value={[style.fontSize || 14]}
-                  onValueChange={([value]) => updateNodeStyle(selectedNode.id, { fontSize: value })}
-                  min={8}
-                  max={48}
-                  step={1}
-                  className="w-full"
-                />
-              </div>
+              <SliderWithInput
+                label="Font Size"
+                value={style.fontSize || 14}
+                onChange={(val) => updateNodeStyle(selectedNode.id, { fontSize: val })}
+                min={8}
+                max={48}
+                step={1}
+                unit="px"
+              />
 
               {/* Text Color */}
               <div className="space-y-2">
@@ -1081,7 +1138,24 @@ export function PropertiesPanel() {
 
               {/* Rotation */}
               <div className="space-y-2">
-                <Label className="text-xs font-medium">Rotation: {style.rotation || 0}</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium">Rotation</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      value={style.rotation || 0}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0
+                        const clamped = Math.max(0, Math.min(360, val))
+                        updateNodeStyle(selectedNode.id, { rotation: clamped })
+                      }}
+                      min={0}
+                      max={360}
+                      className="h-6 w-14 text-xs text-center px-1"
+                    />
+                    <span className="text-xs text-muted-foreground w-3">°</span>
+                  </div>
+                </div>
                 <div className="flex gap-2 items-center">
                   <Slider
                     value={[style.rotation || 0]}
@@ -1103,19 +1177,15 @@ export function PropertiesPanel() {
               </div>
 
               {/* Overall Opacity */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">
-                  Shape Opacity: {Math.round((style.opacity ?? 1) * 100)}%
-                </Label>
-                <Slider
-                  value={[(style.opacity ?? 1) * 100]}
-                  onValueChange={([value]) => updateNodeStyle(selectedNode.id, { opacity: value / 100 })}
-                  min={10}
-                  max={100}
-                  step={5}
-                  className="w-full"
-                />
-              </div>
+              <SliderWithInput
+                label="Shape Opacity"
+                value={Math.round((style.opacity ?? 1) * 100)}
+                onChange={(value) => updateNodeStyle(selectedNode.id, { opacity: value / 100 })}
+                min={10}
+                max={100}
+                step={5}
+                unit="%"
+              />
             </AccordionContent>
           </AccordionItem>
 

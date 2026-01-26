@@ -136,40 +136,143 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       ...overrides,
     })
 
-    // Get drop-shadow filter for clip-path shapes (box-shadow doesn't work with clip-path)
+    // Get drop-shadow filter for SVG shapes
     const getDropShadowFilter = () => {
       if (!style?.shadowEnabled) return undefined
       return `drop-shadow(${style.shadowOffsetX || 4}px ${style.shadowOffsetY || 4}px ${style.shadowBlur || 10}px ${style.shadowColor || 'rgba(0,0,0,0.2)'})`
     }
 
-    // Wrapper component for clip-path shapes to preserve shadow using filter
-    const ClipPathWrapper = ({
+    // SVG Shape component - renders polygon shapes with proper stroke (border) support
+    const SVGShape = ({
+      points,
       children,
-      clipPath,
-      className = ''
+      textOffset: _textOffset = { x: '50%', y: '55%' }
     }: {
+      points: string
       children: React.ReactNode
-      clipPath: string
-      className?: string
-    }) => (
-      <div
-        className="w-full h-full"
-        style={{
-          filter: getDropShadowFilter(),
-          transform: style?.rotation ? `rotate(${style.rotation}deg)` : undefined,
-        }}
-      >
+      textOffset?: { x: string; y: string }
+    }) => {
+      void _textOffset // Reserved for future use
+      // Convert border style to SVG stroke-dasharray
+      const getStrokeDasharray = () => {
+        switch (style?.borderStyle) {
+          case 'dashed': return '8,4'
+          case 'dotted': return '2,2'
+          case 'none': return undefined
+          default: return undefined
+        }
+      }
+
+      return (
         <div
-          className={cn(shapeClass, className)}
+          className="w-full h-full relative"
           style={{
-            ...getShapeStyle({ boxShadow: 'none', transform: undefined }), // Don't apply box-shadow inside clip-path
-            clipPath,
+            filter: getDropShadowFilter(),
+            transform: style?.rotation ? `rotate(${style.rotation}deg)` : undefined,
           }}
         >
-          {children}
+          <svg
+            className="absolute inset-0 w-full h-full"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+          >
+            <polygon
+              points={points}
+              fill={baseStyle.backgroundColor}
+              fillOpacity={baseStyle.opacity}
+              stroke={style?.borderStyle === 'none' ? 'none' : baseStyle.borderColor}
+              strokeWidth={style?.borderStyle === 'none' ? 0 : (baseStyle.borderWidth || 1) * 1.5}
+              strokeDasharray={getStrokeDasharray()}
+              strokeLinejoin="round"
+            />
+          </svg>
+          <div
+            className={cn(
+              'absolute inset-0 flex items-center justify-center text-center overflow-hidden',
+              getVerticalAlignClass(),
+              locked && 'opacity-75'
+            )}
+            style={{
+              color: baseStyle.color,
+              fontSize: baseStyle.fontSize,
+              fontFamily: baseStyle.fontFamily,
+              fontWeight: baseStyle.fontWeight,
+              fontStyle: baseStyle.fontStyle,
+              textDecoration: baseStyle.textDecoration,
+              textAlign: baseStyle.textAlign,
+              padding: '8px',
+            }}
+          >
+            {children}
+          </div>
         </div>
-      </div>
-    )
+      )
+    }
+
+    // SVG Path Shape component - for complex path shapes
+    const SVGPathShape = ({
+      path,
+      children,
+      viewBox = '0 0 100 100'
+    }: {
+      path: string
+      children: React.ReactNode
+      viewBox?: string
+    }) => {
+      const getStrokeDasharray = () => {
+        switch (style?.borderStyle) {
+          case 'dashed': return '8,4'
+          case 'dotted': return '2,2'
+          case 'none': return undefined
+          default: return undefined
+        }
+      }
+
+      return (
+        <div
+          className="w-full h-full relative"
+          style={{
+            filter: getDropShadowFilter(),
+            transform: style?.rotation ? `rotate(${style.rotation}deg)` : undefined,
+          }}
+        >
+          <svg
+            className="absolute inset-0 w-full h-full"
+            viewBox={viewBox}
+            preserveAspectRatio="none"
+          >
+            <path
+              d={path}
+              fill={baseStyle.backgroundColor}
+              fillOpacity={baseStyle.opacity}
+              stroke={style?.borderStyle === 'none' ? 'none' : baseStyle.borderColor}
+              strokeWidth={style?.borderStyle === 'none' ? 0 : (baseStyle.borderWidth || 1) * 1.5}
+              strokeDasharray={getStrokeDasharray()}
+              strokeLinejoin="round"
+            />
+          </svg>
+          <div
+            className={cn(
+              'absolute inset-0 flex items-center justify-center text-center overflow-hidden',
+              getVerticalAlignClass(),
+              locked && 'opacity-75'
+            )}
+            style={{
+              color: baseStyle.color,
+              fontSize: baseStyle.fontSize,
+              fontFamily: baseStyle.fontFamily,
+              fontWeight: baseStyle.fontWeight,
+              fontStyle: baseStyle.fontStyle,
+              textDecoration: baseStyle.textDecoration,
+              textAlign: baseStyle.textAlign,
+              padding: '8px',
+            }}
+          >
+            {children}
+          </div>
+        </div>
+      )
+    }
 
     switch (type) {
       // ===== BASIC SHAPES (no clip-path, can use box-shadow directly) =====
@@ -215,79 +318,64 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
           </div>
         )
 
-      // ===== CLIP-PATH SHAPES (use filter drop-shadow instead of box-shadow) =====
+      // ===== SVG POLYGON SHAPES (proper stroke/border support) =====
 
       case 'diamond':
       case 'decision':
         return (
-          <div
-            className="relative w-full h-full"
-            style={{
-              filter: getDropShadowFilter(),
-              transform: style?.rotation ? `rotate(${style.rotation}deg)` : undefined,
-            }}
-          >
-            <div
-              className={cn('absolute inset-[10%] rotate-45', locked && 'opacity-75')}
-              style={getShapeStyle({ borderRadius: style?.borderRadius || 4, boxShadow: 'none', transform: undefined })}
-            />
-            <div
-              className="absolute inset-0 flex items-center justify-center"
-              style={{ color: baseStyle.color, fontSize: baseStyle.fontSize, fontFamily: baseStyle.fontFamily }}
-            >
-              {label}
-            </div>
-          </div>
+          <SVGShape points="50,2 98,50 50,98 2,50">
+            {label}
+          </SVGShape>
         )
 
       case 'triangle':
         return (
-          <ClipPathWrapper clipPath="polygon(50% 0%, 0% 100%, 100% 100%)">
-            <span className="mt-[30%]">{label}</span>
-          </ClipPathWrapper>
+          <SVGShape points="50,5 95,95 5,95">
+            {label}
+          </SVGShape>
         )
 
       case 'pentagon':
         return (
-          <ClipPathWrapper clipPath="polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)" className="px-4 py-2">
+          <SVGShape points="50,5 97,38 80,95 20,95 3,38">
             {label}
-          </ClipPathWrapper>
+          </SVGShape>
         )
 
       case 'hexagon':
       case 'preparation':
         return (
-          <ClipPathWrapper clipPath="polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)" className="px-4 py-2">
+          <SVGShape points="25,5 75,5 98,50 75,95 25,95 2,50">
             {label}
-          </ClipPathWrapper>
+          </SVGShape>
         )
 
       case 'octagon':
         return (
-          <ClipPathWrapper clipPath="polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)" className="px-4 py-2">
+          <SVGShape points="30,5 70,5 95,30 95,70 70,95 30,95 5,70 5,30">
             {label}
-          </ClipPathWrapper>
+          </SVGShape>
         )
 
       case 'star':
         return (
-          <ClipPathWrapper clipPath="polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)" className="px-2 py-2">
+          <SVGShape points="50,5 61,35 95,35 68,55 79,90 50,70 21,90 32,55 5,35 39,35">
             {label}
-          </ClipPathWrapper>
+          </SVGShape>
         )
 
       case 'arrow':
         return (
-          <ClipPathWrapper clipPath="polygon(0% 20%, 60% 20%, 60% 0%, 100% 50%, 60% 100%, 60% 80%, 0% 80%)" className="px-4 py-2">
+          <SVGShape points="5,25 60,25 60,5 95,50 60,95 60,75 5,75">
             {label}
-          </ClipPathWrapper>
+          </SVGShape>
         )
 
       case 'double-arrow':
         return (
-          <ClipPathWrapper clipPath="polygon(0% 50%, 15% 0%, 15% 25%, 85% 25%, 85% 0%, 100% 50%, 85% 100%, 85% 75%, 15% 75%, 15% 100%)" className="px-6 py-2">
+          <SVGShape points="5,50 20,10 20,30 80,30 80,10 95,50 80,90 80,70 20,70 20,90">
             {label}
-          </ClipPathWrapper>
+          </SVGShape>
         )
 
       // ===== SPECIAL SHAPES (complex rendering) =====
@@ -327,9 +415,9 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'trapezoid':
         return (
-          <ClipPathWrapper clipPath="polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)" className="px-4 py-2">
+          <SVGShape points="20,5 80,5 95,95 5,95">
             {label}
-          </ClipPathWrapper>
+          </SVGShape>
         )
 
       case 'cloud':
@@ -344,17 +432,17 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'callout':
         return (
-          <ClipPathWrapper clipPath="polygon(0% 0%, 100% 0%, 100% 75%, 25% 75%, 10% 100%, 20% 75%, 0% 75%)" className="px-4 py-2">
-            <span className="mb-[10%]">{label}</span>
-          </ClipPathWrapper>
+          <SVGPathShape path="M 5,5 L 95,5 L 95,70 L 30,70 L 15,95 L 22,70 L 5,70 Z">
+            {label}
+          </SVGPathShape>
         )
 
       case 'note':
       case 'uml-note':
         return (
-          <ClipPathWrapper clipPath="polygon(0% 0%, 85% 0%, 100% 15%, 100% 100%, 0% 100%)" className="px-4 py-2">
+          <SVGPathShape path="M 5,5 L 80,5 L 95,20 L 95,95 L 5,95 Z M 80,5 L 80,20 L 95,20">
             {label}
-          </ClipPathWrapper>
+          </SVGPathShape>
         )
 
       // ===== FLOWCHART SHAPES =====
@@ -371,9 +459,9 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'document':
         return (
-          <ClipPathWrapper clipPath="polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%)" className="px-4 py-2">
+          <SVGPathShape path="M 5,5 L 95,5 L 95,80 Q 72,95 50,80 Q 28,65 5,80 Z">
             {label}
-          </ClipPathWrapper>
+          </SVGPathShape>
         )
 
       case 'multi-document':
@@ -421,9 +509,9 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'manual-input':
         return (
-          <ClipPathWrapper clipPath="polygon(0% 20%, 100% 0%, 100% 100%, 0% 100%)" className="px-4 py-2">
-            <span className="mt-[10%]">{label}</span>
-          </ClipPathWrapper>
+          <SVGShape points="5,20 95,5 95,95 5,95">
+            {label}
+          </SVGShape>
         )
 
       case 'delay':
@@ -438,9 +526,9 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'merge':
         return (
-          <ClipPathWrapper clipPath="polygon(0% 0%, 100% 0%, 50% 100%)">
-            <span className="mb-[20%]">{label}</span>
-          </ClipPathWrapper>
+          <SVGShape points="5,5 95,5 50,95">
+            {label}
+          </SVGShape>
         )
 
       case 'or':
@@ -721,9 +809,9 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
       case 'load-balancer':
         return (
-          <ClipPathWrapper clipPath="polygon(0% 50%, 25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%)" className="px-4 py-2">
+          <SVGShape points="5,50 25,5 75,5 95,50 75,95 25,95">
             {label}
-          </ClipPathWrapper>
+          </SVGShape>
         )
 
       case 'user':
