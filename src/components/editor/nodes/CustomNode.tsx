@@ -71,6 +71,18 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
     }
   }
 
+  // Get horizontal alignment class for flexbox
+  const getHorizontalAlignClass = () => {
+    switch (style?.textAlign) {
+      case 'left':
+        return 'justify-start text-left'
+      case 'right':
+        return 'justify-end text-right'
+      default:
+        return 'justify-center text-center'
+    }
+  }
+
   // Handle double-click to start editing
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
     if (locked) return
@@ -109,8 +121,9 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
   const renderShape = () => {
     // Common classes for all shapes - use w-full h-full for resize support
     const shapeClass = cn(
-      'w-full h-full flex justify-center text-center overflow-hidden transition-all duration-150',
+      'w-full h-full flex overflow-hidden transition-all duration-150',
       getVerticalAlignClass(),
+      getHorizontalAlignClass(),
       locked && 'opacity-75',
       // Highlight when being connected to
       isTarget && 'ring-2 ring-green-500 ring-offset-2'
@@ -188,8 +201,9 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
           </svg>
           <div
             className={cn(
-              'absolute inset-0 flex items-center justify-center text-center overflow-hidden',
+              'absolute inset-0 flex overflow-hidden',
               getVerticalAlignClass(),
+              getHorizontalAlignClass(),
               locked && 'opacity-75'
             )}
             style={{
@@ -199,7 +213,6 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
               fontWeight: baseStyle.fontWeight,
               fontStyle: baseStyle.fontStyle,
               textDecoration: baseStyle.textDecoration,
-              textAlign: baseStyle.textAlign,
               padding: '8px',
             }}
           >
@@ -253,8 +266,9 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
           </svg>
           <div
             className={cn(
-              'absolute inset-0 flex items-center justify-center text-center overflow-hidden',
+              'absolute inset-0 flex overflow-hidden',
               getVerticalAlignClass(),
+              getHorizontalAlignClass(),
               locked && 'opacity-75'
             )}
             style={{
@@ -264,7 +278,6 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
               fontWeight: baseStyle.fontWeight,
               fontStyle: baseStyle.fontStyle,
               textDecoration: baseStyle.textDecoration,
-              textAlign: baseStyle.textAlign,
               padding: '8px',
             }}
           >

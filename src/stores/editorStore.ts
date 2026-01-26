@@ -105,7 +105,61 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       return true
     })
 
-    const newNodes = applyNodeChanges(filteredChanges, nodes) as DiagramNode[]
+    // Handle grouped node movement - when one node in a group moves, move all nodes in that group
+    const positionChanges = filteredChanges.filter(
+      (c): c is NodeChange & { type: 'position'; id: string; position?: { x: number; y: number }; dragging?: boolean } =>
+        c.type === 'position' && 'id' in c
+    )
+
+    // Track position deltas for grouped nodes
+    const groupDeltas = new Map<string, { dx: number; dy: number }>()
+
+    for (const change of positionChanges) {
+      if (!change.position) continue
+      const node = nodes.find((n) => n.id === change.id)
+      if (!node?.data.groupId) continue
+
+      // Calculate delta from current position to new position
+      const dx = change.position.x - node.position.x
+      const dy = change.position.y - node.position.y
+
+      // Only process if there's actual movement and node is being dragged
+      if ((dx !== 0 || dy !== 0) && change.dragging) {
+        const existingDelta = groupDeltas.get(node.data.groupId)
+        if (!existingDelta) {
+          groupDeltas.set(node.data.groupId, { dx, dy })
+        }
+      }
+    }
+
+    // Apply node changes first
+    let newNodes = applyNodeChanges(filteredChanges, nodes) as DiagramNode[]
+
+    // Now apply group movement to other nodes in the same group
+    if (groupDeltas.size > 0) {
+      const movedNodeIds = new Set(positionChanges.map((c) => c.id))
+
+      newNodes = newNodes.map((node) => {
+        // Skip if this node was already moved directly
+        if (movedNodeIds.has(node.id)) return node
+        // Skip if node has no group
+        if (!node.data.groupId) return node
+        // Skip if node is locked
+        if (node.data.locked) return node
+
+        const delta = groupDeltas.get(node.data.groupId)
+        if (!delta) return node
+
+        return {
+          ...node,
+          position: {
+            x: node.position.x + delta.dx,
+            y: node.position.y + delta.dy,
+          },
+        }
+      })
+    }
+
     const hasSignificantChange = filteredChanges.some(
       (c) => c.type === 'position' || c.type === 'dimensions' || c.type === 'remove'
     )
