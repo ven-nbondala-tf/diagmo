@@ -18,6 +18,10 @@ vi.mock('@xyflow/react', () => ({
   NodeResizer: ({ isVisible }: { isVisible: boolean }) => (
     isVisible ? <div data-testid="node-resizer" /> : null
   ),
+  useConnection: () => ({
+    inProgress: false,
+    fromNode: null,
+  }),
 }))
 
 // Mock lucide-react
@@ -159,11 +163,12 @@ describe('CustomNode', () => {
     expect(screen.getByTestId('handle-target-left')).toBeInTheDocument()
     expect(screen.getByTestId('handle-target-bottom')).toBeInTheDocument()
     expect(screen.getByTestId('handle-target-right')).toBeInTheDocument()
-    // Source handles appear when node is selected
+    // Source handles appear when node is selected (8 connection points like draw.io)
+    // Use getAllByTestId since there are multiple handles per side (corners + midpoints)
     expect(screen.getByTestId('handle-source-top')).toBeInTheDocument()
-    expect(screen.getByTestId('handle-source-left')).toBeInTheDocument()
+    expect(screen.getAllByTestId('handle-source-left').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByTestId('handle-source-bottom')).toBeInTheDocument()
-    expect(screen.getByTestId('handle-source-right')).toBeInTheDocument()
+    expect(screen.getAllByTestId('handle-source-right').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should show lock icon when node is locked', () => {

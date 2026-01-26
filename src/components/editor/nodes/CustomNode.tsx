@@ -1,11 +1,23 @@
 import { memo, useState, useCallback, useRef, useEffect } from 'react'
-import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react'
+import { Handle, Position, NodeResizer, useConnection, type NodeProps } from '@xyflow/react'
 import type { DiagramNode } from '@/types'
 import { cn } from '@/utils'
 import { useEditorStore } from '@/stores/editorStore'
 import { Lock, Group } from 'lucide-react'
 
 type CustomNodeProps = NodeProps<DiagramNode>
+
+// Connection point positions - 8 points like draw.io
+const connectionPoints = [
+  { id: 'top', position: Position.Top, style: { left: '50%', top: 0, transform: 'translate(-50%, -50%)' } },
+  { id: 'top-right', position: Position.Right, style: { left: '100%', top: 0, transform: 'translate(-50%, -50%)' } },
+  { id: 'right', position: Position.Right, style: { right: 0, top: '50%', transform: 'translate(50%, -50%)' } },
+  { id: 'bottom-right', position: Position.Right, style: { right: 0, top: '100%', transform: 'translate(50%, -50%)' } },
+  { id: 'bottom', position: Position.Bottom, style: { left: '50%', bottom: 0, transform: 'translate(-50%, 50%)' } },
+  { id: 'bottom-left', position: Position.Left, style: { left: 0, bottom: 0, transform: 'translate(-50%, 50%)' } },
+  { id: 'left', position: Position.Left, style: { left: 0, top: '50%', transform: 'translate(-50%, -50%)' } },
+  { id: 'top-left', position: Position.Left, style: { left: 0, top: 0, transform: 'translate(-50%, -50%)' } },
+]
 
 export const CustomNode = memo(function CustomNode({ id, data, selected }: CustomNodeProps) {
   const { label, type, style, locked, groupId } = data
@@ -15,8 +27,12 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
   const inputRef = useRef<HTMLInputElement>(null)
   const updateNode = useEditorStore((state) => state.updateNode)
 
-  // Show handles only when selected or hovered
-  const showHandles = selected || isHovered
+  // Check if a connection is being made TO this node
+  const connection = useConnection()
+  const isTarget = connection.inProgress && connection.fromNode?.id !== id
+
+  // Show handles when: selected, hovered, OR being connected to
+  const showHandles = selected || isHovered || isTarget
 
   const minWidth = type === 'text' ? 40 : 60
   const minHeight = type === 'text' ? 20 : 40
@@ -25,12 +41,34 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
     backgroundColor: style?.backgroundColor || '#ffffff',
     borderColor: style?.borderColor || '#9ca3af',
     borderWidth: style?.borderWidth || 1,
+    borderStyle: style?.borderStyle || 'solid',
+    borderRadius: style?.borderRadius || 8,
     color: style?.textColor || '#1f2937',
     fontSize: style?.fontSize || 14,
+    fontFamily: style?.fontFamily || 'Inter',
     fontWeight: style?.fontWeight || 'normal',
     fontStyle: style?.fontStyle || 'normal',
     textDecoration: style?.textDecoration || 'none',
     textAlign: (style?.textAlign || 'center') as 'left' | 'center' | 'right',
+    opacity: style?.backgroundOpacity ?? 1,
+    // Shadow
+    boxShadow: style?.shadowEnabled
+      ? `${style.shadowOffsetX || 4}px ${style.shadowOffsetY || 4}px ${style.shadowBlur || 10}px ${style.shadowColor || 'rgba(0,0,0,0.2)'}`
+      : 'none',
+    // Rotation
+    transform: style?.rotation ? `rotate(${style.rotation}deg)` : undefined,
+  }
+
+  // Get vertical alignment class
+  const getVerticalAlignClass = () => {
+    switch (style?.verticalAlign) {
+      case 'top':
+        return 'items-start pt-2'
+      case 'bottom':
+        return 'items-end pb-2'
+      default:
+        return 'items-center'
+    }
   }
 
   // Handle double-click to start editing
@@ -71,8 +109,11 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
   const renderShape = () => {
     // Common classes for all shapes - use w-full h-full for resize support
     const shapeClass = cn(
-      'w-full h-full flex items-center justify-center text-center overflow-hidden',
-      locked && 'opacity-75'
+      'w-full h-full flex justify-center text-center overflow-hidden transition-all duration-150',
+      getVerticalAlignClass(),
+      locked && 'opacity-75',
+      // Highlight when being connected to
+      isTarget && 'ring-2 ring-green-500 ring-offset-2'
     )
 
     switch (type) {
@@ -797,93 +838,118 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
   return (
     <div
-      className="w-full h-full"
+      className={cn(
+        'w-full h-full relative',
+        // Add a subtle glow when being targeted for connection
+        isTarget && 'drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]'
+      )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* NodeResizer must be first child for proper resize handles */}
+      {/* NodeResizer - 8 handles (4 corners + 4 edges) */}
       <NodeResizer
         isVisible={selected && !locked}
         minWidth={minWidth}
         minHeight={minHeight}
+        keepAspectRatio={false}
+        handleClassName="nodrag"
         handleStyle={{
           width: 8,
           height: 8,
-          borderRadius: '50%',
+          borderRadius: 2,
           backgroundColor: 'white',
-          border: '2px solid #3b82f6',
+          border: '1px solid #3b82f6',
         }}
         lineStyle={{
           borderWidth: 1,
           borderColor: '#3b82f6',
+          borderStyle: 'dashed',
         }}
       />
 
-      {/* Hidden target handles - always present for receiving connections */}
+      {/* Connection Points - 8 points like draw.io */}
+      {/* These are BOTH source AND target - bidirectional */}
+      {connectionPoints.map((point) => (
+        <Handle
+          key={point.id}
+          id={point.id}
+          type="source"
+          position={point.position}
+          className={cn(
+            'transition-all duration-150 !absolute',
+            // Hidden by default
+            !showHandles && 'opacity-0 scale-0',
+            // Visible on hover/select
+            showHandles && 'opacity-100 scale-100',
+            // Green glow when being targeted
+            isTarget && '!bg-green-500 ring-2 ring-green-300'
+          )}
+          style={{
+            width: showHandles ? 12 : 6,
+            height: showHandles ? 12 : 6,
+            backgroundColor: isTarget ? '#22c55e' : '#3b82f6',
+            border: '2px solid white',
+            borderRadius: '50%',
+            cursor: 'crosshair',
+            ...point.style,
+          }}
+          isConnectable={!locked}
+        />
+      ))}
+
+      {/* Invisible target handles that cover entire edges for easy connection */}
       <Handle
         type="target"
-        position={Position.Top}
         id="top-target"
-        style={{ opacity: 0, pointerEvents: 'all' }}
+        position={Position.Top}
+        className="!w-full !h-3 !rounded-none !border-none !top-0 !left-0 !transform-none"
+        style={{
+          opacity: 0,
+          cursor: 'crosshair',
+          pointerEvents: 'all',
+        }}
       />
       <Handle
         type="target"
-        position={Position.Left}
-        id="left-target"
-        style={{ opacity: 0, pointerEvents: 'all' }}
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        id="bottom-target"
-        style={{ opacity: 0, pointerEvents: 'all' }}
-      />
-      <Handle
-        type="target"
-        position={Position.Right}
         id="right-target"
-        style={{ opacity: 0, pointerEvents: 'all' }}
+        position={Position.Right}
+        className="!w-3 !h-full !rounded-none !border-none !right-0 !top-0 !transform-none"
+        style={{
+          opacity: 0,
+          cursor: 'crosshair',
+          pointerEvents: 'all',
+        }}
+      />
+      <Handle
+        type="target"
+        id="bottom-target"
+        position={Position.Bottom}
+        className="!w-full !h-3 !rounded-none !border-none !bottom-0 !left-0 !transform-none"
+        style={{
+          opacity: 0,
+          cursor: 'crosshair',
+          pointerEvents: 'all',
+        }}
+      />
+      <Handle
+        type="target"
+        id="left-target"
+        position={Position.Left}
+        className="!w-3 !h-full !rounded-none !border-none !left-0 !top-0 !transform-none"
+        style={{
+          opacity: 0,
+          cursor: 'crosshair',
+          pointerEvents: 'all',
+        }}
       />
 
-      {/* Visible handles - only shown on hover or selection */}
-      {showHandles && (
-        <>
-          <Handle
-            type="source"
-            position={Position.Top}
-            id="top"
-            className="!w-2.5 !h-2.5 !border !border-white !rounded-full"
-            style={{ backgroundColor: '#60a5fa' }}
-          />
-          <Handle
-            type="source"
-            position={Position.Left}
-            id="left"
-            className="!w-2.5 !h-2.5 !border !border-white !rounded-full"
-            style={{ backgroundColor: '#60a5fa' }}
-          />
-          <Handle
-            type="source"
-            position={Position.Bottom}
-            id="bottom"
-            className="!w-2.5 !h-2.5 !border !border-white !rounded-full"
-            style={{ backgroundColor: '#60a5fa' }}
-          />
-          <Handle
-            type="source"
-            position={Position.Right}
-            id="right"
-            className="!w-2.5 !h-2.5 !border !border-white !rounded-full"
-            style={{ backgroundColor: '#60a5fa' }}
-          />
-        </>
-      )}
-
+      {/* Shape content */}
       <div
         className="relative w-full h-full"
         onDoubleClick={handleDoubleClick}
       >
         {renderShape()}
+
         {/* Inline text editor overlay */}
         {isEditing && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/90 z-10">
@@ -903,6 +969,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
             />
           </div>
         )}
+
         {/* Status indicators */}
         <div className="absolute -top-2 -right-2 flex gap-1">
           {locked && (

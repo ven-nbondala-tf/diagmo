@@ -51,26 +51,65 @@ export interface DiagramEdge extends Edge {
 }
 
 export interface NodeStyle {
+  // Fill
   backgroundColor?: string
+  backgroundOpacity?: number
+  gradientEnabled?: boolean
+  gradientColor?: string
+  gradientDirection?: 'horizontal' | 'vertical' | 'diagonal'
+
+  // Border/Stroke
   borderColor?: string
   borderWidth?: number
   borderRadius?: number
+  borderStyle?: 'solid' | 'dashed' | 'dotted' | 'none'
+  borderOpacity?: number
+
+  // Shadow
+  shadowEnabled?: boolean
+  shadowColor?: string
+  shadowBlur?: number
+  shadowOffsetX?: number
+  shadowOffsetY?: number
+
+  // Text
   textColor?: string
   fontSize?: number
-  fontWeight?: string
-  fontStyle?: string
-  textDecoration?: string
+  fontFamily?: string
+  fontWeight?: 'normal' | 'bold' | 'light' | string
+  fontStyle?: 'normal' | 'italic' | string
+  textDecoration?: 'none' | 'underline' | 'line-through' | string
   textAlign?: 'left' | 'center' | 'right'
+  verticalAlign?: 'top' | 'middle' | 'bottom'
+  lineHeight?: number
+  letterSpacing?: number
+
+  // Effects
+  opacity?: number
+  rotation?: number
 }
 
 export interface EdgeStyle {
+  // Line
   strokeColor?: string
   strokeWidth?: number
+  strokeOpacity?: number
   strokeDasharray?: string
   lineType?: 'solid' | 'dashed' | 'dotted'
-  animated?: boolean
+
+  // Markers
   markerStart?: 'none' | 'arrow' | 'arrowClosed' | 'circle' | 'diamond'
   markerEnd?: 'none' | 'arrow' | 'arrowClosed' | 'circle' | 'diamond'
+  markerSize?: number
+
+  // Animation
+  animated?: boolean
+  animationSpeed?: 'slow' | 'normal' | 'fast'
+
+  // Label
+  labelColor?: string
+  labelBgColor?: string
+  labelFontSize?: number
 }
 
 // Shape types

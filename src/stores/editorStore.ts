@@ -135,13 +135,13 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       type: 'straight',
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        width: 16,
-        height: 16,
-        color: '#9ca3af',
+        width: 12,
+        height: 12,
+        color: '#6b7280',
       },
       style: {
-        strokeWidth: 1,
-        stroke: '#9ca3af',
+        strokeWidth: 1.5,
+        stroke: '#6b7280',
       },
     }
     set({

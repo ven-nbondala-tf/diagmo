@@ -13,8 +13,8 @@ export const DEFAULT_NODE_STYLE = {
 }
 
 export const DEFAULT_EDGE_STYLE = {
-  strokeColor: '#9ca3af',
-  strokeWidth: 1,
+  strokeColor: '#6b7280',
+  strokeWidth: 1.5,
   strokeDasharray: '',
   animated: false,
 }

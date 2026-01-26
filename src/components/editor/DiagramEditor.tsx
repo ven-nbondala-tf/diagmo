@@ -6,6 +6,7 @@ import {
   BackgroundVariant,
   useReactFlow,
   ConnectionLineType,
+  ConnectionMode,
   MarkerType,
   type OnSelectionChangeParams,
 } from '@xyflow/react'
@@ -23,14 +24,21 @@ const defaultEdgeOptions = {
   animated: false,
   markerEnd: {
     type: MarkerType.ArrowClosed,
-    width: 16,
-    height: 16,
-    color: '#9ca3af',
+    width: 12,
+    height: 12,
+    color: '#6b7280',
   },
   style: {
-    strokeWidth: 1,
-    stroke: '#9ca3af',
+    strokeWidth: 1.5,
+    stroke: '#6b7280',
   },
+}
+
+// Connection line style (the line while dragging)
+const connectionLineStyle = {
+  strokeWidth: 2,
+  stroke: '#22c55e', // Green while connecting
+  strokeDasharray: '5,5', // Dashed to show it's temporary
 }
 
 interface DiagramEditorProps {
@@ -220,6 +228,9 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           nodeTypes={nodeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
           connectionLineType={ConnectionLineType.Straight}
+          connectionLineStyle={connectionLineStyle}
+          connectionMode={ConnectionMode.Loose}
+          connectionRadius={30}
           snapToGrid={snapToGrid}
           snapGrid={[gridSize, gridSize]}
           fitView
