@@ -1,23 +1,25 @@
-import { memo, useState, useCallback, useRef, useEffect } from 'react'
+import { memo, useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { Handle, Position, NodeResizer, useConnection, type NodeProps } from '@xyflow/react'
-import type { DiagramNode } from '@/types'
+import type { DiagramNode, ShapeType } from '@/types'
 import { cn } from '@/utils'
 import { useEditorStore } from '@/stores/editorStore'
 import { Lock, Group } from 'lucide-react'
+import { cloudIconComponents, type CloudIconType } from '../icons'
 
 type CustomNodeProps = NodeProps<DiagramNode>
 
-// Connection point positions - 8 points like draw.io
-const connectionPoints = [
-  { id: 'top', position: Position.Top, style: { left: '50%', top: 0, transform: 'translate(-50%, -50%)' } },
-  { id: 'top-right', position: Position.Right, style: { left: '100%', top: 0, transform: 'translate(-50%, -50%)' } },
-  { id: 'right', position: Position.Right, style: { right: 0, top: '50%', transform: 'translate(50%, -50%)' } },
-  { id: 'bottom-right', position: Position.Right, style: { right: 0, top: '100%', transform: 'translate(50%, -50%)' } },
-  { id: 'bottom', position: Position.Bottom, style: { left: '50%', bottom: 0, transform: 'translate(-50%, 50%)' } },
-  { id: 'bottom-left', position: Position.Left, style: { left: 0, bottom: 0, transform: 'translate(-50%, 50%)' } },
-  { id: 'left', position: Position.Left, style: { left: 0, top: '50%', transform: 'translate(-50%, -50%)' } },
-  { id: 'top-left', position: Position.Left, style: { left: 0, top: 0, transform: 'translate(-50%, -50%)' } },
-]
+// Simple 4 cardinal connection points - React Flow handles positioning automatically
+// We just specify the position (Top, Right, Bottom, Left) and React Flow places them correctly
+const getShapeConnectionPoints = (_type: ShapeType) => {
+  // All shapes use 4 cardinal points at the exact node boundary
+  // React Flow automatically places handles at the correct edge positions
+  return [
+    { id: 'top', position: Position.Top },
+    { id: 'right', position: Position.Right },
+    { id: 'bottom', position: Position.Bottom },
+    { id: 'left', position: Position.Left },
+  ]
+}
 
 export const CustomNode = memo(function CustomNode({ id, data, selected }: CustomNodeProps) {
   const { label, type, style, locked, groupId } = data
@@ -29,13 +31,20 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
   // Check if a connection is being made TO this node
   const connection = useConnection()
-  const isTarget = connection.inProgress && connection.fromNode?.id !== id
+
+  // Only highlight if: connection in progress, we're not the source, AND mouse is hovering THIS node
+  const isValidTarget = connection.inProgress && connection.fromNode?.id !== id && isHovered
 
   // Show handles when: selected, hovered, OR being connected to
-  const showHandles = selected || isHovered || isTarget
+  const showHandles = selected || isHovered || connection.inProgress
 
-  const minWidth = type === 'text' ? 40 : 60
-  const minHeight = type === 'text' ? 20 : 40
+  // Get shape-specific connection points
+  const connectionPoints = useMemo(() => getShapeConnectionPoints(type), [type])
+
+  // Set min dimensions - allow very small sizes for flexibility
+  const isCloudIcon = type.startsWith('aws-') || type.startsWith('azure-') || type.startsWith('gcp-')
+  const minWidth = type === 'text' ? 20 : isCloudIcon ? 24 : 20
+  const minHeight = type === 'text' ? 15 : isCloudIcon ? 24 : 20
 
   const baseStyle = {
     backgroundColor: style?.backgroundColor || '#ffffff',
@@ -83,6 +92,19 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
     }
   }
 
+  // Get text wrap class
+  const getTextWrapClass = () => {
+    switch (style?.textWrap) {
+      case 'nowrap':
+        return 'whitespace-nowrap overflow-hidden'
+      case 'truncate':
+        return 'truncate'
+      case 'wrap':
+      default:
+        return 'whitespace-normal break-words'
+    }
+  }
+
   // Handle double-click to start editing
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
     if (locked) return
@@ -124,9 +146,10 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       'w-full h-full flex overflow-hidden transition-all duration-150',
       getVerticalAlignClass(),
       getHorizontalAlignClass(),
+      getTextWrapClass(),
       locked && 'opacity-75',
-      // Highlight when being connected to
-      isTarget && 'ring-2 ring-green-500 ring-offset-2'
+      // Highlight when being connected to (only this specific node when hovered)
+      isValidTarget && 'ring-2 ring-green-500 ring-offset-2'
     )
 
     // Helper function to build complete style object that respects user settings
@@ -176,6 +199,8 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         }
       }
 
+      const strokeWidth = style?.borderStyle === 'none' ? 0 : (baseStyle.borderWidth || 1)
+
       return (
         <div
           className="w-full h-full relative"
@@ -194,9 +219,10 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
               fill={baseStyle.backgroundColor}
               fillOpacity={baseStyle.opacity}
               stroke={style?.borderStyle === 'none' ? 'none' : baseStyle.borderColor}
-              strokeWidth={style?.borderStyle === 'none' ? 0 : (baseStyle.borderWidth || 1) * 1.5}
+              strokeWidth={strokeWidth}
               strokeDasharray={getStrokeDasharray()}
               strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
             />
           </svg>
           <div
@@ -241,6 +267,8 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         }
       }
 
+      const strokeWidth = style?.borderStyle === 'none' ? 0 : (baseStyle.borderWidth || 1)
+
       return (
         <div
           className="w-full h-full relative"
@@ -259,9 +287,10 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
               fill={baseStyle.backgroundColor}
               fillOpacity={baseStyle.opacity}
               stroke={style?.borderStyle === 'none' ? 'none' : baseStyle.borderColor}
-              strokeWidth={style?.borderStyle === 'none' ? 0 : (baseStyle.borderWidth || 1) * 1.5}
+              strokeWidth={strokeWidth}
               strokeDasharray={getStrokeDasharray()}
               strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
             />
           </svg>
           <div
@@ -294,7 +323,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'process':
         return (
           <div
-            className={cn(shapeClass, 'px-4 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle()}
           >
             {label}
@@ -304,7 +333,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'ellipse':
         return (
           <div
-            className={cn(shapeClass, 'rounded-full px-4 py-2')}
+            className={cn(shapeClass, 'rounded-full p-1')}
             style={getShapeStyle({ borderRadius: '50%' })}
           >
             {label}
@@ -314,7 +343,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'circle':
         return (
           <div
-            className={cn(shapeClass, 'rounded-full px-2 py-2 aspect-square')}
+            className={cn(shapeClass, 'rounded-full p-1 aspect-square')}
             style={getShapeStyle({ borderRadius: '50%' })}
           >
             {label}
@@ -324,7 +353,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'rounded-rectangle':
         return (
           <div
-            className={cn(shapeClass, 'px-4 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: style?.borderRadius ?? 16 })}
           >
             {label}
@@ -397,7 +426,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'database':
         return (
           <div
-            className={cn(shapeClass, 'px-4 py-6')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: '10px 10px 50% 50% / 10px 10px 20px 20px' })}
           >
             {label}
@@ -414,7 +443,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
             }}
           >
             <div
-              className={cn(shapeClass, 'px-6 py-2')}
+              className={cn(shapeClass, 'p-1')}
               style={{
                 ...getShapeStyle({ boxShadow: 'none' }),
                 transform: `skewX(-15deg)${style?.rotation ? ` rotate(${style.rotation}deg)` : ''}`,
@@ -436,7 +465,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'cloud':
         return (
           <div
-            className={cn(shapeClass, 'px-4 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%' })}
           >
             {label}
@@ -463,7 +492,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'terminator':
         return (
           <div
-            className={cn(shapeClass, 'rounded-full px-6 py-2')}
+            className={cn(shapeClass, 'rounded-full p-1')}
             style={getShapeStyle({ borderRadius: 9999 })}
           >
             {label}
@@ -504,7 +533,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div className="relative w-full h-full" style={{ transform: baseStyle.transform }}>
             <div
-              className={cn(shapeClass, 'px-4 py-2')}
+              className={cn(shapeClass, 'p-1')}
               style={getShapeStyle({ borderRadius: style?.borderRadius || 4, transform: undefined })}
             >
               {label}
@@ -530,7 +559,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'delay':
         return (
           <div
-            className={cn(shapeClass, 'px-4 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: '0 50% 50% 0' })}
           >
             {label}
@@ -689,7 +718,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'uml-usecase':
         return (
           <div
-            className={cn(shapeClass, 'rounded-full px-4 py-2')}
+            className={cn(shapeClass, 'rounded-full p-1')}
             style={getShapeStyle({ borderRadius: '50%' })}
           >
             {label}
@@ -700,7 +729,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         return (
           <div className="relative w-full h-full" style={{ transform: baseStyle.transform }}>
             <div
-              className={cn(shapeClass, 'px-4 py-2')}
+              className={cn(shapeClass, 'p-1')}
               style={getShapeStyle({ borderRadius: 4, transform: undefined })}
             >
               {label}
@@ -737,7 +766,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'uml-state':
         return (
           <div
-            className={cn(shapeClass, 'px-4 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: 16 })}
           >
             {label}
@@ -771,7 +800,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'router':
         return (
           <div
-            className={cn(shapeClass, 'px-2 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: 8 })}
           >
             <div className="flex flex-col items-center">
@@ -789,7 +818,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'switch':
         return (
           <div
-            className={cn(shapeClass, 'px-4 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: 8 })}
           >
             <div className="flex flex-col items-center">
@@ -806,7 +835,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'firewall':
         return (
           <div
-            className={cn(shapeClass, 'px-2 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: 4, borderColor: '#dc2626' })}
           >
             <div className="flex flex-col items-center">
@@ -830,7 +859,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'user':
         return (
           <div
-            className={cn(shapeClass, 'px-2 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: 4 })}
           >
             <div className="flex flex-col items-center">
@@ -853,7 +882,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'users':
         return (
           <div
-            className={cn(shapeClass, 'px-2 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: 4 })}
           >
             <div className="flex flex-col items-center">
@@ -884,7 +913,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'laptop':
         return (
           <div
-            className={cn(shapeClass, 'px-2 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: 4 })}
           >
             <div className="flex flex-col items-center">
@@ -907,7 +936,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'mobile':
         return (
           <div
-            className={cn(shapeClass, 'px-2 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: 4 })}
           >
             <div className="flex flex-col items-center">
@@ -929,7 +958,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
       case 'internet':
         return (
           <div
-            className={cn(shapeClass, 'px-2 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle({ borderRadius: '50%' })}
           >
             <div className="flex flex-col items-center">
@@ -946,540 +975,6 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
                 />
               </div>
               <span className="text-xs" style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}>{label}</span>
-            </div>
-          </div>
-        )
-
-      // ===== AWS CLOUD SHAPES =====
-
-      case 'aws-ec2':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#FF9900] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <rect x="4" y="4" width="16" height="4" rx="0.5" fill="white" />
-                  <rect x="4" y="10" width="16" height="4" rx="0.5" fill="white" />
-                  <rect x="4" y="16" width="16" height="4" rx="0.5" fill="white" />
-                  <circle cx="6.5" cy="6" r="1" fill="#FF9900" />
-                  <circle cx="6.5" cy="12" r="1" fill="#FF9900" />
-                  <circle cx="6.5" cy="18" r="1" fill="#FF9900" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'EC2'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-s3':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#569A31] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <path d="M6,6 L18,6 L16,20 L8,20 Z" fill="white" />
-                  <ellipse cx="12" cy="6" rx="6" ry="2" fill="white" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'S3'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-lambda':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#FF9900] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <path d="M6,20 L12,4 L14,4 L10,12 L18,12 L18,14 L9,14 L6,20 Z" fill="white" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Lambda'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-rds':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#3B48CC] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <ellipse cx="12" cy="6" rx="7" ry="2.5" fill="white" />
-                  <path d="M5,6 L5,18 C5,20 8,21.5 12,21.5 C16,21.5 19,20 19,18 L19,6" fill="none" stroke="white" strokeWidth="2" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'RDS'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-dynamodb':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#4053D6] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <ellipse cx="12" cy="6" rx="6" ry="2" fill="white" />
-                  <ellipse cx="12" cy="12" rx="6" ry="2" fill="none" stroke="white" strokeWidth="1.5" />
-                  <ellipse cx="12" cy="18" rx="6" ry="2" fill="white" />
-                  <line x1="6" y1="6" x2="6" y2="18" stroke="white" strokeWidth="1.5" />
-                  <line x1="18" y1="6" x2="18" y2="18" stroke="white" strokeWidth="1.5" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'DynamoDB'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-api-gateway':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#FF4F8B] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <rect x="8" y="4" width="8" height="16" rx="1" fill="white" />
-                  <path d="M4,8 L8,8" stroke="white" strokeWidth="2" />
-                  <path d="M4,12 L8,12" stroke="white" strokeWidth="2" />
-                  <path d="M4,16 L8,16" stroke="white" strokeWidth="2" />
-                  <path d="M16,8 L20,8" stroke="white" strokeWidth="2" />
-                  <path d="M16,12 L20,12" stroke="white" strokeWidth="2" />
-                  <path d="M16,16 L20,16" stroke="white" strokeWidth="2" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'API Gateway'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-sns':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#FF4F8B] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <circle cx="12" cy="12" r="3" fill="white" />
-                  <path d="M12,4 L12,9" stroke="white" strokeWidth="2" />
-                  <path d="M12,15 L12,20" stroke="white" strokeWidth="2" />
-                  <path d="M4,12 L9,12" stroke="white" strokeWidth="2" />
-                  <path d="M15,12 L20,12" stroke="white" strokeWidth="2" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'SNS'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-sqs':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#FF4F8B] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <rect x="4" y="6" width="6" height="12" rx="1" fill="white" />
-                  <rect x="12" y="6" width="8" height="12" rx="1" fill="none" stroke="white" strokeWidth="1.5" />
-                  <path d="M10,12 L12,12" stroke="white" strokeWidth="2" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'SQS'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-cloudfront':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#8C4FFF] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <circle cx="12" cy="12" r="6" fill="none" stroke="white" strokeWidth="2" />
-                  <circle cx="12" cy="12" r="3" fill="white" />
-                  <path d="M12,2 L12,6" stroke="white" strokeWidth="2" />
-                  <path d="M12,18 L12,22" stroke="white" strokeWidth="2" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'CloudFront'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-route53':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#8C4FFF] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <circle cx="12" cy="12" r="7" fill="none" stroke="white" strokeWidth="2" />
-                  <ellipse cx="12" cy="12" rx="3" ry="7" fill="none" stroke="white" strokeWidth="1.5" />
-                  <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="1.5" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Route 53'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-vpc':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#8C4FFF] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="white" strokeWidth="2" />
-                  <rect x="7" y="7" width="10" height="10" rx="1" fill="none" stroke="white" strokeWidth="1.5" strokeDasharray="2,2" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'VPC'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-iam':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#DD344C] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <circle cx="12" cy="8" r="3" fill="white" />
-                  <path d="M6,20 C6,16 8,14 12,14 C16,14 18,16 18,20" fill="white" />
-                  <rect x="10" y="16" width="4" height="6" fill="#DD344C" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'IAM'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-ecs':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#FF9900] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <rect x="4" y="4" width="7" height="7" rx="1" fill="white" />
-                  <rect x="13" y="4" width="7" height="7" rx="1" fill="white" />
-                  <rect x="4" y="13" width="7" height="7" rx="1" fill="white" />
-                  <rect x="13" y="13" width="7" height="7" rx="1" fill="white" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'ECS'}</span>
-            </div>
-          </div>
-        )
-
-      case 'aws-eks':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#FF9900] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <circle cx="12" cy="12" r="7" fill="none" stroke="white" strokeWidth="2" />
-                  <path d="M12,5 L12,19 M5,12 L19,12 M7,7 L17,17 M17,7 L7,17" stroke="white" strokeWidth="1.5" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'EKS'}</span>
-            </div>
-          </div>
-        )
-
-      // ===== AZURE CLOUD SHAPES =====
-
-      case 'azure-vm':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#0078D4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <rect x="4" y="4" width="16" height="12" rx="1" fill="white" />
-                  <rect x="8" y="17" width="8" height="1.5" fill="white" />
-                  <rect x="6" y="19" width="12" height="1.5" fill="white" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'VM'}</span>
-            </div>
-          </div>
-        )
-
-      case 'azure-storage':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#0078D4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <rect x="4" y="4" width="16" height="4" rx="0.5" fill="white" />
-                  <rect x="4" y="10" width="16" height="4" rx="0.5" fill="white" />
-                  <rect x="4" y="16" width="16" height="4" rx="0.5" fill="white" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Storage'}</span>
-            </div>
-          </div>
-        )
-
-      case 'azure-functions':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#0062AD] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <path d="M14,2 L8,12 L12,12 L10,22 L18,10 L13,10 L16,2 Z" fill="#FFC107" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Functions'}</span>
-            </div>
-          </div>
-        )
-
-      case 'azure-sql':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#0078D4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <ellipse cx="12" cy="6" rx="7" ry="2.5" fill="white" />
-                  <path d="M5,6 L5,18 C5,20 8,21.5 12,21.5 C16,21.5 19,20 19,18 L19,6" fill="none" stroke="white" strokeWidth="2" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'SQL'}</span>
-            </div>
-          </div>
-        )
-
-      case 'azure-cosmos':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#0078D4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <circle cx="12" cy="12" r="6" fill="none" stroke="white" strokeWidth="2" />
-                  <circle cx="12" cy="12" r="2" fill="white" />
-                  <circle cx="8" cy="9" r="1.5" fill="white" />
-                  <circle cx="16" cy="15" r="1.5" fill="white" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Cosmos DB'}</span>
-            </div>
-          </div>
-        )
-
-      case 'azure-app-service':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#0078D4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <rect x="4" y="4" width="16" height="16" rx="2" fill="white" />
-                  <path d="M8,10 L16,10 M8,14 L14,14 M8,18 L12,18" stroke="#0078D4" strokeWidth="1.5" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'App Service'}</span>
-            </div>
-          </div>
-        )
-
-      case 'azure-aks':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#326CE5] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <circle cx="12" cy="12" r="7" fill="none" stroke="white" strokeWidth="2" />
-                  <path d="M12,5 L12,19 M5,12 L19,12 M7,7 L17,17 M17,7 L7,17" stroke="white" strokeWidth="1.5" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'AKS'}</span>
-            </div>
-          </div>
-        )
-
-      case 'azure-cdn':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#0078D4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <circle cx="12" cy="12" r="7" fill="none" stroke="white" strokeWidth="2" />
-                  <circle cx="12" cy="12" r="3" fill="none" stroke="white" strokeWidth="1.5" />
-                  <circle cx="12" cy="12" r="1" fill="white" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'CDN'}</span>
-            </div>
-          </div>
-        )
-
-      case 'azure-vnet':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#0078D4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="white" strokeWidth="2" />
-                  <line x1="4" y1="12" x2="20" y2="12" stroke="white" strokeWidth="1.5" />
-                  <line x1="12" y1="4" x2="12" y2="20" stroke="white" strokeWidth="1.5" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'VNet'}</span>
-            </div>
-          </div>
-        )
-
-      case 'azure-keyvault':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#0078D4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <circle cx="12" cy="10" r="4" fill="none" stroke="white" strokeWidth="2" />
-                  <rect x="10" y="14" width="4" height="8" fill="white" />
-                  <rect x="9" y="18" width="6" height="2" fill="white" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Key Vault'}</span>
-            </div>
-          </div>
-        )
-
-      // ===== GCP CLOUD SHAPES =====
-
-      case 'gcp-compute':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#4285F4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <rect x="4" y="6" width="16" height="12" rx="1" fill="white" />
-                  <rect x="6" y="8" width="4" height="3" fill="#4285F4" />
-                  <rect x="6" y="13" width="4" height="3" fill="#4285F4" />
-                  <rect x="12" y="8" width="6" height="8" fill="#4285F4" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Compute'}</span>
-            </div>
-          </div>
-        )
-
-      case 'gcp-storage':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#4285F4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <ellipse cx="12" cy="6" rx="7" ry="2.5" fill="white" />
-                  <path d="M5,6 L5,18 C5,20 8,21.5 12,21.5 C16,21.5 19,20 19,18 L19,6" fill="white" />
-                  <line x1="5" y1="10" x2="19" y2="10" stroke="#4285F4" strokeWidth="1" />
-                  <line x1="5" y1="14" x2="19" y2="14" stroke="#4285F4" strokeWidth="1" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Storage'}</span>
-            </div>
-          </div>
-        )
-
-      case 'gcp-functions':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#4285F4] flex items-center justify-center">
-                <span className="text-white text-xl font-bold">ƒ</span>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Functions'}</span>
-            </div>
-          </div>
-        )
-
-      case 'gcp-bigquery':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#4285F4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <rect x="4" y="4" width="4" height="16" fill="white" />
-                  <rect x="10" y="8" width="4" height="12" fill="white" />
-                  <rect x="16" y="12" width="4" height="8" fill="white" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'BigQuery'}</span>
-            </div>
-          </div>
-        )
-
-      case 'gcp-pubsub':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#4285F4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <circle cx="7" cy="12" r="3" fill="white" />
-                  <circle cx="17" cy="7" r="3" fill="white" />
-                  <circle cx="17" cy="17" r="3" fill="white" />
-                  <line x1="10" y1="11" x2="14" y2="8" stroke="white" strokeWidth="2" />
-                  <line x1="10" y1="13" x2="14" y2="16" stroke="white" strokeWidth="2" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Pub/Sub'}</span>
-            </div>
-          </div>
-        )
-
-      case 'gcp-gke':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#4285F4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <circle cx="12" cy="12" r="7" fill="none" stroke="white" strokeWidth="2" />
-                  <path d="M12,5 L12,19 M5,12 L19,12 M7,7 L17,17 M17,7 L7,17" stroke="white" strokeWidth="1.5" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'GKE'}</span>
-            </div>
-          </div>
-        )
-
-      case 'gcp-cloud-run':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#4285F4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <path d="M7,18 L12,4 L17,18 Z" fill="none" stroke="white" strokeWidth="2" />
-                  <path d="M10,18 L12,22 L14,18" fill="white" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Cloud Run'}</span>
-            </div>
-          </div>
-        )
-
-      case 'gcp-firestore':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#FFCA28] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <path d="M7,4 L12,16 L7,20 Z" fill="white" />
-                  <path d="M17,4 L12,16 L17,20 Z" fill="white" opacity="0.7" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Firestore'}</span>
-            </div>
-          </div>
-        )
-
-      case 'gcp-cloud-sql':
-        return (
-          <div className={cn(shapeClass, 'p-2')} style={getShapeStyle({ borderRadius: 8 })}>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-10 h-10 rounded bg-[#4285F4] flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6">
-                  <ellipse cx="12" cy="6" rx="7" ry="2.5" fill="white" />
-                  <path d="M5,6 L5,18 C5,20 8,21.5 12,21.5 C16,21.5 19,20 19,18 L19,6" fill="none" stroke="white" strokeWidth="2" />
-                  <ellipse cx="12" cy="12" rx="7" ry="2" fill="none" stroke="white" strokeWidth="1" />
-                </svg>
-              </div>
-              <span className="text-xs font-medium" style={{ color: baseStyle.color }}>{label || 'Cloud SQL'}</span>
             </div>
           </div>
         )
@@ -1505,17 +1000,53 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
           </div>
         )
 
-      // ===== DEFAULT SHAPE =====
+      // ===== DEFAULT - Cloud Icons and Unknown Types =====
 
-      default:
+      default: {
+        // Check if it's a cloud icon type
+        const IconComponent = cloudIconComponents[type as CloudIconType]
+        if (IconComponent) {
+          // Cloud icons render with icon and optional label below
+          return (
+            <div
+              className={cn(
+                'w-full h-full flex flex-col items-center justify-center',
+                locked && 'opacity-75',
+                isValidTarget && 'ring-2 ring-green-500 ring-offset-2'
+              )}
+              style={{ transform: baseStyle.transform }}
+            >
+              <div className="cloud-icon-container flex-1 w-full min-h-0">
+                <IconComponent />
+              </div>
+              {label && (
+                <div
+                  className={cn('w-full text-center px-1 shrink-0', getTextWrapClass())}
+                  style={{
+                    color: baseStyle.color,
+                    fontSize: `${Math.max(10, (baseStyle.fontSize as number) - 2)}px`,
+                    fontFamily: baseStyle.fontFamily,
+                    fontWeight: baseStyle.fontWeight,
+                    marginTop: '2px',
+                  }}
+                >
+                  {label}
+                </div>
+              )}
+            </div>
+          )
+        }
+
+        // Default shape for unknown types
         return (
           <div
-            className={cn(shapeClass, 'px-4 py-2')}
+            className={cn(shapeClass, 'p-1')}
             style={getShapeStyle()}
           >
             {label}
           </div>
         )
+      }
     }
   }
 
@@ -1523,13 +1054,13 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
     <div
       className={cn(
         'w-full h-full relative',
-        // Add a subtle glow when being targeted for connection
-        isTarget && 'drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]'
+        // Add a subtle glow when being targeted for connection (only when hovered)
+        isValidTarget && 'drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]'
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* NodeResizer - 8 handles (4 corners + 4 edges) */}
+      {/* NodeResizer - Lucidchart style */}
       <NodeResizer
         isVisible={selected && !locked}
         minWidth={minWidth}
@@ -1537,21 +1068,20 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         keepAspectRatio={false}
         handleClassName="nodrag"
         handleStyle={{
-          width: 8,
-          height: 8,
-          borderRadius: 2,
-          backgroundColor: 'white',
-          border: '2px solid #3b82f6',
+          width: 6,
+          height: 6,
+          borderRadius: 1,
+          backgroundColor: '#3b82f6',
+          border: 'none',
         }}
         lineStyle={{
           borderWidth: 1,
           borderColor: '#3b82f6',
-          borderStyle: 'dashed',
+          borderStyle: 'solid',
         }}
       />
 
-      {/* Connection Points - 8 points like draw.io */}
-      {/* These are BOTH source AND target - bidirectional */}
+      {/* Connection handles - Lucidchart style */}
       {connectionPoints.map((point) => (
         <Handle
           key={point.id}
@@ -1559,72 +1089,16 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
           type="source"
           position={point.position}
           className={cn(
-            'transition-all duration-150 !absolute',
-            // Hidden by default
-            !showHandles && 'opacity-0 scale-0',
-            // Visible on hover/select
-            showHandles && 'opacity-100 scale-100',
-            // Green glow when being targeted
-            isTarget && '!bg-green-500 ring-2 ring-green-300'
+            'custom-handle',
+            !showHandles && '!opacity-0',
+            showHandles && '!opacity-100',
+            isValidTarget && 'valid-target'
           )}
-          style={{
-            width: showHandles ? 12 : 6,
-            height: showHandles ? 12 : 6,
-            backgroundColor: isTarget ? '#22c55e' : '#3b82f6',
-            border: '2px solid white',
-            borderRadius: '50%',
-            cursor: 'crosshair',
-            ...point.style,
-          }}
           isConnectable={!locked}
+          isConnectableStart={true}
+          isConnectableEnd={true}
         />
       ))}
-
-      {/* Invisible target handles that cover entire edges for easy connection */}
-      <Handle
-        type="target"
-        id="top-target"
-        position={Position.Top}
-        className="!w-full !h-3 !rounded-none !border-none !top-0 !left-0 !transform-none"
-        style={{
-          opacity: 0,
-          cursor: 'crosshair',
-          pointerEvents: 'all',
-        }}
-      />
-      <Handle
-        type="target"
-        id="right-target"
-        position={Position.Right}
-        className="!w-3 !h-full !rounded-none !border-none !right-0 !top-0 !transform-none"
-        style={{
-          opacity: 0,
-          cursor: 'crosshair',
-          pointerEvents: 'all',
-        }}
-      />
-      <Handle
-        type="target"
-        id="bottom-target"
-        position={Position.Bottom}
-        className="!w-full !h-3 !rounded-none !border-none !bottom-0 !left-0 !transform-none"
-        style={{
-          opacity: 0,
-          cursor: 'crosshair',
-          pointerEvents: 'all',
-        }}
-      />
-      <Handle
-        type="target"
-        id="left-target"
-        position={Position.Left}
-        className="!w-3 !h-full !rounded-none !border-none !left-0 !top-0 !transform-none"
-        style={{
-          opacity: 0,
-          cursor: 'crosshair',
-          pointerEvents: 'all',
-        }}
-      />
 
       {/* Shape content */}
       <div

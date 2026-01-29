@@ -83,6 +83,7 @@ export interface NodeStyle {
   verticalAlign?: 'top' | 'middle' | 'bottom'
   lineHeight?: number
   letterSpacing?: number
+  textWrap?: 'wrap' | 'nowrap' | 'truncate'
 
   // Effects
   opacity?: number
@@ -106,10 +107,14 @@ export interface EdgeStyle {
   animated?: boolean
   animationSpeed?: 'slow' | 'normal' | 'fast'
 
-  // Label
+  // Label text styling
   labelColor?: string
   labelBgColor?: string
   labelFontSize?: number
+  labelFontFamily?: string
+  labelFontWeight?: 'normal' | 'bold' | 'light'
+  labelFontStyle?: 'normal' | 'italic'
+  labelTextDecoration?: 'none' | 'underline' | 'line-through'
 }
 
 // Shape types
@@ -184,6 +189,16 @@ export type ShapeType =
   | 'aws-iam'
   | 'aws-ecs'
   | 'aws-eks'
+  | 'aws-cognito'
+  | 'aws-step-functions'
+  | 'aws-kinesis'
+  | 'aws-redshift'
+  | 'aws-elasticache'
+  | 'aws-cloudwatch'
+  | 'aws-secrets-manager'
+  | 'aws-eventbridge'
+  | 'aws-amplify'
+  | 'aws-appsync'
   // Azure Cloud icons
   | 'azure-vm'
   | 'azure-storage'
@@ -195,6 +210,16 @@ export type ShapeType =
   | 'azure-cdn'
   | 'azure-vnet'
   | 'azure-keyvault'
+  | 'azure-event-hub'
+  | 'azure-service-bus'
+  | 'azure-logic-apps'
+  | 'azure-databricks'
+  | 'azure-active-directory'
+  | 'azure-container-registry'
+  | 'azure-redis-cache'
+  | 'azure-app-gateway'
+  | 'azure-front-door'
+  | 'azure-monitor'
   // GCP Cloud icons
   | 'gcp-compute'
   | 'gcp-storage'
@@ -205,6 +230,21 @@ export type ShapeType =
   | 'gcp-cloud-run'
   | 'gcp-firestore'
   | 'gcp-cloud-sql'
+  | 'gcp-spanner'
+  | 'gcp-dataflow'
+  | 'gcp-cloud-armor'
+  | 'gcp-cloud-build'
+  | 'gcp-artifact-registry'
+  | 'gcp-secret-manager'
+  // Generic Cloud/DevOps
+  | 'kubernetes'
+  | 'docker'
+  | 'generic-api'
+  | 'generic-database'
+  | 'generic-cache'
+  | 'generic-queue'
+  | 'generic-load-balancer'
+  | 'generic-cdn'
 
 // Folder types
 export interface Folder {

@@ -14,28 +14,24 @@ import '@xyflow/react/dist/style.css'
 import { useEditorStore } from '@/stores/editorStore'
 import type { Diagram, ShapeType } from '@/types'
 import { nodeTypes } from './nodes'
+import { edgeTypes } from './edges'
 import { ShapePanel } from './ShapePanel'
 import { PropertiesPanel } from './PropertiesPanel'
 import { ZoomControls } from './ZoomControls'
 import { EditorToolbar } from './EditorToolbar'
 
 const defaultEdgeOptions = {
-  type: 'smoothstep', // Better connection to shapes than straight
+  type: 'labeled', // Use custom labeled edge with smart routing
   animated: false,
   markerEnd: {
     type: MarkerType.ArrowClosed,
-    width: 20, // Larger for better visibility
-    height: 20,
+    width: 18,
+    height: 18,
     color: '#6b7280',
   },
   style: {
-    strokeWidth: 2,
+    strokeWidth: 1,  // Thinner line - Lucidchart style
     stroke: '#6b7280',
-  },
-  // Path options for better edge routing
-  pathOptions: {
-    offset: 0,
-    borderRadius: 8,
   },
 }
 
@@ -231,11 +227,12 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           onDrop={onDrop}
           onMoveEnd={(_, viewport) => setZoom(viewport.zoom)}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
           connectionLineType={ConnectionLineType.SmoothStep}
           connectionLineStyle={connectionLineStyle}
           connectionMode={ConnectionMode.Loose}
-          connectionRadius={30}
+          connectionRadius={25}
           snapToGrid={snapToGrid}
           snapGrid={[gridSize, gridSize]}
           fitView

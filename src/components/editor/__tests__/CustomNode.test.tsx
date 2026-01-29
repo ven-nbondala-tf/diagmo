@@ -158,17 +158,12 @@ describe('CustomNode', () => {
     props.selected = true
     render(<CustomNode {...props} />)
 
-    // Target handles are always present (but invisible for receiving connections)
-    expect(screen.getByTestId('handle-target-top')).toBeInTheDocument()
-    expect(screen.getByTestId('handle-target-left')).toBeInTheDocument()
-    expect(screen.getByTestId('handle-target-bottom')).toBeInTheDocument()
-    expect(screen.getByTestId('handle-target-right')).toBeInTheDocument()
-    // Source handles appear when node is selected (8 connection points like draw.io)
-    // Use getAllByTestId since there are multiple handles per side (corners + midpoints)
+    // Single handles work as both source AND target (using isConnectableStart/End)
+    // 4 cardinal connection points: top, right, bottom, left
     expect(screen.getByTestId('handle-source-top')).toBeInTheDocument()
-    expect(screen.getAllByTestId('handle-source-left').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByTestId('handle-source-right')).toBeInTheDocument()
     expect(screen.getByTestId('handle-source-bottom')).toBeInTheDocument()
-    expect(screen.getAllByTestId('handle-source-right').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByTestId('handle-source-left')).toBeInTheDocument()
   })
 
   it('should show lock icon when node is locked', () => {

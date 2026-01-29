@@ -17,21 +17,43 @@ interface LabeledEdgeData extends Record<string, unknown> {
   onLabelChange?: (label: string) => void
 }
 
-type LabeledEdgeType = Edge<LabeledEdgeData>
+// Extended edge type to include label styling properties
+interface LabeledEdgeType extends Edge<LabeledEdgeData> {
+  labelBgStyle?: { fill?: string }
+  labelBgPadding?: [number, number]
+  labelBgBorderRadius?: number
+}
 
-// Helper to convert marker type to ReactFlow marker URL
+// Helper to convert marker definition to URL string for BaseEdge
+// React Flow creates marker defs with IDs like: react-flow__arrowclosed-#color
+const getMarkerUrlFromObject = (marker: unknown): string | undefined => {
+  if (!marker) return undefined
+
+  if (typeof marker === 'string') {
+    return marker
+  }
+
+  if (typeof marker === 'object' && marker !== null) {
+    const m = marker as { type?: MarkerType; color?: string }
+    if (m.type) {
+      // React Flow marker ID format: react-flow__[type]-[color]
+      // Color needs to be URL encoded (# becomes %23)
+      const color = m.color ? m.color.replace('#', '%23') : '%236b7280'
+      return `url(#react-flow__${m.type}-${color})`
+    }
+  }
+
+  return undefined
+}
+
+// Helper to convert our custom style marker type to URL
 const getMarkerUrl = (markerType: EdgeStyle['markerEnd']): string | undefined => {
   if (!markerType || markerType === 'none') return undefined
 
-  // ReactFlow uses marker URLs for built-in markers
-  const markerTypeMap: Record<string, MarkerType> = {
-    arrow: MarkerType.Arrow,
-    arrowClosed: MarkerType.ArrowClosed,
-  }
-
-  const type = markerTypeMap[markerType] || MarkerType.ArrowClosed
-  // Return the marker type string for ReactFlow's internal handling
-  return `url(#${type})`
+  // Default color for custom style markers
+  const color = '%236b7280'
+  const type = markerType === 'arrow' ? MarkerType.Arrow : MarkerType.ArrowClosed
+  return `url(#react-flow__${type}-${color})`
 }
 
 // Helper to convert line type to stroke dasharray
@@ -58,60 +80,141 @@ export function LabeledEdge({
   markerStart: defaultMarkerStart,
   data,
   selected,
-}: EdgeProps<LabeledEdgeType>) {
+  label, // Get label directly from edge props
+  labelBgStyle,
+  labelBgPadding,
+  labelBgBorderRadius,
+}: EdgeProps<LabeledEdgeType> & {
+  labelBgStyle?: { fill?: string }
+  labelBgPadding?: [number, number]
+  labelBgBorderRadius?: number
+}) {
   const edgeData = data as LabeledEdgeData | undefined
   const edgeStyle = edgeData?.style
   const [isEditing, setIsEditing] = useState(false)
-  const [labelText, setLabelText] = useState(edgeData?.label || '')
+  // Use edge label from props, or from data, and sync with local state for editing
+  const edgeLabel = (label as string) || edgeData?.label || ''
+  const [labelText, setLabelText] = useState(edgeLabel)
   const [isHovered, setIsHovered] = useState(false)
 
+  // Sync labelText when edge label changes from outside (e.g., properties panel)
+  if (labelText !== edgeLabel && !isEditing) {
+    setLabelText(edgeLabel)
+  }
+
   // Only show label UI if there's actual text or if editing
-  const hasLabel = labelText.trim().length > 0
+  const hasLabel = edgeLabel.trim().length > 0
   const showLabelUI = hasLabel || isEditing || (selected && isHovered)
 
-  // Compute effective styles
+  // Compute effective styles - merge React Flow style prop with custom data.style
+  // PropertiesPanel updates edge.style, so we need to read from both sources
   const effectiveStyle = useMemo<CSSProperties>(() => {
-    const strokeColor = edgeStyle?.strokeColor || '#374151'
+    // Priority: edgeStyle (data.style) > style prop (React Flow) > defaults
+    const stroke = edgeStyle?.strokeColor || (style?.stroke as string) || '#374151'
+    const strokeWidth = edgeStyle?.strokeWidth || (style?.strokeWidth as number) || 2
+
+    // For dasharray, check edgeStyle.lineType first, then style.strokeDasharray
+    let strokeDasharray: string | undefined
+    if (edgeStyle?.lineType) {
+      strokeDasharray = getStrokeDasharray(edgeStyle.lineType)
+    } else if (style?.strokeDasharray) {
+      strokeDasharray = style.strokeDasharray as string
+    }
+
     return {
       ...style,
-      stroke: strokeColor,
-      strokeWidth: edgeStyle?.strokeWidth || 2,
-      strokeDasharray: getStrokeDasharray(edgeStyle?.lineType),
+      stroke,
+      strokeWidth,
+      strokeDasharray,
     }
   }, [style, edgeStyle])
 
-  // Compute markers
+  // Compute markers - convert to URL string for BaseEdge
   const effectiveMarkerEnd = useMemo((): string | undefined => {
     if (edgeStyle?.markerEnd) {
       return getMarkerUrl(edgeStyle.markerEnd)
     }
-    return typeof defaultMarkerEnd === 'string' ? defaultMarkerEnd : undefined
+    // Convert the default marker object to URL string
+    return getMarkerUrlFromObject(defaultMarkerEnd)
   }, [edgeStyle?.markerEnd, defaultMarkerEnd])
 
   const effectiveMarkerStart = useMemo((): string | undefined => {
     if (edgeStyle?.markerStart) {
       return getMarkerUrl(edgeStyle.markerStart)
     }
-    return typeof defaultMarkerStart === 'string' ? defaultMarkerStart : undefined
+    // Convert the default marker object to URL string
+    return getMarkerUrlFromObject(defaultMarkerStart)
   }, [edgeStyle?.markerStart, defaultMarkerStart])
 
-  // Smart edge routing: use straight path if shapes are aligned, smoothstep otherwise
-  const ALIGNMENT_THRESHOLD = 15 // pixels
-  const isHorizontallyAligned = Math.abs(sourceY - targetY) < ALIGNMENT_THRESHOLD
-  const isVerticallyAligned = Math.abs(sourceX - targetX) < ALIGNMENT_THRESHOLD
-  const usesStraightPath = isHorizontallyAligned || isVerticallyAligned
+  // Smart edge routing: Lucidchart style
+  // Use straight line ONLY when handles are on OPPOSITE sides and aligned
+  const deltaX = Math.abs(targetX - sourceX)
+  const deltaY = Math.abs(targetY - sourceY)
 
-  const [edgePath, labelX, labelY] = usesStraightPath
-    ? getStraightPath({ sourceX, sourceY, targetX, targetY })
-    : getSmoothStepPath({
-        sourceX,
-        sourceY,
-        sourcePosition,
-        targetX,
-        targetY,
-        targetPosition,
-        borderRadius: 5,
-      })
+  // Check if handles are on opposite sides (can form a straight line)
+  const isHorizontalConnection =
+    (sourcePosition === 'left' && targetPosition === 'right') ||
+    (sourcePosition === 'right' && targetPosition === 'left')
+
+  const isVerticalConnection =
+    (sourcePosition === 'top' && targetPosition === 'bottom') ||
+    (sourcePosition === 'bottom' && targetPosition === 'top')
+
+  // Use straight line for opposite-side connections that are reasonably aligned
+  // - Horizontal: left↔right with offset ratio < 1.0 (allows diagonal lines)
+  // - Vertical: top↔bottom with offset ratio < 1.0
+  // Also use straight line if shapes are very close together (within 50px)
+  const useStraightLine =
+    (isHorizontalConnection && deltaX > 20 && (deltaY / deltaX < 1.0 || deltaY < 50)) ||
+    (isVerticalConnection && deltaY > 20 && (deltaX / deltaY < 1.0 || deltaX < 50))
+
+  // Calculate the path - NO extension, use exact handle positions
+  let edgePath: string
+  let labelX: number
+  let labelY: number
+
+  // Snap-to-straight threshold
+  const snapThreshold = 20
+
+  // Calculate adjusted coordinates (may snap to straight)
+  let adjSourceX = sourceX
+  let adjSourceY = sourceY
+  let adjTargetX = targetX
+  let adjTargetY = targetY
+
+  // Snap to perfectly horizontal/vertical when nearly aligned
+  if (useStraightLine) {
+    if (isHorizontalConnection && deltaY < snapThreshold) {
+      const midY = (sourceY + targetY) / 2
+      adjSourceY = midY
+      adjTargetY = midY
+    } else if (isVerticalConnection && deltaX < snapThreshold) {
+      const midX = (sourceX + targetX) / 2
+      adjSourceX = midX
+      adjTargetX = midX
+    }
+  }
+
+  if (useStraightLine) {
+    // Direct straight line - no extension
+    ;[edgePath, labelX, labelY] = getStraightPath({
+      sourceX: adjSourceX,
+      sourceY: adjSourceY,
+      targetX: adjTargetX,
+      targetY: adjTargetY,
+    })
+  } else {
+    // Smoothstep for non-aligned connections
+    ;[edgePath, labelX, labelY] = getSmoothStepPath({
+      sourceX,
+      sourceY,
+      sourcePosition,
+      targetX,
+      targetY,
+      targetPosition,
+      borderRadius: 6, // Slightly smaller radius
+    })
+  }
 
   const handleDoubleClick = useCallback(() => {
     setIsEditing(true)
@@ -171,7 +274,22 @@ export function LabeledEdge({
             ) : (
               <div
                 onDoubleClick={handleDoubleClick}
-                className="px-2 py-0.5 text-xs bg-background border rounded cursor-pointer hover:bg-accent min-w-[20px] text-center"
+                className="cursor-pointer hover:opacity-80 min-w-[20px] text-center"
+                style={{
+                  backgroundColor: edgeStyle?.labelBgColor || labelBgStyle?.fill || 'transparent',
+                  padding: labelBgPadding
+                    ? `${labelBgPadding[0]}px ${labelBgPadding[1]}px`
+                    : '2px 4px',
+                  borderRadius: labelBgBorderRadius ?? 0,
+                  border: (edgeStyle?.labelBgColor || labelBgStyle?.fill) ? '1px solid hsl(var(--border))' : 'none',
+                  // Text styling from EdgeStyle
+                  color: edgeStyle?.labelColor || '#374151',
+                  fontSize: edgeStyle?.labelFontSize ? `${edgeStyle.labelFontSize}px` : '12px',
+                  fontFamily: edgeStyle?.labelFontFamily || 'inherit',
+                  fontWeight: edgeStyle?.labelFontWeight || 'normal',
+                  fontStyle: edgeStyle?.labelFontStyle || 'normal',
+                  textDecoration: edgeStyle?.labelTextDecoration || 'none',
+                }}
               >
                 {labelText}
               </div>

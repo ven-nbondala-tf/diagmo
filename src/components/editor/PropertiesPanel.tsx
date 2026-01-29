@@ -208,71 +208,52 @@ export function PropertiesPanel() {
                 {/* Path Type */}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Path Type</Label>
-                  <div className="grid grid-cols-2 gap-1">
-                    {[
-                      { value: 'straight', label: 'Straight' },
-                      { value: 'smoothstep', label: 'Smooth' },
-                      { value: 'step', label: 'Step' },
-                      { value: 'bezier', label: 'Curved' },
-                    ].map((type) => (
-                      <Button
-                        key={type.value}
-                        variant={edgeType === type.value ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => updateEdge(selectedEdge.id, { type: type.value })}
-                      >
-                        {type.label}
-                      </Button>
-                    ))}
-                  </div>
+                  <select
+                    value={edgeType}
+                    onChange={(e) => updateEdge(selectedEdge.id, { type: e.target.value })}
+                    className="w-full h-8 text-sm border rounded px-2 bg-background"
+                  >
+                    <option value="labeled">Auto (Smart)</option>
+                    <option value="straight">Straight</option>
+                    <option value="smoothstep">Smooth Step</option>
+                    <option value="step">Step</option>
+                    <option value="bezier">Curved</option>
+                  </select>
                 </div>
 
                 {/* Line Style */}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Line Style</Label>
-                  <div className="grid grid-cols-3 gap-1">
-                    {[
-                      { value: 'solid', label: 'Solid', dasharray: undefined },
-                      { value: 'dashed', label: 'Dashed', dasharray: '8 4' },
-                      { value: 'dotted', label: 'Dotted', dasharray: '2 4' },
-                    ].map((s) => (
-                      <Button
-                        key={s.value}
-                        variant={lineStyle === s.value ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() =>
-                          updateEdge(selectedEdge.id, {
-                            style: { ...selectedEdge.style, strokeDasharray: s.dasharray },
-                          })
-                        }
-                      >
-                        {s.label}
-                      </Button>
-                    ))}
-                  </div>
+                  <select
+                    value={lineStyle}
+                    onChange={(e) => {
+                      const dasharrays: Record<string, string | undefined> = {
+                        solid: undefined,
+                        dashed: '8 4',
+                        dotted: '2 4',
+                      }
+                      updateEdge(selectedEdge.id, {
+                        style: { ...selectedEdge.style, strokeDasharray: dasharrays[e.target.value] },
+                      })
+                    }}
+                    className="w-full h-8 text-sm border rounded px-2 bg-background"
+                  >
+                    <option value="solid">Solid</option>
+                    <option value="dashed">Dashed</option>
+                    <option value="dotted">Dotted</option>
+                  </select>
                 </div>
 
-                {/* Stroke Color */}
+                {/* Stroke Color - only changes line, not arrow */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium">Color</Label>
+                  <Label className="text-xs font-medium">Line Color</Label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
                       value={strokeColor}
                       onChange={(e) => {
-                        const color = e.target.value
                         updateEdge(selectedEdge.id, {
-                          style: { ...selectedEdge.style, stroke: color },
-                          markerStart:
-                            markerStartType !== 'none'
-                              ? createMarker(markerStartType, color, markerSize)
-                              : undefined,
-                          markerEnd:
-                            markerEndType !== 'none'
-                              ? createMarker(markerEndType, color, markerSize)
-                              : undefined,
+                          style: { ...selectedEdge.style, stroke: e.target.value },
                         })
                       }}
                       className="w-10 h-8 rounded border cursor-pointer"
@@ -280,17 +261,8 @@ export function PropertiesPanel() {
                     <Input
                       value={strokeColor}
                       onChange={(e) => {
-                        const color = e.target.value
                         updateEdge(selectedEdge.id, {
-                          style: { ...selectedEdge.style, stroke: color },
-                          markerStart:
-                            markerStartType !== 'none'
-                              ? createMarker(markerStartType, color, markerSize)
-                              : undefined,
-                          markerEnd:
-                            markerEndType !== 'none'
-                              ? createMarker(markerEndType, color, markerSize)
-                              : undefined,
+                          style: { ...selectedEdge.style, stroke: e.target.value },
                         })
                       }}
                       className="h-8 text-xs font-mono flex-1"
@@ -307,14 +279,6 @@ export function PropertiesPanel() {
                           onClick={() => {
                             updateEdge(selectedEdge.id, {
                               style: { ...selectedEdge.style, stroke: color },
-                              markerStart:
-                                markerStartType !== 'none'
-                                  ? createMarker(markerStartType, color, markerSize)
-                                  : undefined,
-                              markerEnd:
-                                markerEndType !== 'none'
-                                  ? createMarker(markerEndType, color, markerSize)
-                                  : undefined,
                             })
                           }}
                         />
@@ -370,61 +334,53 @@ export function PropertiesPanel() {
               <AccordionContent className="px-4 pb-4 space-y-4">
                 {/* Quick Presets */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium">Quick Presets</Label>
-                  <div className="grid grid-cols-2 gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() =>
-                        updateEdge(selectedEdge.id, {
-                          markerStart: undefined,
-                          markerEnd: createMarker('arrowClosed', strokeColor, markerSize),
-                        })
+                  <Label className="text-xs font-medium">Arrow Direction</Label>
+                  <select
+                    value={
+                      markerEndType !== 'none' && markerStartType !== 'none'
+                        ? 'both'
+                        : markerStartType !== 'none'
+                        ? 'reverse'
+                        : markerEndType !== 'none'
+                        ? 'forward'
+                        : 'none'
+                    }
+                    onChange={(e) => {
+                      const arrowColor = (selectedEdge.markerEnd as { color?: string })?.color || strokeColor
+                      switch (e.target.value) {
+                        case 'forward':
+                          updateEdge(selectedEdge.id, {
+                            markerStart: undefined,
+                            markerEnd: createMarker('arrowClosed', arrowColor, markerSize),
+                          })
+                          break
+                        case 'both':
+                          updateEdge(selectedEdge.id, {
+                            markerStart: createMarker('arrowClosed', arrowColor, markerSize),
+                            markerEnd: createMarker('arrowClosed', arrowColor, markerSize),
+                          })
+                          break
+                        case 'reverse':
+                          updateEdge(selectedEdge.id, {
+                            markerStart: createMarker('arrowClosed', arrowColor, markerSize),
+                            markerEnd: undefined,
+                          })
+                          break
+                        case 'none':
+                          updateEdge(selectedEdge.id, {
+                            markerStart: undefined,
+                            markerEnd: undefined,
+                          })
+                          break
                       }
-                    >
-                      One-way
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() =>
-                        updateEdge(selectedEdge.id, {
-                          markerStart: createMarker('arrowClosed', strokeColor, markerSize),
-                          markerEnd: createMarker('arrowClosed', strokeColor, markerSize),
-                        })
-                      }
-                    >
-                      Both
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() =>
-                        updateEdge(selectedEdge.id, {
-                          markerStart: undefined,
-                          markerEnd: undefined,
-                        })
-                      }
-                    >
-                      None
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() =>
-                        updateEdge(selectedEdge.id, {
-                          markerStart: createMarker('arrowClosed', strokeColor, markerSize),
-                          markerEnd: undefined,
-                        })
-                      }
-                    >
-                      Reverse
-                    </Button>
-                  </div>
+                    }}
+                    className="w-full h-8 text-sm border rounded px-2 bg-background"
+                  >
+                    <option value="forward">Forward (→)</option>
+                    <option value="both">Both (↔)</option>
+                    <option value="reverse">Reverse (←)</option>
+                    <option value="none">None</option>
+                  </select>
                 </div>
 
                 {/* Start Arrow */}
@@ -432,11 +388,12 @@ export function PropertiesPanel() {
                   <Label className="text-xs font-medium">Start Arrow</Label>
                   <select
                     value={markerStartType}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const arrowColor = (selectedEdge.markerEnd as { color?: string })?.color || strokeColor
                       updateEdge(selectedEdge.id, {
-                        markerStart: createMarker(e.target.value, strokeColor, markerSize),
+                        markerStart: createMarker(e.target.value, arrowColor, markerSize),
                       })
-                    }
+                    }}
                     className="w-full h-8 text-sm border rounded px-2 bg-background"
                   >
                     <option value="none">None</option>
@@ -450,11 +407,12 @@ export function PropertiesPanel() {
                   <Label className="text-xs font-medium">End Arrow</Label>
                   <select
                     value={markerEndType}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const arrowColor = (selectedEdge.markerEnd as { color?: string })?.color || strokeColor
                       updateEdge(selectedEdge.id, {
-                        markerEnd: createMarker(e.target.value, strokeColor, markerSize),
+                        markerEnd: createMarker(e.target.value, arrowColor, markerSize),
                       })
-                    }
+                    }}
                     className="w-full h-8 text-sm border rounded px-2 bg-background"
                   >
                     <option value="none">None</option>
@@ -463,20 +421,87 @@ export function PropertiesPanel() {
                   </select>
                 </div>
 
+                {/* Arrow Color (separate from line color) */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Arrow Color</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={(selectedEdge.markerEnd as { color?: string })?.color || strokeColor}
+                      onChange={(e) => {
+                        const arrowColor = e.target.value
+                        updateEdge(selectedEdge.id, {
+                          markerStart:
+                            markerStartType !== 'none'
+                              ? createMarker(markerStartType, arrowColor, markerSize)
+                              : undefined,
+                          markerEnd:
+                            markerEndType !== 'none'
+                              ? createMarker(markerEndType, arrowColor, markerSize)
+                              : undefined,
+                        })
+                      }}
+                      className="w-10 h-8 rounded border cursor-pointer"
+                    />
+                    <Input
+                      value={(selectedEdge.markerEnd as { color?: string })?.color || strokeColor}
+                      onChange={(e) => {
+                        const arrowColor = e.target.value
+                        updateEdge(selectedEdge.id, {
+                          markerStart:
+                            markerStartType !== 'none'
+                              ? createMarker(markerStartType, arrowColor, markerSize)
+                              : undefined,
+                          markerEnd:
+                            markerEndType !== 'none'
+                              ? createMarker(markerEndType, arrowColor, markerSize)
+                              : undefined,
+                        })
+                      }}
+                      className="h-8 text-xs font-mono flex-1"
+                    />
+                  </div>
+                  {/* Quick color presets */}
+                  <div className="flex gap-1">
+                    {['#6b7280', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#000000'].map(
+                      (color) => (
+                        <button
+                          key={color}
+                          className="w-5 h-5 rounded border hover:scale-110 transition-transform"
+                          style={{ backgroundColor: color }}
+                          onClick={() => {
+                            updateEdge(selectedEdge.id, {
+                              markerStart:
+                                markerStartType !== 'none'
+                                  ? createMarker(markerStartType, color, markerSize)
+                                  : undefined,
+                              markerEnd:
+                                markerEndType !== 'none'
+                                  ? createMarker(markerEndType, color, markerSize)
+                                  : undefined,
+                            })
+                          }}
+                        />
+                      )
+                    )}
+                  </div>
+                </div>
+
                 {/* Arrow Size */}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Arrow Size: {markerSize}px</Label>
                   <Slider
                     value={[markerSize]}
                     onValueChange={([value]) => {
+                      const arrowColor = (selectedEdge.markerEnd as { color?: string })?.color || strokeColor
                       updateEdge(selectedEdge.id, {
                         markerStart:
                           markerStartType !== 'none'
-                            ? createMarker(markerStartType, strokeColor, value)
+                            ? createMarker(markerStartType, arrowColor, value)
                             : undefined,
                         markerEnd:
                           markerEndType !== 'none'
-                            ? createMarker(markerEndType, strokeColor, value)
+                            ? createMarker(markerEndType, arrowColor, value)
                             : undefined,
                       })
                     }}
@@ -498,6 +523,7 @@ export function PropertiesPanel() {
                 </span>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4 space-y-4">
+                {/* Label Text */}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Text</Label>
                   <Input
@@ -509,36 +535,222 @@ export function PropertiesPanel() {
                 </div>
 
                 {selectedEdge.label && (
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">Label Background</Label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={(selectedEdge.labelBgStyle?.fill as string) || '#ffffff'}
+                  <>
+                    {/* Font Family */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Font Family</Label>
+                      <select
+                        value={(selectedEdge.data as { style?: { labelFontFamily?: string } })?.style?.labelFontFamily || 'Inter'}
                         onChange={(e) =>
                           updateEdge(selectedEdge.id, {
-                            labelBgStyle: { fill: e.target.value },
-                            labelBgPadding: [4, 8],
-                            labelBgBorderRadius: 4,
+                            data: {
+                              ...selectedEdge.data,
+                              style: {
+                                ...(selectedEdge.data as { style?: object })?.style,
+                                labelFontFamily: e.target.value,
+                              },
+                            },
                           })
                         }
-                        className="w-10 h-8 rounded border cursor-pointer"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs"
-                        onClick={() =>
-                          updateEdge(selectedEdge.id, {
-                            labelBgStyle: undefined,
-                            labelBgPadding: undefined,
-                          })
-                        }
+                        className="w-full h-8 text-sm border rounded px-2 bg-background"
                       >
-                        No Background
-                      </Button>
+                        {FONT_FAMILIES.map((font) => (
+                          <option key={font.value} value={font.value}>
+                            {font.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  </div>
+
+                    {/* Font Size */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Font Size</Label>
+                      <div className="flex items-center gap-2">
+                        <Slider
+                          value={[(selectedEdge.data as { style?: { labelFontSize?: number } })?.style?.labelFontSize || 12]}
+                          onValueChange={([value]) =>
+                            updateEdge(selectedEdge.id, {
+                              data: {
+                                ...selectedEdge.data,
+                                style: {
+                                  ...(selectedEdge.data as { style?: object })?.style,
+                                  labelFontSize: value,
+                                },
+                              },
+                            })
+                          }
+                          min={8}
+                          max={24}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <span className="text-xs text-muted-foreground w-8">
+                          {(selectedEdge.data as { style?: { labelFontSize?: number } })?.style?.labelFontSize || 12}px
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Text Color */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Text Color</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={(selectedEdge.data as { style?: { labelColor?: string } })?.style?.labelColor || '#374151'}
+                          onChange={(e) =>
+                            updateEdge(selectedEdge.id, {
+                              data: {
+                                ...selectedEdge.data,
+                                style: {
+                                  ...(selectedEdge.data as { style?: object })?.style,
+                                  labelColor: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                          className="w-10 h-8 rounded border cursor-pointer"
+                        />
+                        <Input
+                          value={(selectedEdge.data as { style?: { labelColor?: string } })?.style?.labelColor || '#374151'}
+                          onChange={(e) =>
+                            updateEdge(selectedEdge.id, {
+                              data: {
+                                ...selectedEdge.data,
+                                style: {
+                                  ...(selectedEdge.data as { style?: object })?.style,
+                                  labelColor: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                          className="h-8 text-xs font-mono flex-1"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Font Style Buttons */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Style</Label>
+                      <div className="flex gap-1">
+                        <Button
+                          variant={
+                            (selectedEdge.data as { style?: { labelFontWeight?: string } })?.style?.labelFontWeight === 'bold'
+                              ? 'default'
+                              : 'outline'
+                          }
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() =>
+                            updateEdge(selectedEdge.id, {
+                              data: {
+                                ...selectedEdge.data,
+                                style: {
+                                  ...(selectedEdge.data as { style?: object })?.style,
+                                  labelFontWeight:
+                                    (selectedEdge.data as { style?: { labelFontWeight?: string } })?.style?.labelFontWeight === 'bold'
+                                      ? 'normal'
+                                      : 'bold',
+                                },
+                              },
+                            })
+                          }
+                        >
+                          <Bold className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant={
+                            (selectedEdge.data as { style?: { labelFontStyle?: string } })?.style?.labelFontStyle === 'italic'
+                              ? 'default'
+                              : 'outline'
+                          }
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() =>
+                            updateEdge(selectedEdge.id, {
+                              data: {
+                                ...selectedEdge.data,
+                                style: {
+                                  ...(selectedEdge.data as { style?: object })?.style,
+                                  labelFontStyle:
+                                    (selectedEdge.data as { style?: { labelFontStyle?: string } })?.style?.labelFontStyle === 'italic'
+                                      ? 'normal'
+                                      : 'italic',
+                                },
+                              },
+                            })
+                          }
+                        >
+                          <Italic className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant={
+                            (selectedEdge.data as { style?: { labelTextDecoration?: string } })?.style?.labelTextDecoration === 'underline'
+                              ? 'default'
+                              : 'outline'
+                          }
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() =>
+                            updateEdge(selectedEdge.id, {
+                              data: {
+                                ...selectedEdge.data,
+                                style: {
+                                  ...(selectedEdge.data as { style?: object })?.style,
+                                  labelTextDecoration:
+                                    (selectedEdge.data as { style?: { labelTextDecoration?: string } })?.style?.labelTextDecoration === 'underline'
+                                      ? 'none'
+                                      : 'underline',
+                                },
+                              },
+                            })
+                          }
+                        >
+                          <Underline className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Background Color */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Background</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={(selectedEdge.data as { style?: { labelBgColor?: string } })?.style?.labelBgColor || '#ffffff'}
+                          onChange={(e) =>
+                            updateEdge(selectedEdge.id, {
+                              data: {
+                                ...selectedEdge.data,
+                                style: {
+                                  ...(selectedEdge.data as { style?: object })?.style,
+                                  labelBgColor: e.target.value,
+                                },
+                              },
+                            })
+                          }
+                          className="w-10 h-8 rounded border cursor-pointer"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs flex-1"
+                          onClick={() =>
+                            updateEdge(selectedEdge.id, {
+                              data: {
+                                ...selectedEdge.data,
+                                style: {
+                                  ...(selectedEdge.data as { style?: object })?.style,
+                                  labelBgColor: undefined,
+                                },
+                              },
+                            })
+                          }
+                        >
+                          No Background
+                        </Button>
+                      </div>
+                    </div>
+                  </>
                 )}
               </AccordionContent>
             </AccordionItem>
@@ -552,14 +764,17 @@ export function PropertiesPanel() {
                 </span>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4 space-y-4">
-                <Button
-                  variant={selectedEdge.animated ? 'default' : 'outline'}
-                  size="sm"
-                  className="w-full h-8 text-xs"
-                  onClick={() => updateEdge(selectedEdge.id, { animated: !selectedEdge.animated })}
-                >
-                  {selectedEdge.animated ? 'Animated' : 'Static'}
-                </Button>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Flow Animation</Label>
+                  <select
+                    value={selectedEdge.animated ? 'animated' : 'static'}
+                    onChange={(e) => updateEdge(selectedEdge.id, { animated: e.target.value === 'animated' })}
+                    className="w-full h-8 text-sm border rounded px-2 bg-background"
+                  >
+                    <option value="static">Static (No animation)</option>
+                    <option value="animated">Animated (Flow dots)</option>
+                  </select>
+                </div>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -745,30 +960,21 @@ export function PropertiesPanel() {
               {/* Border Style */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Border Style</Label>
-                <div className="grid grid-cols-4 gap-1">
-                  {[
-                    { value: 'solid', label: 'Solid' },
-                    { value: 'dashed', label: 'Dash' },
-                    { value: 'dotted', label: 'Dot' },
-                    { value: 'none', label: 'None' },
-                  ].map((s) => (
-                    <Button
-                      key={s.value}
-                      variant={(style.borderStyle || 'solid') === s.value ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() =>
-                        updateNodeStyle(selectedNode.id, {
-                          borderStyle: s.value as 'solid' | 'dashed' | 'dotted' | 'none',
-                          // When "none", also set borderWidth to 0 to fully hide the border
-                          ...(s.value === 'none' ? { borderWidth: 0 } : {}),
-                        })
-                      }
-                    >
-                      {s.label}
-                    </Button>
-                  ))}
-                </div>
+                <select
+                  value={style.borderStyle || 'solid'}
+                  onChange={(e) =>
+                    updateNodeStyle(selectedNode.id, {
+                      borderStyle: e.target.value as 'solid' | 'dashed' | 'dotted' | 'none',
+                      ...(e.target.value === 'none' ? { borderWidth: 0 } : {}),
+                    })
+                  }
+                  className="w-full h-8 text-sm border rounded px-2 bg-background"
+                >
+                  <option value="solid">Solid</option>
+                  <option value="dashed">Dashed</option>
+                  <option value="dotted">Dotted</option>
+                  <option value="none">None</option>
+                </select>
               </div>
 
               {/* Border Radius */}
@@ -981,6 +1187,24 @@ export function PropertiesPanel() {
                     <Strikethrough className="w-4 h-4" />
                   </Button>
                 </div>
+              </div>
+
+              {/* Text Wrap */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Text Wrap</Label>
+                <select
+                  value={style.textWrap || 'wrap'}
+                  onChange={(e) =>
+                    updateNodeStyle(selectedNode.id, {
+                      textWrap: e.target.value as 'wrap' | 'nowrap' | 'truncate',
+                    })
+                  }
+                  className="w-full h-8 text-sm border rounded px-2 bg-background"
+                >
+                  <option value="wrap">Wrap</option>
+                  <option value="nowrap">No Wrap</option>
+                  <option value="truncate">Truncate</option>
+                </select>
               </div>
 
               {/* Text Alignment */}
@@ -1201,11 +1425,47 @@ export function PropertiesPanel() {
               {/* Z-Order */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Layer Order</Label>
-                <div className="flex gap-1">
+                <div className="grid grid-cols-2 gap-1">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 flex-1 text-xs"
+                    className="h-8 text-xs"
+                    onClick={() => {
+                      const currentNodes = useEditorStore.getState().nodes
+                      const idx = currentNodes.findIndex((n) => n.id === selectedNode.id)
+                      if (idx < currentNodes.length - 1) {
+                        const newNodes = [...currentNodes]
+                        const node = newNodes.splice(idx, 1)[0]
+                        newNodes.push(node) // Move to end (front)
+                        useEditorStore.setState({ nodes: newNodes, isDirty: true })
+                      }
+                    }}
+                  >
+                    <ChevronUp className="w-3 h-3 mr-1" />
+                    To Front
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => {
+                      const currentNodes = useEditorStore.getState().nodes
+                      const idx = currentNodes.findIndex((n) => n.id === selectedNode.id)
+                      if (idx > 0) {
+                        const newNodes = [...currentNodes]
+                        const node = newNodes.splice(idx, 1)[0]
+                        newNodes.unshift(node) // Move to beginning (back)
+                        useEditorStore.setState({ nodes: newNodes, isDirty: true })
+                      }
+                    }}
+                  >
+                    <ChevronDown className="w-3 h-3 mr-1" />
+                    To Back
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
                     onClick={() => {
                       const currentNodes = useEditorStore.getState().nodes
                       const idx = currentNodes.findIndex((n) => n.id === selectedNode.id)
@@ -1216,13 +1476,12 @@ export function PropertiesPanel() {
                       }
                     }}
                   >
-                    <ChevronUp className="w-3 h-3 mr-1" />
                     Forward
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 flex-1 text-xs"
+                    className="h-8 text-xs"
                     onClick={() => {
                       const currentNodes = useEditorStore.getState().nodes
                       const idx = currentNodes.findIndex((n) => n.id === selectedNode.id)
@@ -1233,8 +1492,7 @@ export function PropertiesPanel() {
                       }
                     }}
                   >
-                    <ChevronDown className="w-3 h-3 mr-1" />
-                    Back
+                    Backward
                   </Button>
                 </div>
               </div>
