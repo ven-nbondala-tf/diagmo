@@ -94,3 +94,4 @@ export {
   MenubarShortcut,
 } from './menubar'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs'
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from './popover'

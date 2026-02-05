@@ -5,6 +5,10 @@ import {
   Button,
   ScrollArea,
   Accordion,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
 } from '@/components/ui'
 import {
   Trash2,
@@ -150,18 +154,40 @@ export function PropertiesPanel() {
         </p>
       </div>
 
-      {/* Scrollable content */}
-      <ScrollArea className="flex-1">
-        <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full">
-          <ImageSection {...sectionProps} />
-          <FillSection {...sectionProps} />
-          <BorderSection {...sectionProps} />
-          <ShadowSection {...sectionProps} />
-          <TextSection {...sectionProps} />
-          <SizeSection {...sectionProps} />
-          <ArrangeSection {...sectionProps} />
-        </Accordion>
-      </ScrollArea>
+      {/* Tabbed content */}
+      <Tabs defaultValue="style" className="flex-1 flex flex-col overflow-hidden">
+        <div className="px-3 pt-2 border-b">
+          <TabsList className="w-full">
+            <TabsTrigger value="style" className="flex-1 text-xs">Style</TabsTrigger>
+            <TabsTrigger value="text" className="flex-1 text-xs">Text</TabsTrigger>
+            <TabsTrigger value="layout" className="flex-1 text-xs">Layout</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <ScrollArea className="flex-1">
+          <TabsContent value="style" className="m-0 p-0">
+            <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full">
+              <ImageSection {...sectionProps} />
+              <FillSection {...sectionProps} />
+              <BorderSection {...sectionProps} />
+              <ShadowSection {...sectionProps} />
+            </Accordion>
+          </TabsContent>
+
+          <TabsContent value="text" className="m-0 p-0">
+            <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full">
+              <TextSection {...sectionProps} />
+            </Accordion>
+          </TabsContent>
+
+          <TabsContent value="layout" className="m-0 p-0">
+            <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full">
+              <SizeSection {...sectionProps} />
+              <ArrangeSection {...sectionProps} />
+            </Accordion>
+          </TabsContent>
+        </ScrollArea>
+      </Tabs>
 
       {/* Actions Footer */}
       <div className="p-3 border-t space-y-2">
