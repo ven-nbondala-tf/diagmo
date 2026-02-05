@@ -77,7 +77,7 @@ export function DiagramCard({ diagram, onClick }: DiagramCardProps) {
   return (
     <>
       <Card
-        className="cursor-pointer hover:shadow-md transition-shadow group relative"
+        className="cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 ease-out group relative"
         onClick={onClick}
       >
         <div className="absolute top-2 right-2 z-10">
@@ -143,10 +143,10 @@ export function DiagramCard({ diagram, onClick }: DiagramCardProps) {
               <img
                 src={diagram.thumbnail}
                 alt={diagram.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
             ) : (
-              <FileImage className="h-12 w-12 text-muted-foreground" />
+              <FileImage className="h-12 w-12 text-muted-foreground transition-transform duration-300 group-hover:scale-110" />
             )}
           </div>
           <CardTitle className="text-lg truncate">{diagram.name}</CardTitle>

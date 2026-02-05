@@ -88,6 +88,16 @@
   transition: box-shadow 0.15s ease;
 }
 
+/* Node hover - subtle lift effect */
+.react-flow__node:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Selected node - slightly stronger lift */
+.react-flow__node.selected {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
 /* Node being dragged */
 .react-flow__node.dragging {
   cursor: grabbing !important;
@@ -259,4 +269,39 @@
   height: 100% !important;
   /* Preserve aspect ratio and fit within container */
   object-fit: contain;
+}
+
+/* ========== COMMAND PALETTE (cmdk) ========== */
+
+[cmdk-overlay] {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 50;
+}
+
+[cmdk-dialog] {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 20vh;
+}
+
+/* ========== SELECTION BOX STYLING ========== */
+
+/* Selection rectangle (drag-select / lasso) */
+.react-flow__selection {
+  background: rgba(59, 130, 246, 0.08) !important;
+  border: 1.5px dashed rgba(59, 130, 246, 0.5) !important;
+  border-radius: 4px !important;
+}
+
+/* The "nodesselection" rectangle around all selected nodes */
+.react-flow__nodesselection-rect {
+  background: rgba(59, 130, 246, 0.04) !important;
+  border: 1.5px dashed rgba(59, 130, 246, 0.4) !important;
+  border-radius: 4px !important;
 }

@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
 import { useEditorStore } from '@/stores/editorStore'
 import { useUpdateDiagram } from '@/hooks'
 import { exportService } from '@/services/exportService'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
-import type { Diagram } from '@/types'
+import type { Diagram, DiagramNode, DiagramEdge } from '@/types'
 import {
   Button,
   Input,
@@ -26,6 +26,7 @@ import {
 import { AUTO_SAVE_INTERVAL } from '@/constants'
 import { toast } from 'sonner'
 import { MenuBar } from './MenuBar'
+import { CommandPalette } from './CommandPalette'
 
 interface EditorHeaderProps {
   diagram: Diagram
@@ -69,11 +70,23 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
 
     setSaving(true)
     try {
+      // Generate thumbnail
+      let thumbnail: string | undefined
+      const viewportEl = document.querySelector('.react-flow__viewport') as HTMLElement
+      if (viewportEl && nodes.length > 0) {
+        try {
+          thumbnail = await exportService.generateThumbnail(viewportEl, nodes)
+        } catch {
+          // Thumbnail generation is non-critical
+        }
+      }
+
       await updateDiagram.mutateAsync({
         id: diagram.id,
         name,
         nodes,
         edges,
+        ...(thumbnail ? { thumbnail } : {}),
       })
       setDirty(false)
       setLastSaved(new Date())
@@ -171,6 +184,37 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
     }
   }
 
+  // Import from JSON
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImport = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string)
+        if (!data.nodes || !Array.isArray(data.nodes) || !data.edges || !Array.isArray(data.edges)) {
+          toast.error('Invalid diagram file: missing nodes or edges')
+          return
+        }
+        useEditorStore.getState().importDiagram(data.nodes as DiagramNode[], data.edges as DiagramEdge[])
+        if (data.name) setName(data.name)
+        toast.success('Diagram imported')
+      } catch {
+        toast.error('Failed to parse JSON file')
+      }
+    }
+    reader.readAsText(file)
+    // Reset so the same file can be imported again
+    e.target.value = ''
+  }, [])
+
   // Auto-save
   useEffect(() => {
     const interval = setInterval(() => {
@@ -197,6 +241,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           diagramName={name}
           onSave={handleSave}
           onExport={handleExport}
+          onImport={handleImport}
           saving={saving}
         />
 
@@ -242,6 +287,18 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           </span>
         </div>
       </header>
+
+      {/* Hidden file input for JSON import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* Command Palette */}
+      <CommandPalette onSave={handleSave} onExport={handleExport} onImport={handleImport} />
 
       <Dialog open={showShortcuts} onOpenChange={setShowShortcuts}>
         <DialogContent>

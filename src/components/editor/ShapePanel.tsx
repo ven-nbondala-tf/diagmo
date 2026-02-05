@@ -17,7 +17,8 @@ import {
 } from '@/components/ui'
 import { SHAPE_CATEGORIES, SHAPE_LABELS, CLOUD_PROVIDER_CATEGORIES } from '@/constants'
 import type { ShapeType, WebImageResult } from '@/types'
-import { Search, ChevronRight, Shapes, ImageIcon } from 'lucide-react'
+import { Search, ChevronRight, ChevronLeft, Shapes, ImageIcon, Square, Diamond, Circle, Type, ArrowRight, StickyNote } from 'lucide-react'
+import { Button } from '@/components/ui'
 import { cloudIconComponents, type CloudIconType } from './icons'
 import { WebImageSearch } from './WebImageSearch'
 
@@ -705,8 +706,19 @@ const countCloudProviderShapes = (subcategories: Record<string, { shapes: ShapeT
   return Object.values(subcategories).reduce((total, sub) => total + sub.shapes.length, 0)
 }
 
+const collapsedShapes: { type: ShapeType; icon: React.ElementType; label: string }[] = [
+  { type: 'rectangle', icon: Square, label: 'Rectangle' },
+  { type: 'diamond', icon: Diamond, label: 'Diamond' },
+  { type: 'circle', icon: Circle, label: 'Circle' },
+  { type: 'text', icon: Type, label: 'Text' },
+  { type: 'arrow-right', icon: ArrowRight, label: 'Arrow' },
+  { type: 'note', icon: StickyNote, label: 'Note' },
+]
+
 export function ShapePanel() {
   const addNode = useEditorStore((state) => state.addNode)
+  const shapePanelCollapsed = useEditorStore((state) => state.shapePanelCollapsed)
+  const toggleShapePanel = useEditorStore((state) => state.toggleShapePanel)
   const [mainTab, setMainTab] = useState<'shapes' | 'images'>('shapes')
   const [searchQuery, setSearchQuery] = useState('')
   // Start with empty array = all collapsed by default
@@ -880,12 +892,42 @@ export function ShapePanel() {
 
   const hasResults = Object.keys(filteredCategories).length > 0 || Object.keys(filteredCloudCategories).length > 0
 
+  if (shapePanelCollapsed) {
+    return (
+      <div className="w-12 border-r bg-background flex flex-col h-full items-center py-2 gap-1">
+        <Button variant="ghost" size="icon" className="h-8 w-8 mb-2" onClick={toggleShapePanel} title="Expand Library (Ctrl+B)">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        {collapsedShapes.map(({ type, icon: Icon, label }) => (
+          <Tooltip key={type}>
+            <TooltipTrigger asChild>
+              <button
+                className="h-8 w-8 flex items-center justify-center rounded hover:bg-accent transition-colors cursor-grab"
+                draggable
+                onDragStart={(e) => onDragStart(e, type)}
+                onClick={() => handleClick(type)}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{label}</TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div className="w-64 border-r bg-background flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b">
-        <h2 className="font-semibold">Library</h2>
-        <p className="text-xs text-muted-foreground">Drag or click to add</p>
+      <div className="p-4 border-b flex items-center justify-between">
+        <div>
+          <h2 className="font-semibold">Library</h2>
+          <p className="text-xs text-muted-foreground">Drag or click to add</p>
+        </div>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleShapePanel} title="Collapse Library (Ctrl+B)">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Main tabs: Shapes | Web Images */}

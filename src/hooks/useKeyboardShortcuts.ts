@@ -124,6 +124,18 @@ export function useKeyboardShortcuts(callbacks?: KeyboardShortcutCallbacks) {
         event.preventDefault()
         toggleSnapToGrid()
       }
+
+      // Toggle Shape Panel: Ctrl+B
+      if (isMod && event.key === 'b') {
+        event.preventDefault()
+        useEditorStore.getState().toggleShapePanel()
+      }
+
+      // Command Palette: Ctrl+K
+      if (isMod && event.key === 'k') {
+        event.preventDefault()
+        useEditorStore.getState().toggleCommandPalette()
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)

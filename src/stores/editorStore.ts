@@ -30,6 +30,8 @@ interface EditorState {
   isDirty: boolean
   propertiesPanelOpen: boolean
   interactionMode: 'select' | 'pan'
+  shapePanelCollapsed: boolean
+  commandPaletteOpen: boolean
 }
 
 interface EditorActions {
@@ -69,6 +71,10 @@ interface EditorActions {
   togglePropertiesPanel: () => void
   setPropertiesPanelOpen: (open: boolean) => void
   setInteractionMode: (mode: 'select' | 'pan') => void
+  toggleShapePanel: () => void
+  toggleCommandPalette: () => void
+  setCommandPaletteOpen: (open: boolean) => void
+  importDiagram: (nodes: DiagramNode[], edges: DiagramEdge[]) => void
   // Granular node update actions (replace direct setState)
   updateNodePosition: (id: string, position: { x?: number; y?: number }) => void
   updateNodeDimensions: (ids: string[], dimensions: { width?: number; height?: number }) => void
@@ -92,6 +98,8 @@ const initialState: EditorState = {
   gridSize: 20,
   propertiesPanelOpen: true,
   interactionMode: 'select',
+  shapePanelCollapsed: false,
+  commandPaletteOpen: false,
   past: [],
   future: [],
   isDirty: false,
@@ -694,6 +702,29 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   setInteractionMode: (mode: 'select' | 'pan') => {
     set({ interactionMode: mode })
+  },
+
+  toggleShapePanel: () => {
+    set((state) => ({ shapePanelCollapsed: !state.shapePanelCollapsed }))
+  },
+
+  toggleCommandPalette: () => {
+    set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen }))
+  },
+
+  setCommandPaletteOpen: (open: boolean) => {
+    set({ commandPaletteOpen: open })
+  },
+
+  importDiagram: (nodes, edges) => {
+    get().pushHistory()
+    set({
+      nodes,
+      edges,
+      selectedNodes: [],
+      selectedEdges: [],
+      isDirty: true,
+    })
   },
 
   // Update a single node's position (for properties panel X/Y inputs)

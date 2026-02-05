@@ -182,12 +182,22 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           className="bg-muted/30"
         >
           {gridEnabled && (
-            <Background
-              variant={BackgroundVariant.Dots}
-              gap={gridSize}
-              size={1}
-              color="#d1d5db"
-            />
+            <>
+              <Background
+                id="major-grid"
+                variant={BackgroundVariant.Lines}
+                gap={gridSize * 5}
+                lineWidth={0.5}
+                color="rgba(0, 0, 0, 0.08)"
+              />
+              <Background
+                id="minor-grid"
+                variant={BackgroundVariant.Lines}
+                gap={gridSize}
+                lineWidth={0.3}
+                color="rgba(0, 0, 0, 0.04)"
+              />
+            </>
           )}
           <MiniMap
             nodeStrokeColor="#374151"

@@ -1,6 +1,7 @@
 import { toPng, toSvg } from 'html-to-image'
 import { jsPDF } from 'jspdf'
-import type { ExportOptions } from '@/types'
+import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
+import type { ExportOptions, DiagramNode } from '@/types'
 
 export const exportService = {
   async exportToPng(
@@ -61,6 +62,33 @@ export const exportService = {
     pdf.addImage(pngDataUrl, 'PNG', padding, padding, img.width, img.height)
 
     return pdf.output('blob')
+  },
+
+  async generateThumbnail(
+    element: HTMLElement,
+    nodes: DiagramNode[],
+    width = 400,
+    height = 225
+  ): Promise<string> {
+    const padding = 20
+    const bounds = getNodesBounds(nodes)
+    const viewport = getViewportForBounds(bounds, width, height, 0.5, 2, padding)
+
+    const originalTransform = element.style.transform
+    element.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
+
+    try {
+      const dataUrl = await toPng(element, {
+        quality: 0.8,
+        backgroundColor: '#ffffff',
+        width,
+        height,
+        pixelRatio: 1,
+      })
+      return dataUrl
+    } finally {
+      element.style.transform = originalTransform
+    }
   },
 
   downloadFile(data: string | Blob, filename: string): void {

@@ -81,7 +81,7 @@ export function SelectionToolbar() {
 
   return (
     <div
-      className="fixed flex items-center gap-1 bg-background border rounded-md p-1 shadow-lg z-50"
+      className="fixed flex items-center gap-1 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 shadow-lg ring-1 ring-black/5 rounded-xl p-1 z-50"
       style={{ left, top }}
     >
       {/* Color quick-change */}

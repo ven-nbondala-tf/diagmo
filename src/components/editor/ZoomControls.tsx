@@ -10,7 +10,7 @@ export function ZoomControls() {
   const setInteractionMode = useEditorStore((state) => state.setInteractionMode)
 
   return (
-    <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-background border rounded-md p-1 shadow-sm z-10">
+    <div className="absolute bottom-4 left-4 flex items-center gap-1 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 shadow-lg ring-1 ring-black/5 rounded-xl p-1 z-10">
       {/* Mode toggle */}
       <Button
         variant={interactionMode === 'select' ? 'secondary' : 'ghost'}
