@@ -28,6 +28,7 @@ export interface Diagram {
   folderId?: string
   nodes: DiagramNode[]
   edges: DiagramEdge[]
+  layers?: Layer[]
   thumbnail?: string
   createdAt: string
   updatedAt: string
@@ -53,6 +54,16 @@ export interface DBColumn {
   type: string
   isPrimaryKey?: boolean
   isNullable?: boolean
+}
+
+// Layer type for organizing shapes
+export interface Layer {
+  id: string
+  name: string
+  visible: boolean
+  locked: boolean
+  color?: string  // Optional color indicator
+  order: number   // For layer ordering (higher = on top)
 }
 
 export interface DiagramNode extends Node {
@@ -83,6 +94,8 @@ export interface DiagramNode extends Node {
     parentId?: string  // ID of parent container
     isCollapsed?: boolean
     containerColor?: string  // Header color for containers
+    // Layer assignment
+    layerId?: string  // ID of layer this node belongs to
   }
 }
 

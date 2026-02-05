@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { nanoid } from 'nanoid'
-import { PanelRightOpen } from 'lucide-react'
+import { PanelRightOpen, Layers } from 'lucide-react'
 import { useEditorStore } from '@/stores/editorStore'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import type { Diagram, DiagramNode, DiagramEdge, ShapeType } from '@/types'
@@ -22,6 +22,7 @@ import { nodeTypes } from './nodes'
 import { edgeTypes } from './edges'
 import { ShapePanel } from './ShapePanel'
 import { PropertiesPanel } from './properties'
+import { LayersPanel } from './LayersPanel'
 import { ZoomControls } from './ZoomControls'
 import { SelectionToolbar } from './SelectionToolbar'
 import { QuickShapeBar } from './QuickShapeBar'
@@ -75,12 +76,15 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const setEdges = useEditorStore((state) => state.setEdges)
   const propertiesPanelOpen = useEditorStore((state) => state.propertiesPanelOpen)
   const togglePropertiesPanel = useEditorStore((state) => state.togglePropertiesPanel)
+  const layersPanelOpen = useEditorStore((state) => state.layersPanelOpen)
+  const toggleLayersPanel = useEditorStore((state) => state.toggleLayersPanel)
   const interactionMode = useEditorStore((state) => state.interactionMode)
+  const layers = useEditorStore((state) => state.layers)
 
   // Load diagram on mount
   useEffect(() => {
-    loadDiagram(diagram.nodes, diagram.edges)
-  }, [diagram.id, diagram.nodes, diagram.edges, loadDiagram])
+    loadDiagram(diagram.nodes, diagram.edges, diagram.layers)
+  }, [diagram.id, diagram.nodes, diagram.edges, diagram.layers, loadDiagram])
 
   const onSelectionChange = useCallback(
     ({ nodes, edges }: OnSelectionChangeParams) => {
@@ -232,6 +236,21 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
     [screenToFlowPosition, addNode]
   )
 
+  // Filter nodes based on layer visibility
+  const hiddenLayerIds = new Set(
+    layers.filter((l) => !l.visible).map((l) => l.id)
+  )
+  const visibleNodes = nodes.filter((node) => {
+    const layerId = node.data.layerId || 'default-layer'
+    return !hiddenLayerIds.has(layerId)
+  })
+
+  // Filter edges that connect to hidden nodes
+  const visibleNodeIds = new Set(visibleNodes.map((n) => n.id))
+  const visibleEdges = edges.filter(
+    (edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)
+  )
+
   return (
     <div className="flex-1 flex overflow-hidden">
       <ErrorBoundary>
@@ -239,8 +258,8 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
       </ErrorBoundary>
       <div ref={reactFlowWrapper} className="flex-1 relative" onDoubleClick={onPaneDoubleClick}>
         <ReactFlow
-          nodes={nodes}
-          edges={edges}
+          nodes={visibleNodes}
+          edges={visibleEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -292,9 +311,20 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         <SelectionToolbar />
         <QuickShapeBar />
         <ZoomControls />
-        {/* Toggle button when panel is closed */}
-        {!propertiesPanelOpen && (
-          <div className="absolute right-4 top-4 z-10">
+        {/* Toggle buttons when panels are closed */}
+        <div className="absolute right-4 top-4 z-10 flex gap-2">
+          {!layersPanelOpen && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 bg-background shadow-md"
+              onClick={toggleLayersPanel}
+              title="Open Layers Panel"
+            >
+              <Layers className="w-4 h-4" />
+            </Button>
+          )}
+          {!propertiesPanelOpen && (
             <Button
               variant="outline"
               size="sm"
@@ -304,9 +334,14 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             >
               <PanelRightOpen className="w-4 h-4" />
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+      {layersPanelOpen && (
+        <ErrorBoundary>
+          <LayersPanel />
+        </ErrorBoundary>
+      )}
       {propertiesPanelOpen && (
         <ErrorBoundary>
           <PropertiesPanel />

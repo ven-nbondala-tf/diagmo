@@ -9,7 +9,7 @@ import {
   MarkerType,
 } from '@xyflow/react'
 import { nanoid } from 'nanoid'
-import type { DiagramNode, DiagramEdge, ShapeType, NodeStyle, EdgeStyle, HistoryEntry } from '@/types'
+import type { DiagramNode, DiagramEdge, ShapeType, NodeStyle, EdgeStyle, HistoryEntry, Layer } from '@/types'
 import { DEFAULT_NODE_STYLE, MAX_HISTORY_LENGTH, SHAPE_LABELS } from '@/constants'
 
 type AlignType = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom'
@@ -32,6 +32,10 @@ interface EditorState {
   interactionMode: 'select' | 'pan'
   shapePanelCollapsed: boolean
   commandPaletteOpen: boolean
+  // Layers
+  layers: Layer[]
+  activeLayerId: string | null
+  layersPanelOpen: boolean
 }
 
 interface EditorActions {
@@ -58,7 +62,7 @@ interface EditorActions {
   redo: () => void
   pushHistory: () => void
   resetEditor: () => void
-  loadDiagram: (nodes: DiagramNode[], edges: DiagramEdge[]) => void
+  loadDiagram: (nodes: DiagramNode[], edges: DiagramEdge[], layers?: Layer[]) => void
   setDirty: (dirty: boolean) => void
   // New actions for Set 3
   alignNodes: (type: AlignType) => void
@@ -82,9 +86,30 @@ interface EditorActions {
   bringForward: (ids: string[]) => void
   sendBackward: (ids: string[]) => void
   sendToBack: (ids: string[]) => void
+  // Layer actions
+  addLayer: (name?: string) => void
+  deleteLayer: (id: string) => void
+  updateLayer: (id: string, updates: Partial<Layer>) => void
+  toggleLayerVisibility: (id: string) => void
+  toggleLayerLock: (id: string) => void
+  setActiveLayer: (id: string | null) => void
+  moveLayerUp: (id: string) => void
+  moveLayerDown: (id: string) => void
+  assignNodesToLayer: (nodeIds: string[], layerId: string | null) => void
+  toggleLayersPanel: () => void
+  setLayers: (layers: Layer[]) => void
 }
 
 type EditorStore = EditorState & EditorActions
+
+// Default layer created when diagram starts
+const DEFAULT_LAYER: Layer = {
+  id: 'default-layer',
+  name: 'Default',
+  visible: true,
+  locked: false,
+  order: 0,
+}
 
 const initialState: EditorState = {
   nodes: [],
@@ -103,6 +128,10 @@ const initialState: EditorState = {
   past: [],
   future: [],
   isDirty: false,
+  // Layers
+  layers: [DEFAULT_LAYER],
+  activeLayerId: 'default-layer',
+  layersPanelOpen: false,
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -112,17 +141,30 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   setEdges: (edges) => set({ edges, isDirty: true }),
 
   onNodesChange: (changes) => {
-    const { nodes } = get()
+    const { nodes, layers } = get()
 
-    // Filter out position changes for locked nodes
+    // Create a set of locked layer IDs
+    const lockedLayerIds = new Set(
+      layers.filter((l) => l.locked).map((l) => l.id)
+    )
+
+    // Check if a node is effectively locked (either node lock or layer lock)
+    const isNodeLocked = (node: DiagramNode | undefined): boolean => {
+      if (!node) return false
+      if (node.data.locked) return true
+      const layerId = node.data.layerId || 'default-layer'
+      return lockedLayerIds.has(layerId)
+    }
+
+    // Filter out position changes for locked nodes or nodes on locked layers
     const filteredChanges = changes.filter((change) => {
       if (change.type === 'position' && 'id' in change) {
         const node = nodes.find((n) => n.id === change.id)
-        if (node?.data.locked) return false
+        if (isNodeLocked(node)) return false
       }
       if (change.type === 'remove' && 'id' in change) {
         const node = nodes.find((n) => n.id === change.id)
-        if (node?.data.locked) return false
+        if (isNodeLocked(node)) return false
       }
       return true
     })
@@ -166,8 +208,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         if (movedNodeIds.has(node.id)) return node
         // Skip if node has no group
         if (!node.data.groupId) return node
-        // Skip if node is locked
-        if (node.data.locked) return node
+        // Skip if node is locked (either node lock or layer lock)
+        if (isNodeLocked(node)) return node
 
         const delta = groupDeltas.get(node.data.groupId)
         if (!delta) return node
@@ -239,6 +281,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const dimensions = customDimensions || getDefaultDimensions(type)
     // Merge styles properly: extraData.style overrides defaults, doesn't replace
     const { style: extraStyle, ...restExtraData } = extraData || {}
+    const { activeLayerId } = get()
     const newNode: DiagramNode = {
       id: nanoid(),
       type: 'custom',
@@ -248,6 +291,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         label: getDefaultLabel(type),
         type,
         style: { ...DEFAULT_NODE_STYLE, ...extraStyle },
+        layerId: activeLayerId || undefined,
         ...restExtraData,
       },
     }
@@ -313,12 +357,20 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   },
 
   deleteSelected: () => {
-    const { nodes, edges, selectedNodes, selectedEdges } = get()
+    const { nodes, edges, selectedNodes, selectedEdges, layers } = get()
 
-    // Filter out locked nodes from deletion
+    // Create a set of locked layer IDs
+    const lockedLayerIds = new Set(
+      layers.filter((l) => l.locked).map((l) => l.id)
+    )
+
+    // Filter out locked nodes from deletion (node lock or layer lock)
     const unlockedSelectedNodes = selectedNodes.filter((id) => {
       const node = nodes.find((n) => n.id === id)
-      return !node?.data.locked
+      if (!node) return false
+      if (node.data.locked) return false
+      const layerId = node.data.layerId || 'default-layer'
+      return !lockedLayerIds.has(layerId)
     })
 
     if (unlockedSelectedNodes.length === 0 && selectedEdges.length === 0) return
@@ -444,10 +496,14 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   resetEditor: () => set(initialState),
 
-  loadDiagram: (nodes, edges) => {
+  loadDiagram: (nodes, edges, layers) => {
+    // Use provided layers or default layer
+    const loadedLayers = layers && layers.length > 0 ? layers : [DEFAULT_LAYER]
     set({
       nodes,
       edges,
+      layers: loadedLayers,
+      activeLayerId: loadedLayers[0]?.id || null,
       past: [],
       future: [],
       selectedNodes: [],
@@ -819,6 +875,128 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       return { ...n, zIndex: minZ - offset++ }
     })
     set({ nodes: newNodes, isDirty: true })
+  },
+
+  // Layer actions
+  addLayer: (name) => {
+    const { layers } = get()
+    const maxOrder = Math.max(...layers.map((l) => l.order), -1)
+    const newLayer: Layer = {
+      id: nanoid(),
+      name: name || `Layer ${layers.length + 1}`,
+      visible: true,
+      locked: false,
+      order: maxOrder + 1,
+    }
+    set({
+      layers: [...layers, newLayer],
+      activeLayerId: newLayer.id,
+      isDirty: true,
+    })
+  },
+
+  deleteLayer: (id) => {
+    const { layers, nodes, activeLayerId } = get()
+    // Don't delete the last layer
+    if (layers.length <= 1) return
+
+    const newLayers = layers.filter((l) => l.id !== id)
+    // Move nodes from deleted layer to first available layer
+    const fallbackLayer = newLayers[0]
+    const newNodes = nodes.map((n) =>
+      n.data.layerId === id
+        ? { ...n, data: { ...n.data, layerId: fallbackLayer.id } }
+        : n
+    )
+
+    set({
+      layers: newLayers,
+      nodes: newNodes,
+      activeLayerId: activeLayerId === id ? fallbackLayer.id : activeLayerId,
+      isDirty: true,
+    })
+  },
+
+  updateLayer: (id, updates) => {
+    const { layers } = get()
+    set({
+      layers: layers.map((l) => (l.id === id ? { ...l, ...updates } : l)),
+      isDirty: true,
+    })
+  },
+
+  toggleLayerVisibility: (id) => {
+    const { layers } = get()
+    set({
+      layers: layers.map((l) =>
+        l.id === id ? { ...l, visible: !l.visible } : l
+      ),
+      isDirty: true,
+    })
+  },
+
+  toggleLayerLock: (id) => {
+    const { layers } = get()
+    set({
+      layers: layers.map((l) =>
+        l.id === id ? { ...l, locked: !l.locked } : l
+      ),
+      isDirty: true,
+    })
+  },
+
+  setActiveLayer: (id) => {
+    set({ activeLayerId: id })
+  },
+
+  moveLayerUp: (id) => {
+    const { layers } = get()
+    const sortedLayers = [...layers].sort((a, b) => a.order - b.order)
+    const idx = sortedLayers.findIndex((l) => l.id === id)
+    if (idx === sortedLayers.length - 1) return // Already at top
+
+    const currentLayer = sortedLayers[idx]
+    const aboveLayer = sortedLayers[idx + 1]
+    const tempOrder = currentLayer.order
+    currentLayer.order = aboveLayer.order
+    aboveLayer.order = tempOrder
+
+    set({ layers: sortedLayers, isDirty: true })
+  },
+
+  moveLayerDown: (id) => {
+    const { layers } = get()
+    const sortedLayers = [...layers].sort((a, b) => a.order - b.order)
+    const idx = sortedLayers.findIndex((l) => l.id === id)
+    if (idx === 0) return // Already at bottom
+
+    const currentLayer = sortedLayers[idx]
+    const belowLayer = sortedLayers[idx - 1]
+    const tempOrder = currentLayer.order
+    currentLayer.order = belowLayer.order
+    belowLayer.order = tempOrder
+
+    set({ layers: sortedLayers, isDirty: true })
+  },
+
+  assignNodesToLayer: (nodeIds, layerId) => {
+    const { nodes } = get()
+    set({
+      nodes: nodes.map((n) =>
+        nodeIds.includes(n.id)
+          ? { ...n, data: { ...n.data, layerId: layerId || undefined } }
+          : n
+      ),
+      isDirty: true,
+    })
+  },
+
+  toggleLayersPanel: () => {
+    set((state) => ({ layersPanelOpen: !state.layersPanelOpen }))
+  },
+
+  setLayers: (layers) => {
+    set({ layers })
   },
 }))
 
