@@ -104,20 +104,72 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
   // Default font size: 8 for cloud icons, 14 for other shapes
   const defaultFontSize = isCloudIcon ? 10 : 14
 
-  // Generate gradient or solid background
+  // Generate pattern background CSS
+  const getPatternBackground = (bgColor: string, patternColor: string, size: number, opacity: number) => {
+    const patternType = style?.patternType || 'diagonal-lines'
+    const opaqueColor = patternColor.startsWith('#')
+      ? `rgba(${parseInt(patternColor.slice(1, 3), 16)}, ${parseInt(patternColor.slice(3, 5), 16)}, ${parseInt(patternColor.slice(5, 7), 16)}, ${opacity})`
+      : patternColor
+
+    switch (patternType) {
+      case 'diagonal-lines':
+        return `repeating-linear-gradient(45deg, transparent, transparent ${size/2}px, ${opaqueColor} ${size/2}px, ${opaqueColor} ${size/2 + 1}px), ${bgColor}`
+      case 'dots':
+        return `radial-gradient(circle, ${opaqueColor} ${size/6}px, transparent ${size/6}px), ${bgColor}`
+      case 'grid':
+        return `linear-gradient(${opaqueColor} 1px, transparent 1px), linear-gradient(90deg, ${opaqueColor} 1px, transparent 1px), ${bgColor}`
+      case 'crosshatch':
+        return `repeating-linear-gradient(45deg, transparent, transparent ${size/2}px, ${opaqueColor} ${size/2}px, ${opaqueColor} ${size/2 + 0.5}px), repeating-linear-gradient(-45deg, transparent, transparent ${size/2}px, ${opaqueColor} ${size/2}px, ${opaqueColor} ${size/2 + 0.5}px), ${bgColor}`
+      case 'horizontal-lines':
+        return `repeating-linear-gradient(0deg, transparent, transparent ${size - 1}px, ${opaqueColor} ${size - 1}px, ${opaqueColor} ${size}px), ${bgColor}`
+      case 'vertical-lines':
+        return `repeating-linear-gradient(90deg, transparent, transparent ${size - 1}px, ${opaqueColor} ${size - 1}px, ${opaqueColor} ${size}px), ${bgColor}`
+      default:
+        return bgColor
+    }
+  }
+
+  // Get background size for pattern
+  const getPatternBackgroundSize = () => {
+    const size = style?.patternSize ?? 8
+    const patternType = style?.patternType || 'diagonal-lines'
+    switch (patternType) {
+      case 'dots':
+        return `${size}px ${size}px`
+      case 'grid':
+        return `${size}px ${size}px`
+      default:
+        return undefined
+    }
+  }
+
+  // Generate gradient, pattern, or solid background
   const getBackground = () => {
     const bgColor = style?.backgroundColor || '#ffffff'
+
+    // Pattern takes priority if enabled
+    if (style?.patternEnabled) {
+      const patternColor = style.patternColor || '#6b7280'
+      const patternSize = style.patternSize ?? 8
+      const patternOpacity = style.patternOpacity ?? 1
+      return getPatternBackground(bgColor, patternColor, patternSize, patternOpacity)
+    }
+
+    // Then gradient
     if (style?.gradientEnabled && style?.gradientColor) {
       const angle = style.gradientDirection === 'vertical' ? '180deg' :
                     style.gradientDirection === 'diagonal' ? '135deg' : '90deg'
       return `linear-gradient(${angle}, ${bgColor}, ${style.gradientColor})`
     }
+
     return bgColor
   }
 
+  const hasComplexBackground = style?.gradientEnabled || style?.patternEnabled
   const baseStyle = {
-    backgroundColor: style?.gradientEnabled ? undefined : (style?.backgroundColor || '#ffffff'),
-    background: style?.gradientEnabled ? getBackground() : undefined,
+    backgroundColor: hasComplexBackground ? undefined : (style?.backgroundColor || '#ffffff'),
+    background: hasComplexBackground ? getBackground() : undefined,
+    backgroundSize: style?.patternEnabled ? getPatternBackgroundSize() : undefined,
     borderColor: style?.borderColor || '#9ca3af',
     borderWidth: style?.borderWidth || 1,
     borderStyle: style?.borderStyle || 'solid',

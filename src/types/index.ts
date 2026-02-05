@@ -71,6 +71,13 @@ export interface NodeStyle {
   gradientColor?: string
   gradientDirection?: 'horizontal' | 'vertical' | 'diagonal'
 
+  // Pattern fill
+  patternEnabled?: boolean
+  patternType?: 'diagonal-lines' | 'dots' | 'grid' | 'crosshatch' | 'horizontal-lines' | 'vertical-lines'
+  patternColor?: string
+  patternSize?: number
+  patternOpacity?: number
+
   // Border/Stroke
   borderColor?: string
   borderWidth?: number
