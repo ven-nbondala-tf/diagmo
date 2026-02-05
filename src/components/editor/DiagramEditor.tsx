@@ -7,31 +7,35 @@ import {
   useReactFlow,
   ConnectionLineType,
   ConnectionMode,
+  SelectionMode,
   MarkerType,
   type OnSelectionChangeParams,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
+import { PanelRightOpen } from 'lucide-react'
 import { useEditorStore } from '@/stores/editorStore'
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import type { Diagram, ShapeType } from '@/types'
 import { nodeTypes } from './nodes'
 import { edgeTypes } from './edges'
 import { ShapePanel } from './ShapePanel'
-import { PropertiesPanel } from './PropertiesPanel'
+import { PropertiesPanel } from './properties'
 import { ZoomControls } from './ZoomControls'
 import { EditorToolbar } from './EditorToolbar'
+import { Button } from '@/components/ui'
 
 const defaultEdgeOptions = {
   type: 'labeled', // Use custom labeled edge with smart routing
   animated: false,
   markerEnd: {
     type: MarkerType.ArrowClosed,
-    width: 18,
-    height: 18,
-    color: '#6b7280',
+    width: 8,    // Lucidchart style - small arrow
+    height: 8,
+    color: '#64748b', // Slate gray
   },
   style: {
-    strokeWidth: 1,  // Thinner line - Lucidchart style
-    stroke: '#6b7280',
+    strokeWidth: 1.5,  // Slightly thicker for visibility
+    stroke: '#64748b', // Slate gray
   },
 }
 
@@ -58,21 +62,13 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const addNode = useEditorStore((state) => state.addNode)
   const selectNodes = useEditorStore((state) => state.selectNodes)
   const selectEdges = useEditorStore((state) => state.selectEdges)
-  const deleteSelected = useEditorStore((state) => state.deleteSelected)
   const gridEnabled = useEditorStore((state) => state.gridEnabled)
   const snapToGrid = useEditorStore((state) => state.snapToGrid)
   const gridSize = useEditorStore((state) => state.gridSize)
   const loadDiagram = useEditorStore((state) => state.loadDiagram)
   const setZoom = useEditorStore((state) => state.setZoom)
-  const groupNodes = useEditorStore((state) => state.groupNodes)
-  const ungroupNodes = useEditorStore((state) => state.ungroupNodes)
-  const toggleLockNodes = useEditorStore((state) => state.toggleLockNodes)
-  const copyNodes = useEditorStore((state) => state.copyNodes)
-  const pasteNodes = useEditorStore((state) => state.pasteNodes)
-  const undo = useEditorStore((state) => state.undo)
-  const redo = useEditorStore((state) => state.redo)
-  const toggleGrid = useEditorStore((state) => state.toggleGrid)
-  const toggleSnapToGrid = useEditorStore((state) => state.toggleSnapToGrid)
+  const propertiesPanelOpen = useEditorStore((state) => state.propertiesPanelOpen)
+  const togglePropertiesPanel = useEditorStore((state) => state.togglePropertiesPanel)
 
   // Load diagram on mount
   useEffect(() => {
@@ -104,117 +100,52 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         y: event.clientY,
       })
 
+      // Handle web-image type with additional data
+      if (type === 'web-image') {
+        try {
+          const imageDataStr = event.dataTransfer.getData('application/json')
+          if (imageDataStr) {
+            const imageData = JSON.parse(imageDataStr)
+            const noBorder = imageData.imageType === 'icon' || imageData.imageType === 'gif'
+            // Icons/GIFs: tight 48x48 like cloud icons. Photos: 200px max.
+            const maxSize = noBorder ? 48 : 200
+            const aspectRatio = imageData.width / imageData.height
+            let width = maxSize
+            let height = maxSize
+            if (!noBorder) {
+              if (aspectRatio > 1) {
+                height = maxSize / aspectRatio
+              } else {
+                width = maxSize * aspectRatio
+              }
+            }
+
+            addNode('web-image', position, {
+              imageUrl: imageData.imageUrl,
+              thumbnailUrl: imageData.thumbnailUrl,
+              imageType: imageData.imageType,
+              imageAlt: imageData.alt,
+              objectFit: noBorder ? 'contain' : 'cover',
+              attribution: imageData.attribution,
+              ...(noBorder ? { style: { backgroundColor: 'transparent', borderWidth: 0, borderRadius: 0 } } : {}),
+            }, { width, height })
+            return
+          }
+        } catch (e) {
+          console.error('Error parsing image data:', e)
+        }
+      }
+
       addNode(type, position)
     },
     [screenToFlowPosition, addNode]
   )
 
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't trigger shortcuts when typing in inputs
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
-      ) {
-        return
-      }
-
-      const isMod = event.metaKey || event.ctrlKey
-
-      // Delete: Delete or Backspace
-      if (event.key === 'Delete' || event.key === 'Backspace') {
-        deleteSelected()
-      }
-
-      // Copy: Ctrl+C
-      if (isMod && event.key === 'c') {
-        event.preventDefault()
-        copyNodes()
-      }
-
-      // Paste: Ctrl+V
-      if (isMod && event.key === 'v') {
-        event.preventDefault()
-        pasteNodes()
-      }
-
-      // Duplicate: Ctrl+D
-      if (isMod && event.key === 'd') {
-        event.preventDefault()
-        copyNodes()
-        pasteNodes()
-      }
-
-      // Undo: Ctrl+Z
-      if (isMod && event.key === 'z' && !event.shiftKey) {
-        event.preventDefault()
-        undo()
-      }
-
-      // Redo: Ctrl+Shift+Z or Ctrl+Y
-      if ((isMod && event.key === 'z' && event.shiftKey) || (isMod && event.key === 'y')) {
-        event.preventDefault()
-        redo()
-      }
-
-      // Select All: Ctrl+A
-      if (isMod && event.key === 'a') {
-        event.preventDefault()
-        selectNodes(nodes.map((n) => n.id))
-      }
-
-      // Group: Ctrl+G
-      if (isMod && event.key === 'g' && !event.shiftKey) {
-        event.preventDefault()
-        groupNodes()
-      }
-
-      // Ungroup: Ctrl+Shift+G
-      if (isMod && event.key === 'g' && event.shiftKey) {
-        event.preventDefault()
-        ungroupNodes()
-      }
-
-      // Lock/Unlock: Ctrl+L
-      if (isMod && event.key === 'l') {
-        event.preventDefault()
-        toggleLockNodes()
-      }
-
-      // Toggle Grid: Ctrl+' (quote)
-      if (isMod && event.key === "'") {
-        event.preventDefault()
-        toggleGrid()
-      }
-
-      // Toggle Snap to Grid: Ctrl+Shift+'
-      if (isMod && event.shiftKey && event.key === '"') {
-        event.preventDefault()
-        toggleSnapToGrid()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [
-    deleteSelected,
-    copyNodes,
-    pasteNodes,
-    undo,
-    redo,
-    selectNodes,
-    nodes,
-    groupNodes,
-    ungroupNodes,
-    toggleLockNodes,
-    toggleGrid,
-    toggleSnapToGrid,
-  ])
-
   return (
     <div className="flex-1 flex overflow-hidden">
-      <ShapePanel />
+      <ErrorBoundary>
+        <ShapePanel />
+      </ErrorBoundary>
       <div ref={reactFlowWrapper} className="flex-1 relative">
         <ReactFlow
           nodes={nodes}
@@ -236,7 +167,9 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           snapToGrid={snapToGrid}
           snapGrid={[gridSize, gridSize]}
           fitView
-          selectNodesOnDrag={false}
+          selectionOnDrag={true}
+          panOnDrag={[1, 2]}
+          selectionMode={SelectionMode.Partial}
           className="bg-muted/30"
         >
           {gridEnabled && (
@@ -255,8 +188,26 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         </ReactFlow>
         <EditorToolbar />
         <ZoomControls />
+        {/* Toggle button when panel is closed */}
+        {!propertiesPanelOpen && (
+          <div className="absolute right-4 top-4 z-10">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 bg-background shadow-md"
+              onClick={togglePropertiesPanel}
+              title="Open Properties Panel"
+            >
+              <PanelRightOpen className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </div>
-      <PropertiesPanel />
+      {propertiesPanelOpen && (
+        <ErrorBoundary>
+          <PropertiesPanel />
+        </ErrorBoundary>
+      )}
     </div>
   )
 }

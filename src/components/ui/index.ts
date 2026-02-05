@@ -59,6 +59,23 @@ export { Skeleton } from './skeleton'
 export { Slider } from './slider'
 export { Toaster } from './toaster'
 export {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuCheckboxItem,
+  ContextMenuRadioItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuGroup,
+  ContextMenuPortal,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuRadioGroup,
+} from './context-menu'
+export {
   Menubar,
   MenubarMenu,
   MenubarTrigger,
@@ -76,3 +93,4 @@ export {
   MenubarSub,
   MenubarShortcut,
 } from './menubar'
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs'

@@ -1,8 +1,13 @@
 import { LabeledEdge } from './LabeledEdge'
 
+// All edge types use our custom LabeledEdge for consistent waypoint dragging
 export const edgeTypes = {
   labeled: LabeledEdge,
-  smoothstep: LabeledEdge, // Use our custom edge for smoothstep type too
+  default: LabeledEdge,
+  straight: LabeledEdge,
+  step: LabeledEdge,
+  smoothstep: LabeledEdge,
+  bezier: LabeledEdge,
 }
 
 export { LabeledEdge }

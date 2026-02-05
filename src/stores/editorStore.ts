@@ -10,7 +10,7 @@ import {
 } from '@xyflow/react'
 import { nanoid } from 'nanoid'
 import type { DiagramNode, DiagramEdge, ShapeType, NodeStyle, EdgeStyle, HistoryEntry } from '@/types'
-import { DEFAULT_NODE_STYLE, MAX_HISTORY_LENGTH } from '@/constants'
+import { DEFAULT_NODE_STYLE, MAX_HISTORY_LENGTH, SHAPE_LABELS } from '@/constants'
 
 type AlignType = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom'
 type DistributeType = 'horizontal' | 'vertical'
@@ -28,6 +28,7 @@ interface EditorState {
   past: HistoryEntry[]
   future: HistoryEntry[]
   isDirty: boolean
+  propertiesPanelOpen: boolean
 }
 
 interface EditorActions {
@@ -36,7 +37,7 @@ interface EditorActions {
   onNodesChange: (changes: NodeChange<DiagramNode>[]) => void
   onEdgesChange: (changes: EdgeChange<DiagramEdge>[]) => void
   onConnect: (connection: Connection) => void
-  addNode: (type: ShapeType, position: { x: number; y: number }) => void
+  addNode: (type: ShapeType, position: { x: number; y: number }, extraData?: Partial<DiagramNode['data']>, dimensions?: { width: number; height: number }) => void
   updateNode: (id: string, data: Partial<DiagramNode['data']>) => void
   updateNodeStyle: (id: string, style: Partial<NodeStyle>) => void
   updateEdgeStyle: (id: string, style: Partial<EdgeStyle>) => void
@@ -64,6 +65,15 @@ interface EditorActions {
   lockNodes: () => void
   unlockNodes: () => void
   toggleLockNodes: () => void
+  togglePropertiesPanel: () => void
+  setPropertiesPanelOpen: (open: boolean) => void
+  // Granular node update actions (replace direct setState)
+  updateNodePosition: (id: string, position: { x?: number; y?: number }) => void
+  updateNodeDimensions: (ids: string[], dimensions: { width?: number; height?: number }) => void
+  bringToFront: (ids: string[]) => void
+  bringForward: (ids: string[]) => void
+  sendBackward: (ids: string[]) => void
+  sendToBack: (ids: string[]) => void
 }
 
 type EditorStore = EditorState & EditorActions
@@ -78,6 +88,7 @@ const initialState: EditorState = {
   gridEnabled: true,
   snapToGrid: true,
   gridSize: 20,
+  propertiesPanelOpen: true,
   past: [],
   future: [],
   isDirty: false,
@@ -160,10 +171,15 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       })
     }
 
-    const hasSignificantChange = filteredChanges.some(
-      (c) => c.type === 'position' || c.type === 'dimensions' || c.type === 'remove'
+    // Only push history when drag ENDS (not every frame during drag)
+    // or for non-drag changes (dimensions, remove)
+    const hasDragEnd = filteredChanges.some(
+      (c) => c.type === 'position' && 'dragging' in c && c.dragging === false
     )
-    if (hasSignificantChange) {
+    const hasNonDragChange = filteredChanges.some(
+      (c) => c.type === 'dimensions' || c.type === 'remove'
+    )
+    if (hasDragEnd || hasNonDragChange) {
       get().pushHistory()
     }
     set({ nodes: newNodes, isDirty: true })
@@ -191,13 +207,13 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       type: 'labeled', // Use our custom labeled edge with smart routing
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        width: 18,
-        height: 18,
-        color: '#6b7280',
+        width: 8,    // Lucidchart style - small arrow
+        height: 8,
+        color: '#64748b',
       },
       style: {
-        strokeWidth: 1,  // Thinner line - Lucidchart style
-        stroke: '#6b7280',
+        strokeWidth: 1.5,  // Slightly thicker for visibility
+        stroke: '#64748b', // Slate gray
       },
     }
     set({
@@ -206,10 +222,12 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     })
   },
 
-  addNode: (type, position) => {
+  addNode: (type, position, extraData, customDimensions) => {
     get().pushHistory()
-    // Set initial dimensions based on shape type
-    const dimensions = getDefaultDimensions(type)
+    // Set initial dimensions based on shape type or use custom dimensions
+    const dimensions = customDimensions || getDefaultDimensions(type)
+    // Merge styles properly: extraData.style overrides defaults, doesn't replace
+    const { style: extraStyle, ...restExtraData } = extraData || {}
     const newNode: DiagramNode = {
       id: nanoid(),
       type: 'custom',
@@ -218,7 +236,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       data: {
         label: getDefaultLabel(type),
         type,
-        style: { ...DEFAULT_NODE_STYLE },
+        style: { ...DEFAULT_NODE_STYLE, ...extraStyle },
+        ...restExtraData,
       },
     }
     set({
@@ -309,26 +328,12 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   },
 
   selectNodes: (ids) => {
-    // Mark all nodes with their selection state for React Flow
-    const newNodes = get().nodes.map(node => ({
-      ...node,
-      selected: ids.includes(node.id),
-    }))
-    set({
-      selectedNodes: ids,
-      nodes: newNodes,
-    })
+    // Only track selection in our store - React Flow manages the selected property internally
+    set({ selectedNodes: ids })
   },
   selectEdges: (ids) => {
-    // Mark all edges with their selection state for React Flow
-    const newEdges = get().edges.map(edge => ({
-      ...edge,
-      selected: ids.includes(edge.id),
-    }))
-    set({
-      selectedEdges: ids,
-      edges: newEdges,
-    })
+    // Only track selection in our store - React Flow manages the selected property internally
+    set({ selectedEdges: ids })
   },
 
   copyNodes: () => {
@@ -674,16 +679,150 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
     set({ nodes: newNodes, isDirty: true })
   },
+
+  // Toggle properties panel visibility
+  togglePropertiesPanel: () => {
+    set((state) => ({ propertiesPanelOpen: !state.propertiesPanelOpen }))
+  },
+
+  setPropertiesPanelOpen: (open: boolean) => {
+    set({ propertiesPanelOpen: open })
+  },
+
+  // Update a single node's position (for properties panel X/Y inputs)
+  updateNodePosition: (id, position) => {
+    const { nodes } = get()
+    const newNodes = nodes.map((n) => {
+      if (n.id !== id) return n
+      return {
+        ...n,
+        position: {
+          x: position.x ?? n.position.x,
+          y: position.y ?? n.position.y,
+        },
+      }
+    })
+    set({ nodes: newNodes, isDirty: true })
+  },
+
+  // Update dimensions for one or more nodes (for properties panel W/H inputs)
+  updateNodeDimensions: (ids, dimensions) => {
+    const { nodes } = get()
+    const idSet = new Set(ids)
+    const newNodes = nodes.map((n) => {
+      if (!idSet.has(n.id)) return n
+      return {
+        ...n,
+        style: {
+          ...n.style,
+          ...(dimensions.width !== undefined ? { width: dimensions.width } : {}),
+          ...(dimensions.height !== undefined ? { height: dimensions.height } : {}),
+        },
+      }
+    })
+    set({ nodes: newNodes, isDirty: true })
+  },
+
+  // Bring selected nodes to front (highest z-index)
+  bringToFront: (ids) => {
+    const { nodes } = get()
+    const maxZ = Math.max(...nodes.map((n) => n.zIndex || 0))
+    let offset = 1
+    const idSet = new Set(ids)
+    const newNodes = nodes.map((n) => {
+      if (!idSet.has(n.id)) return n
+      return { ...n, zIndex: maxZ + offset++ }
+    })
+    set({ nodes: newNodes, isDirty: true })
+  },
+
+  // Bring selected nodes one layer forward
+  bringForward: (ids) => {
+    const { nodes } = get()
+    let newNodes = [...nodes]
+    for (const id of ids) {
+      const idx = newNodes.findIndex((n) => n.id === id)
+      if (idx === -1) continue
+      const currentZ = newNodes[idx].zIndex || 0
+      const higherNodes = newNodes.filter((n) => (n.zIndex || 0) > currentZ)
+      if (higherNodes.length > 0) {
+        const nextZ = Math.min(...higherNodes.map((n) => n.zIndex || 0))
+        newNodes[idx] = { ...newNodes[idx], zIndex: nextZ + 1 }
+      }
+    }
+    set({ nodes: newNodes, isDirty: true })
+  },
+
+  // Send selected nodes one layer backward
+  sendBackward: (ids) => {
+    const { nodes } = get()
+    let newNodes = [...nodes]
+    for (const id of ids) {
+      const idx = newNodes.findIndex((n) => n.id === id)
+      if (idx === -1) continue
+      const currentZ = newNodes[idx].zIndex || 0
+      const lowerNodes = newNodes.filter((n) => (n.zIndex || 0) < currentZ)
+      if (lowerNodes.length > 0) {
+        const prevZ = Math.max(...lowerNodes.map((n) => n.zIndex || 0))
+        newNodes[idx] = { ...newNodes[idx], zIndex: prevZ - 1 }
+      }
+    }
+    set({ nodes: newNodes, isDirty: true })
+  },
+
+  // Send selected nodes to back (lowest z-index)
+  sendToBack: (ids) => {
+    const { nodes } = get()
+    const minZ = Math.min(...nodes.map((n) => n.zIndex || 0))
+    let offset = 1
+    const idSet = new Set(ids)
+    const newNodes = nodes.map((n) => {
+      if (!idSet.has(n.id)) return n
+      return { ...n, zIndex: minZ - offset++ }
+    })
+    set({ nodes: newNodes, isDirty: true })
+  },
 }))
 
-function getDefaultLabel(_type: ShapeType): string {
-  // Return empty string - no default text on shapes
+function getDefaultLabel(type: ShapeType): string {
+  // Web images don't need labels by default
+  if (type === 'web-image') {
+    return ''
+  }
+
+  // Cloud icons and office icons get labels by default
+  const isCloudIcon = type.startsWith('aws-') ||
+                      type.startsWith('azure-') ||
+                      type.startsWith('gcp-') ||
+                      type.startsWith('office-') ||
+                      type.startsWith('generic-') ||
+                      type === 'kubernetes' ||
+                      type === 'docker'
+
+  if (isCloudIcon) {
+    return SHAPE_LABELS[type] || ''
+  }
+
+  // Return empty string for regular shapes
   return ''
 }
 
 function getDefaultDimensions(type: ShapeType): { width: number; height: number } {
-  // Cloud icons - compact square size, icon fills the space
-  if (type.startsWith('aws-') || type.startsWith('azure-') || type.startsWith('gcp-')) {
+  // Web images - default size, actual size determined by image
+  if (type === 'web-image') {
+    return { width: 200, height: 150 }
+  }
+
+  // All cloud/service icons - consistent square size
+  const isIconType = type.startsWith('aws-') ||
+                     type.startsWith('azure-') ||
+                     type.startsWith('gcp-') ||
+                     type.startsWith('office-') ||
+                     type.startsWith('generic-') ||
+                     type === 'kubernetes' ||
+                     type === 'docker'
+
+  if (isIconType) {
     return { width: 48, height: 48 }
   }
 

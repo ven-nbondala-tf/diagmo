@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js'
 import { supabase } from '@/services/supabase'
 
@@ -27,8 +26,7 @@ interface AuthActions {
 type AuthStore = AuthState & AuthActions
 
 export const useAuthStore = create<AuthStore>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       user: null,
       session: null,
       loading: false,
@@ -146,13 +144,5 @@ export const useAuthStore = create<AuthStore>()(
           })
         }
       },
-    }),
-    {
-      name: 'diagmo-auth',
-      partialize: () => ({
-        // Only persist minimal auth state
-        // Session will be restored from Supabase
-      }),
-    }
-  )
+    })
 )

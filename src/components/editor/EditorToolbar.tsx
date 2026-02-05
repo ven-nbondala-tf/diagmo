@@ -1,9 +1,6 @@
 import { useEditorStore } from '@/stores/editorStore'
 import {
   Button,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -52,22 +49,18 @@ export function EditorToolbar() {
     <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-background border rounded-md p-1 shadow-sm z-10">
       {/* Align dropdown */}
       <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2"
-                disabled={!hasMultipleSelection}
-              >
-                <AlignStartVertical className="h-4 w-4 mr-1" />
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent>Align Nodes</TooltipContent>
-        </Tooltip>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2"
+            disabled={!hasMultipleSelection}
+            title="Align Nodes"
+          >
+            <AlignStartVertical className="h-4 w-4 mr-1" />
+            <ChevronDown className="h-3 w-3" />
+          </Button>
+        </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={() => alignNodes('left')}>
             <AlignStartVertical className="h-4 w-4 mr-2" />
@@ -99,22 +92,18 @@ export function EditorToolbar() {
 
       {/* Distribute dropdown */}
       <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2"
-                disabled={!hasThreeOrMore}
-              >
-                <AlignHorizontalDistributeCenter className="h-4 w-4 mr-1" />
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent>Distribute Nodes</TooltipContent>
-        </Tooltip>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2"
+            disabled={!hasThreeOrMore}
+            title="Distribute Nodes"
+          >
+            <AlignHorizontalDistributeCenter className="h-4 w-4 mr-1" />
+            <ChevronDown className="h-3 w-3" />
+          </Button>
+        </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={() => distributeNodes('horizontal')}>
             <AlignHorizontalDistributeCenter className="h-4 w-4 mr-2" />
@@ -130,59 +119,45 @@ export function EditorToolbar() {
       <Separator orientation="vertical" className="h-6 mx-1" />
 
       {/* Group/Ungroup */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            disabled={!hasMultipleSelection}
-            onClick={groupNodes}
-          >
-            <Group className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Group Nodes (Ctrl+G)</TooltipContent>
-      </Tooltip>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        disabled={!hasMultipleSelection}
+        onClick={groupNodes}
+        title="Group Nodes (Ctrl+G)"
+      >
+        <Group className="h-4 w-4" />
+      </Button>
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            disabled={!hasGroupedNodes}
-            onClick={ungroupNodes}
-          >
-            <Ungroup className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Ungroup Nodes (Ctrl+Shift+G)</TooltipContent>
-      </Tooltip>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        disabled={!hasGroupedNodes}
+        onClick={ungroupNodes}
+        title="Ungroup Nodes (Ctrl+Shift+G)"
+      >
+        <Ungroup className="h-4 w-4" />
+      </Button>
 
       <Separator orientation="vertical" className="h-6 mx-1" />
 
       {/* Lock/Unlock */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant={allLocked ? 'secondary' : 'ghost'}
-            size="icon"
-            className="h-8 w-8"
-            disabled={!hasSelection}
-            onClick={allLocked ? unlockNodes : lockNodes}
-          >
-            {allLocked ? (
-              <Lock className="h-4 w-4" />
-            ) : (
-              <Unlock className="h-4 w-4" />
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          {allLocked ? 'Unlock Nodes (Ctrl+L)' : 'Lock Nodes (Ctrl+L)'}
-        </TooltipContent>
-      </Tooltip>
+      <Button
+        variant={allLocked ? 'secondary' : 'ghost'}
+        size="icon"
+        className="h-8 w-8"
+        disabled={!hasSelection}
+        onClick={allLocked ? unlockNodes : lockNodes}
+        title={allLocked ? 'Unlock Nodes (Ctrl+L)' : 'Lock Nodes (Ctrl+L)'}
+      >
+        {allLocked ? (
+          <Lock className="h-4 w-4" />
+        ) : (
+          <Unlock className="h-4 w-4" />
+        )}
+      </Button>
     </div>
   )
 }

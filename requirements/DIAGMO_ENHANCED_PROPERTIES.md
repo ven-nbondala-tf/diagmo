@@ -1,4 +1,173 @@
-import { useState, useCallback } from 'react'
+# DIAGMO - Fix Resize, Connector Size & Enhanced Properties
+
+## Issues to Fix
+
+1. **Resize only works from one end** - Need proper 8-handle resize from all corners
+2. **Connector arrow size too large** - Arrow markers are 20x20, too big
+3. **Limited shape properties** - Need more styling options like draw.io/Lucidchart
+
+---
+
+## FIX 1: Proper 8-Handle Resize
+
+The issue is that NodeResizer needs `keepAspectRatio` disabled and proper handle configuration.
+
+### Update CustomNode.tsx - NodeResizer section:
+
+```tsx
+{/* Replace the existing NodeResizer with this */}
+<NodeResizer
+  isVisible={selected && !locked}
+  minWidth={minWidth}
+  minHeight={minHeight}
+  // Enable all 8 handles (4 corners + 4 edges)
+  handleClassName="nodrag"
+  handleStyle={{
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+    backgroundColor: 'white',
+    border: '1px solid #3b82f6',
+  }}
+  lineStyle={{
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+    borderStyle: 'dashed',
+  }}
+  // Don't keep aspect ratio - allow free resize
+  keepAspectRatio={false}
+/>
+```
+
+---
+
+## FIX 2: Smaller Default Connector/Arrow Size
+
+### Update DiagramEditor.tsx:
+
+```tsx
+const defaultEdgeOptions = {
+  type: 'straight',
+  animated: false,
+  markerEnd: {
+    type: MarkerType.ArrowClosed,
+    width: 12,  // Reduced from 20
+    height: 12, // Reduced from 20
+    color: '#6b7280',
+  },
+  style: {
+    strokeWidth: 1.5,  // Reduced from 2
+    stroke: '#6b7280',
+  },
+}
+```
+
+### Update editorStore.ts - onConnect function:
+
+```tsx
+onConnect: (connection) => {
+  get().pushHistory()
+  const newEdge: DiagramEdge = {
+    id: nanoid(),
+    source: connection.source!,
+    target: connection.target!,
+    sourceHandle: connection.sourceHandle,
+    targetHandle: connection.targetHandle,
+    type: 'straight',
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      width: 12,  // Smaller arrows
+      height: 12,
+      color: '#6b7280',
+    },
+    style: {
+      strokeWidth: 1.5,
+      stroke: '#6b7280',
+    },
+  }
+  set({
+    edges: addEdge(newEdge, get().edges) as DiagramEdge[],
+    isDirty: true,
+  })
+},
+```
+
+---
+
+## FIX 3: Enhanced Properties Panel
+
+Replace your PropertiesPanel.tsx with this comprehensive version that has many more options:
+
+### Updated types/index.ts - Enhanced NodeStyle:
+
+```typescript
+export interface NodeStyle {
+  // Fill
+  backgroundColor?: string
+  backgroundOpacity?: number
+  gradientEnabled?: boolean
+  gradientColor?: string
+  gradientDirection?: 'horizontal' | 'vertical' | 'diagonal'
+  
+  // Border/Stroke
+  borderColor?: string
+  borderWidth?: number
+  borderRadius?: number
+  borderStyle?: 'solid' | 'dashed' | 'dotted' | 'none'
+  borderOpacity?: number
+  
+  // Shadow
+  shadowEnabled?: boolean
+  shadowColor?: string
+  shadowBlur?: number
+  shadowOffsetX?: number
+  shadowOffsetY?: number
+  
+  // Text
+  textColor?: string
+  fontSize?: number
+  fontFamily?: string
+  fontWeight?: 'normal' | 'bold' | 'light'
+  fontStyle?: 'normal' | 'italic'
+  textDecoration?: 'none' | 'underline' | 'line-through'
+  textAlign?: 'left' | 'center' | 'right'
+  verticalAlign?: 'top' | 'middle' | 'bottom'
+  lineHeight?: number
+  letterSpacing?: number
+  
+  // Effects
+  opacity?: number
+  rotation?: number
+}
+
+export interface EdgeStyle {
+  // Line
+  strokeColor?: string
+  strokeWidth?: number
+  strokeOpacity?: number
+  strokeDasharray?: string
+  lineType?: 'solid' | 'dashed' | 'dotted'
+  
+  // Markers
+  markerStart?: 'none' | 'arrow' | 'arrowClosed' | 'circle' | 'diamond'
+  markerEnd?: 'none' | 'arrow' | 'arrowClosed' | 'circle' | 'diamond'
+  markerSize?: number
+  
+  // Animation
+  animated?: boolean
+  animationSpeed?: 'slow' | 'normal' | 'fast'
+  
+  // Label
+  labelColor?: string
+  labelBgColor?: string
+  labelFontSize?: number
+}
+```
+
+### Complete PropertiesPanel.tsx:
+
+```tsx
+import { useState, useMemo } from 'react'
 import { MarkerType } from '@xyflow/react'
 import { useEditorStore } from '@/stores/editorStore'
 import {
@@ -11,78 +180,8 @@ import {
   AccordionItem,
   AccordionTrigger,
   Slider,
+  Separator,
 } from '@/components/ui'
-
-// Slider with inline number input component
-interface SliderWithInputProps {
-  label: string
-  value: number
-  onChange: (value: number) => void
-  min: number
-  max: number
-  step?: number
-  unit?: string
-}
-
-function SliderWithInput({ label, value, onChange, min, max, step = 1, unit = '' }: SliderWithInputProps) {
-  const [inputValue, setInputValue] = useState(String(value))
-
-  const handleSliderChange = useCallback(([val]: number[]) => {
-    setInputValue(String(val))
-    onChange(val)
-  }, [onChange])
-
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value
-    setInputValue(val)
-    const num = parseFloat(val)
-    if (!isNaN(num) && num >= min && num <= max) {
-      onChange(num)
-    }
-  }, [onChange, min, max])
-
-  const handleInputBlur = useCallback(() => {
-    let num = parseFloat(inputValue)
-    if (isNaN(num)) num = min
-    num = Math.max(min, Math.min(max, num))
-    setInputValue(String(num))
-    onChange(num)
-  }, [inputValue, min, max, onChange])
-
-  // Sync input with value when it changes externally
-  if (parseFloat(inputValue) !== value && document.activeElement?.tagName !== 'INPUT') {
-    setInputValue(String(value))
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label className="text-xs font-medium">{label}</Label>
-        <div className="flex items-center gap-1">
-          <Input
-            type="number"
-            value={inputValue}
-            onChange={handleInputChange}
-            onBlur={handleInputBlur}
-            min={min}
-            max={max}
-            step={step}
-            className="h-6 w-14 text-xs text-center px-1"
-          />
-          {unit && <span className="text-xs text-muted-foreground w-4">{unit}</span>}
-        </div>
-      </div>
-      <Slider
-        value={[value]}
-        onValueChange={handleSliderChange}
-        min={min}
-        max={max}
-        step={step}
-        className="w-full"
-      />
-    </div>
-  )
-}
 import {
   Trash2,
   Copy,
@@ -105,7 +204,10 @@ import {
   Type,
   Square,
   Minus,
+  Circle,
   ArrowRight,
+  ArrowLeftRight,
+  Diamond,
   Sparkles,
   Layers,
   Move,
@@ -156,7 +258,7 @@ export function PropertiesPanel() {
     const lineStyle = strokeDasharray.includes('2') ? 'dotted' : strokeDasharray.includes('8') ? 'dashed' : 'solid'
 
     // Helper functions for markers
-    const getMarkerType = (marker: unknown): 'none' | 'arrow' | 'arrowClosed' => {
+    const getMarkerType = (marker: unknown): 'none' | 'arrow' | 'arrowClosed' | 'circle' | 'diamond' => {
       if (!marker) return 'none'
       if (typeof marker === 'object' && marker !== null && 'type' in marker) {
         const m = marker as { type: MarkerType }
@@ -178,7 +280,7 @@ export function PropertiesPanel() {
 
     const markerStartType = getMarkerType(selectedEdge.markerStart)
     const markerEndType = getMarkerType(selectedEdge.markerEnd)
-    const markerSize = (selectedEdge.markerEnd as { width?: number })?.width || 12
+    const markerSize = (selectedEdge.markerEnd as any)?.width || 12
 
     return (
       <div className="w-72 border-l bg-background flex flex-col h-full overflow-hidden">
@@ -208,52 +310,63 @@ export function PropertiesPanel() {
                 {/* Path Type */}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Path Type</Label>
-                  <select
-                    value={edgeType}
-                    onChange={(e) => updateEdge(selectedEdge.id, { type: e.target.value })}
-                    className="w-full h-8 text-sm border rounded px-2 bg-background"
-                  >
-                    <option value="labeled">Auto (Smart)</option>
-                    <option value="straight">Straight</option>
-                    <option value="smoothstep">Smooth Step</option>
-                    <option value="step">Step</option>
-                    <option value="bezier">Curved</option>
-                  </select>
+                  <div className="grid grid-cols-2 gap-1">
+                    {[
+                      { value: 'straight', label: 'Straight' },
+                      { value: 'smoothstep', label: 'Smooth' },
+                      { value: 'step', label: 'Step' },
+                      { value: 'bezier', label: 'Curved' },
+                    ].map((type) => (
+                      <Button
+                        key={type.value}
+                        variant={edgeType === type.value ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => updateEdge(selectedEdge.id, { type: type.value })}
+                      >
+                        {type.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Line Style */}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Line Style</Label>
-                  <select
-                    value={lineStyle}
-                    onChange={(e) => {
-                      const dasharrays: Record<string, string | undefined> = {
-                        solid: undefined,
-                        dashed: '8 4',
-                        dotted: '2 4',
-                      }
-                      updateEdge(selectedEdge.id, {
-                        style: { ...selectedEdge.style, strokeDasharray: dasharrays[e.target.value] },
-                      })
-                    }}
-                    className="w-full h-8 text-sm border rounded px-2 bg-background"
-                  >
-                    <option value="solid">Solid</option>
-                    <option value="dashed">Dashed</option>
-                    <option value="dotted">Dotted</option>
-                  </select>
+                  <div className="grid grid-cols-3 gap-1">
+                    {[
+                      { value: 'solid', label: '━━━', dasharray: undefined },
+                      { value: 'dashed', label: '┄┄┄', dasharray: '8 4' },
+                      { value: 'dotted', label: '┈┈┈', dasharray: '2 4' },
+                    ].map((style) => (
+                      <Button
+                        key={style.value}
+                        variant={lineStyle === style.value ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-7 text-xs font-mono"
+                        onClick={() => updateEdge(selectedEdge.id, {
+                          style: { ...selectedEdge.style, strokeDasharray: style.dasharray }
+                        })}
+                      >
+                        {style.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Stroke Color - only changes line, not arrow */}
+                {/* Stroke Color */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium">Line Color</Label>
+                  <Label className="text-xs font-medium">Color</Label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
                       value={strokeColor}
                       onChange={(e) => {
+                        const color = e.target.value
                         updateEdge(selectedEdge.id, {
-                          style: { ...selectedEdge.style, stroke: e.target.value },
+                          style: { ...selectedEdge.style, stroke: color },
+                          markerStart: markerStartType !== 'none' ? createMarker(markerStartType, color, markerSize) : undefined,
+                          markerEnd: markerEndType !== 'none' ? createMarker(markerEndType, color, markerSize) : undefined,
                         })
                       }}
                       className="w-10 h-8 rounded border cursor-pointer"
@@ -261,8 +374,11 @@ export function PropertiesPanel() {
                     <Input
                       value={strokeColor}
                       onChange={(e) => {
+                        const color = e.target.value
                         updateEdge(selectedEdge.id, {
-                          style: { ...selectedEdge.style, stroke: e.target.value },
+                          style: { ...selectedEdge.style, stroke: color },
+                          markerStart: markerStartType !== 'none' ? createMarker(markerStartType, color, markerSize) : undefined,
+                          markerEnd: markerEndType !== 'none' ? createMarker(markerEndType, color, markerSize) : undefined,
                         })
                       }}
                       className="h-8 text-xs font-mono flex-1"
@@ -270,20 +386,20 @@ export function PropertiesPanel() {
                   </div>
                   {/* Quick color presets */}
                   <div className="flex gap-1">
-                    {['#6b7280', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#000000'].map(
-                      (color) => (
-                        <button
-                          key={color}
-                          className="w-5 h-5 rounded border hover:scale-110 transition-transform"
-                          style={{ backgroundColor: color }}
-                          onClick={() => {
-                            updateEdge(selectedEdge.id, {
-                              style: { ...selectedEdge.style, stroke: color },
-                            })
-                          }}
-                        />
-                      )
-                    )}
+                    {['#6b7280', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#000000'].map((color) => (
+                      <button
+                        key={color}
+                        className="w-5 h-5 rounded border hover:scale-110 transition-transform"
+                        style={{ backgroundColor: color }}
+                        onClick={() => {
+                          updateEdge(selectedEdge.id, {
+                            style: { ...selectedEdge.style, stroke: color },
+                            markerStart: markerStartType !== 'none' ? createMarker(markerStartType, color, markerSize) : undefined,
+                            markerEnd: markerEndType !== 'none' ? createMarker(markerEndType, color, markerSize) : undefined,
+                          })
+                        }}
+                      />
+                    ))}
                   </div>
                 </div>
 
@@ -294,7 +410,7 @@ export function PropertiesPanel() {
                     value={[strokeWidth]}
                     onValueChange={([value]) =>
                       updateEdge(selectedEdge.id, {
-                        style: { ...selectedEdge.style, strokeWidth: value },
+                        style: { ...selectedEdge.style, strokeWidth: value }
                       })
                     }
                     min={0.5}
@@ -311,7 +427,7 @@ export function PropertiesPanel() {
                     value={[strokeOpacity * 100]}
                     onValueChange={([value]) =>
                       updateEdge(selectedEdge.id, {
-                        style: { ...selectedEdge.style, opacity: value / 100 },
+                        style: { ...selectedEdge.style, opacity: value / 100 }
                       })
                     }
                     min={10}
@@ -334,53 +450,53 @@ export function PropertiesPanel() {
               <AccordionContent className="px-4 pb-4 space-y-4">
                 {/* Quick Presets */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium">Arrow Direction</Label>
-                  <select
-                    value={
-                      markerEndType !== 'none' && markerStartType !== 'none'
-                        ? 'both'
-                        : markerStartType !== 'none'
-                        ? 'reverse'
-                        : markerEndType !== 'none'
-                        ? 'forward'
-                        : 'none'
-                    }
-                    onChange={(e) => {
-                      const arrowColor = (selectedEdge.markerEnd as { color?: string })?.color || strokeColor
-                      switch (e.target.value) {
-                        case 'forward':
-                          updateEdge(selectedEdge.id, {
-                            markerStart: undefined,
-                            markerEnd: createMarker('arrowClosed', arrowColor, markerSize),
-                          })
-                          break
-                        case 'both':
-                          updateEdge(selectedEdge.id, {
-                            markerStart: createMarker('arrowClosed', arrowColor, markerSize),
-                            markerEnd: createMarker('arrowClosed', arrowColor, markerSize),
-                          })
-                          break
-                        case 'reverse':
-                          updateEdge(selectedEdge.id, {
-                            markerStart: createMarker('arrowClosed', arrowColor, markerSize),
-                            markerEnd: undefined,
-                          })
-                          break
-                        case 'none':
-                          updateEdge(selectedEdge.id, {
-                            markerStart: undefined,
-                            markerEnd: undefined,
-                          })
-                          break
-                      }
-                    }}
-                    className="w-full h-8 text-sm border rounded px-2 bg-background"
-                  >
-                    <option value="forward">Forward (→)</option>
-                    <option value="both">Both (↔)</option>
-                    <option value="reverse">Reverse (←)</option>
-                    <option value="none">None</option>
-                  </select>
+                  <Label className="text-xs font-medium">Quick Presets</Label>
+                  <div className="grid grid-cols-2 gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => updateEdge(selectedEdge.id, {
+                        markerStart: undefined,
+                        markerEnd: createMarker('arrowClosed', strokeColor, markerSize),
+                      })}
+                    >
+                      → One-way
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => updateEdge(selectedEdge.id, {
+                        markerStart: createMarker('arrowClosed', strokeColor, markerSize),
+                        markerEnd: createMarker('arrowClosed', strokeColor, markerSize),
+                      })}
+                    >
+                      ↔ Both
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => updateEdge(selectedEdge.id, {
+                        markerStart: undefined,
+                        markerEnd: undefined,
+                      })}
+                    >
+                      — None
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => updateEdge(selectedEdge.id, {
+                        markerStart: createMarker('arrowClosed', strokeColor, markerSize),
+                        markerEnd: undefined,
+                      })}
+                    >
+                      ← Reverse
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Start Arrow */}
@@ -388,12 +504,9 @@ export function PropertiesPanel() {
                   <Label className="text-xs font-medium">Start Arrow</Label>
                   <select
                     value={markerStartType}
-                    onChange={(e) => {
-                      const arrowColor = (selectedEdge.markerEnd as { color?: string })?.color || strokeColor
-                      updateEdge(selectedEdge.id, {
-                        markerStart: createMarker(e.target.value, arrowColor, markerSize),
-                      })
-                    }}
+                    onChange={(e) => updateEdge(selectedEdge.id, {
+                      markerStart: createMarker(e.target.value, strokeColor, markerSize),
+                    })}
                     className="w-full h-8 text-sm border rounded px-2 bg-background"
                   >
                     <option value="none">None</option>
@@ -407,12 +520,9 @@ export function PropertiesPanel() {
                   <Label className="text-xs font-medium">End Arrow</Label>
                   <select
                     value={markerEndType}
-                    onChange={(e) => {
-                      const arrowColor = (selectedEdge.markerEnd as { color?: string })?.color || strokeColor
-                      updateEdge(selectedEdge.id, {
-                        markerEnd: createMarker(e.target.value, arrowColor, markerSize),
-                      })
-                    }}
+                    onChange={(e) => updateEdge(selectedEdge.id, {
+                      markerEnd: createMarker(e.target.value, strokeColor, markerSize),
+                    })}
                     className="w-full h-8 text-sm border rounded px-2 bg-background"
                   >
                     <option value="none">None</option>
@@ -421,88 +531,15 @@ export function PropertiesPanel() {
                   </select>
                 </div>
 
-                {/* Arrow Color (separate from line color) */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium">Arrow Color</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={(selectedEdge.markerEnd as { color?: string })?.color || strokeColor}
-                      onChange={(e) => {
-                        const arrowColor = e.target.value
-                        updateEdge(selectedEdge.id, {
-                          markerStart:
-                            markerStartType !== 'none'
-                              ? createMarker(markerStartType, arrowColor, markerSize)
-                              : undefined,
-                          markerEnd:
-                            markerEndType !== 'none'
-                              ? createMarker(markerEndType, arrowColor, markerSize)
-                              : undefined,
-                        })
-                      }}
-                      className="w-10 h-8 rounded border cursor-pointer"
-                    />
-                    <Input
-                      value={(selectedEdge.markerEnd as { color?: string })?.color || strokeColor}
-                      onChange={(e) => {
-                        const arrowColor = e.target.value
-                        updateEdge(selectedEdge.id, {
-                          markerStart:
-                            markerStartType !== 'none'
-                              ? createMarker(markerStartType, arrowColor, markerSize)
-                              : undefined,
-                          markerEnd:
-                            markerEndType !== 'none'
-                              ? createMarker(markerEndType, arrowColor, markerSize)
-                              : undefined,
-                        })
-                      }}
-                      className="h-8 text-xs font-mono flex-1"
-                    />
-                  </div>
-                  {/* Quick color presets */}
-                  <div className="flex gap-1">
-                    {['#6b7280', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#000000'].map(
-                      (color) => (
-                        <button
-                          key={color}
-                          className="w-5 h-5 rounded border hover:scale-110 transition-transform"
-                          style={{ backgroundColor: color }}
-                          onClick={() => {
-                            updateEdge(selectedEdge.id, {
-                              markerStart:
-                                markerStartType !== 'none'
-                                  ? createMarker(markerStartType, color, markerSize)
-                                  : undefined,
-                              markerEnd:
-                                markerEndType !== 'none'
-                                  ? createMarker(markerEndType, color, markerSize)
-                                  : undefined,
-                            })
-                          }}
-                        />
-                      )
-                    )}
-                  </div>
-                </div>
-
                 {/* Arrow Size */}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Arrow Size: {markerSize}px</Label>
                   <Slider
                     value={[markerSize]}
                     onValueChange={([value]) => {
-                      const arrowColor = (selectedEdge.markerEnd as { color?: string })?.color || strokeColor
                       updateEdge(selectedEdge.id, {
-                        markerStart:
-                          markerStartType !== 'none'
-                            ? createMarker(markerStartType, arrowColor, value)
-                            : undefined,
-                        markerEnd:
-                          markerEndType !== 'none'
-                            ? createMarker(markerEndType, arrowColor, value)
-                            : undefined,
+                        markerStart: markerStartType !== 'none' ? createMarker(markerStartType, strokeColor, value) : undefined,
+                        markerEnd: markerEndType !== 'none' ? createMarker(markerEndType, strokeColor, value) : undefined,
                       })
                     }}
                     min={6}
@@ -523,7 +560,6 @@ export function PropertiesPanel() {
                 </span>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4 space-y-4">
-                {/* Label Text */}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Text</Label>
                   <Input
@@ -536,215 +572,27 @@ export function PropertiesPanel() {
 
                 {selectedEdge.label && (
                   <>
-                    {/* Font Family */}
                     <div className="space-y-2">
-                      <Label className="text-xs font-medium">Font Family</Label>
-                      <select
-                        value={(selectedEdge.data as { style?: { labelFontFamily?: string } })?.style?.labelFontFamily || 'Inter'}
-                        onChange={(e) =>
-                          updateEdge(selectedEdge.id, {
-                            data: {
-                              ...selectedEdge.data,
-                              style: {
-                                ...(selectedEdge.data as { style?: object })?.style,
-                                labelFontFamily: e.target.value,
-                              },
-                            },
-                          })
-                        }
-                        className="w-full h-8 text-sm border rounded px-2 bg-background"
-                      >
-                        {FONT_FAMILIES.map((font) => (
-                          <option key={font.value} value={font.value}>
-                            {font.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Font Size */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">Font Size</Label>
-                      <div className="flex items-center gap-2">
-                        <Slider
-                          value={[(selectedEdge.data as { style?: { labelFontSize?: number } })?.style?.labelFontSize || 12]}
-                          onValueChange={([value]) =>
-                            updateEdge(selectedEdge.id, {
-                              data: {
-                                ...selectedEdge.data,
-                                style: {
-                                  ...(selectedEdge.data as { style?: object })?.style,
-                                  labelFontSize: value,
-                                },
-                              },
-                            })
-                          }
-                          min={8}
-                          max={24}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <span className="text-xs text-muted-foreground w-8">
-                          {(selectedEdge.data as { style?: { labelFontSize?: number } })?.style?.labelFontSize || 12}px
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Text Color */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">Text Color</Label>
+                      <Label className="text-xs font-medium">Label Background</Label>
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
-                          value={(selectedEdge.data as { style?: { labelColor?: string } })?.style?.labelColor || '#374151'}
-                          onChange={(e) =>
-                            updateEdge(selectedEdge.id, {
-                              data: {
-                                ...selectedEdge.data,
-                                style: {
-                                  ...(selectedEdge.data as { style?: object })?.style,
-                                  labelColor: e.target.value,
-                                },
-                              },
-                            })
-                          }
-                          className="w-10 h-8 rounded border cursor-pointer"
-                        />
-                        <Input
-                          value={(selectedEdge.data as { style?: { labelColor?: string } })?.style?.labelColor || '#374151'}
-                          onChange={(e) =>
-                            updateEdge(selectedEdge.id, {
-                              data: {
-                                ...selectedEdge.data,
-                                style: {
-                                  ...(selectedEdge.data as { style?: object })?.style,
-                                  labelColor: e.target.value,
-                                },
-                              },
-                            })
-                          }
-                          className="h-8 text-xs font-mono flex-1"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Font Style Buttons */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">Style</Label>
-                      <div className="flex gap-1">
-                        <Button
-                          variant={
-                            (selectedEdge.data as { style?: { labelFontWeight?: string } })?.style?.labelFontWeight === 'bold'
-                              ? 'default'
-                              : 'outline'
-                          }
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() =>
-                            updateEdge(selectedEdge.id, {
-                              data: {
-                                ...selectedEdge.data,
-                                style: {
-                                  ...(selectedEdge.data as { style?: object })?.style,
-                                  labelFontWeight:
-                                    (selectedEdge.data as { style?: { labelFontWeight?: string } })?.style?.labelFontWeight === 'bold'
-                                      ? 'normal'
-                                      : 'bold',
-                                },
-                              },
-                            })
-                          }
-                        >
-                          <Bold className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant={
-                            (selectedEdge.data as { style?: { labelFontStyle?: string } })?.style?.labelFontStyle === 'italic'
-                              ? 'default'
-                              : 'outline'
-                          }
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() =>
-                            updateEdge(selectedEdge.id, {
-                              data: {
-                                ...selectedEdge.data,
-                                style: {
-                                  ...(selectedEdge.data as { style?: object })?.style,
-                                  labelFontStyle:
-                                    (selectedEdge.data as { style?: { labelFontStyle?: string } })?.style?.labelFontStyle === 'italic'
-                                      ? 'normal'
-                                      : 'italic',
-                                },
-                              },
-                            })
-                          }
-                        >
-                          <Italic className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant={
-                            (selectedEdge.data as { style?: { labelTextDecoration?: string } })?.style?.labelTextDecoration === 'underline'
-                              ? 'default'
-                              : 'outline'
-                          }
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() =>
-                            updateEdge(selectedEdge.id, {
-                              data: {
-                                ...selectedEdge.data,
-                                style: {
-                                  ...(selectedEdge.data as { style?: object })?.style,
-                                  labelTextDecoration:
-                                    (selectedEdge.data as { style?: { labelTextDecoration?: string } })?.style?.labelTextDecoration === 'underline'
-                                      ? 'none'
-                                      : 'underline',
-                                },
-                              },
-                            })
-                          }
-                        >
-                          <Underline className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Background Color */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">Background</Label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={(selectedEdge.data as { style?: { labelBgColor?: string } })?.style?.labelBgColor || '#ffffff'}
-                          onChange={(e) =>
-                            updateEdge(selectedEdge.id, {
-                              data: {
-                                ...selectedEdge.data,
-                                style: {
-                                  ...(selectedEdge.data as { style?: object })?.style,
-                                  labelBgColor: e.target.value,
-                                },
-                              },
-                            })
-                          }
+                          value={(selectedEdge.labelBgStyle?.fill as string) || '#ffffff'}
+                          onChange={(e) => updateEdge(selectedEdge.id, {
+                            labelBgStyle: { fill: e.target.value },
+                            labelBgPadding: [4, 8],
+                            labelBgBorderRadius: 4,
+                          })}
                           className="w-10 h-8 rounded border cursor-pointer"
                         />
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 text-xs flex-1"
-                          onClick={() =>
-                            updateEdge(selectedEdge.id, {
-                              data: {
-                                ...selectedEdge.data,
-                                style: {
-                                  ...(selectedEdge.data as { style?: object })?.style,
-                                  labelBgColor: undefined,
-                                },
-                              },
-                            })
-                          }
+                          className="h-8 text-xs"
+                          onClick={() => updateEdge(selectedEdge.id, {
+                            labelBgStyle: undefined,
+                            labelBgPadding: undefined,
+                          })}
                         >
                           No Background
                         </Button>
@@ -764,17 +612,14 @@ export function PropertiesPanel() {
                 </span>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4 space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium">Flow Animation</Label>
-                  <select
-                    value={selectedEdge.animated ? 'animated' : 'static'}
-                    onChange={(e) => updateEdge(selectedEdge.id, { animated: e.target.value === 'animated' })}
-                    className="w-full h-8 text-sm border rounded px-2 bg-background"
-                  >
-                    <option value="static">Static (No animation)</option>
-                    <option value="animated">Animated (Flow dots)</option>
-                  </select>
-                </div>
+                <Button
+                  variant={selectedEdge.animated ? 'default' : 'outline'}
+                  size="sm"
+                  className="w-full h-8 text-xs"
+                  onClick={() => updateEdge(selectedEdge.id, { animated: !selectedEdge.animated })}
+                >
+                  {selectedEdge.animated ? '✨ Animated' : 'Static'}
+                </Button>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -872,16 +717,8 @@ export function PropertiesPanel() {
                 {/* Color presets */}
                 <div className="flex gap-1 flex-wrap">
                   {[
-                    '#ffffff',
-                    '#f3f4f6',
-                    '#fef2f2',
-                    '#fef9c3',
-                    '#dcfce7',
-                    '#dbeafe',
-                    '#f3e8ff',
-                    '#fce7f3',
-                    '#1f2937',
-                    '#000000',
+                    '#ffffff', '#f3f4f6', '#fef2f2', '#fef9c3', '#dcfce7', 
+                    '#dbeafe', '#f3e8ff', '#fce7f3', '#1f2937', '#000000'
                   ].map((color) => (
                     <button
                       key={color}
@@ -894,15 +731,19 @@ export function PropertiesPanel() {
               </div>
 
               {/* Background Opacity */}
-              <SliderWithInput
-                label="Opacity"
-                value={Math.round((style.backgroundOpacity ?? 1) * 100)}
-                onChange={(val) => updateNodeStyle(selectedNode.id, { backgroundOpacity: val / 100 })}
-                min={0}
-                max={100}
-                step={5}
-                unit="%"
-              />
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">
+                  Opacity: {Math.round((style.backgroundOpacity ?? 1) * 100)}%
+                </Label>
+                <Slider
+                  value={[(style.backgroundOpacity ?? 1) * 100]}
+                  onValueChange={([value]) => updateNodeStyle(selectedNode.id, { backgroundOpacity: value / 100 })}
+                  min={0}
+                  max={100}
+                  step={5}
+                  className="w-full"
+                />
+              </div>
             </AccordionContent>
           </AccordionItem>
 
@@ -933,60 +774,65 @@ export function PropertiesPanel() {
                 </div>
                 {/* Color presets */}
                 <div className="flex gap-1">
-                  {['#9ca3af', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#000000'].map(
-                    (color) => (
-                      <button
-                        key={color}
-                        className="w-5 h-5 rounded border hover:scale-110 transition-transform"
-                        style={{ backgroundColor: color }}
-                        onClick={() => updateNodeStyle(selectedNode.id, { borderColor: color })}
-                      />
-                    )
-                  )}
+                  {['#9ca3af', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#000000'].map((color) => (
+                    <button
+                      key={color}
+                      className="w-5 h-5 rounded border hover:scale-110 transition-transform"
+                      style={{ backgroundColor: color }}
+                      onClick={() => updateNodeStyle(selectedNode.id, { borderColor: color })}
+                    />
+                  ))}
                 </div>
               </div>
 
               {/* Border Width */}
-              <SliderWithInput
-                label="Border Width"
-                value={style.borderWidth || 1}
-                onChange={(val) => updateNodeStyle(selectedNode.id, { borderWidth: val })}
-                min={0}
-                max={8}
-                step={1}
-                unit="px"
-              />
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Border Width: {style.borderWidth || 1}px</Label>
+                <Slider
+                  value={[style.borderWidth || 1]}
+                  onValueChange={([value]) => updateNodeStyle(selectedNode.id, { borderWidth: value })}
+                  min={0}
+                  max={8}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
 
               {/* Border Style */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Border Style</Label>
-                <select
-                  value={style.borderStyle || 'solid'}
-                  onChange={(e) =>
-                    updateNodeStyle(selectedNode.id, {
-                      borderStyle: e.target.value as 'solid' | 'dashed' | 'dotted' | 'none',
-                      ...(e.target.value === 'none' ? { borderWidth: 0 } : {}),
-                    })
-                  }
-                  className="w-full h-8 text-sm border rounded px-2 bg-background"
-                >
-                  <option value="solid">Solid</option>
-                  <option value="dashed">Dashed</option>
-                  <option value="dotted">Dotted</option>
-                  <option value="none">None</option>
-                </select>
+                <div className="grid grid-cols-4 gap-1">
+                  {[
+                    { value: 'solid', label: '━' },
+                    { value: 'dashed', label: '┄' },
+                    { value: 'dotted', label: '┈' },
+                    { value: 'none', label: '○' },
+                  ].map((s) => (
+                    <Button
+                      key={s.value}
+                      variant={(style.borderStyle || 'solid') === s.value ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-7 text-xs font-mono"
+                      onClick={() => updateNodeStyle(selectedNode.id, { borderStyle: s.value as any })}
+                    >
+                      {s.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
 
               {/* Border Radius */}
-              <SliderWithInput
-                label="Corner Radius"
-                value={style.borderRadius || 8}
-                onChange={(val) => updateNodeStyle(selectedNode.id, { borderRadius: val })}
-                min={0}
-                max={50}
-                step={1}
-                unit="px"
-              />
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Corner Radius: {style.borderRadius || 8}px</Label>
+                <Slider
+                  value={[style.borderRadius || 8]}
+                  onValueChange={([value]) => updateNodeStyle(selectedNode.id, { borderRadius: value })}
+                  min={0}
+                  max={50}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
             </AccordionContent>
           </AccordionItem>
 
@@ -1006,7 +852,7 @@ export function PropertiesPanel() {
                 className="w-full h-8 text-xs"
                 onClick={() => updateNodeStyle(selectedNode.id, { shadowEnabled: !style.shadowEnabled })}
               >
-                {style.shadowEnabled ? 'Shadow Enabled' : 'Enable Shadow'}
+                {style.shadowEnabled ? '✓ Shadow Enabled' : 'Enable Shadow'}
               </Button>
 
               {style.shadowEnabled && (
@@ -1030,15 +876,17 @@ export function PropertiesPanel() {
                   </div>
 
                   {/* Shadow Blur */}
-                  <SliderWithInput
-                    label="Blur"
-                    value={style.shadowBlur || 10}
-                    onChange={(val) => updateNodeStyle(selectedNode.id, { shadowBlur: val })}
-                    min={0}
-                    max={50}
-                    step={1}
-                    unit="px"
-                  />
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Blur: {style.shadowBlur || 10}px</Label>
+                    <Slider
+                      value={[style.shadowBlur || 10]}
+                      onValueChange={([value]) => updateNodeStyle(selectedNode.id, { shadowBlur: value })}
+                      min={0}
+                      max={50}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
 
                   {/* Shadow Offset */}
                   <div className="grid grid-cols-2 gap-2">
@@ -1047,9 +895,7 @@ export function PropertiesPanel() {
                       <Input
                         type="number"
                         value={style.shadowOffsetX || 4}
-                        onChange={(e) =>
-                          updateNodeStyle(selectedNode.id, { shadowOffsetX: parseInt(e.target.value) })
-                        }
+                        onChange={(e) => updateNodeStyle(selectedNode.id, { shadowOffsetX: parseInt(e.target.value) })}
                         className="h-8 text-sm"
                       />
                     </div>
@@ -1058,9 +904,7 @@ export function PropertiesPanel() {
                       <Input
                         type="number"
                         value={style.shadowOffsetY || 4}
-                        onChange={(e) =>
-                          updateNodeStyle(selectedNode.id, { shadowOffsetY: parseInt(e.target.value) })
-                        }
+                        onChange={(e) => updateNodeStyle(selectedNode.id, { shadowOffsetY: parseInt(e.target.value) })}
                         className="h-8 text-sm"
                       />
                     </div>
@@ -1106,15 +950,17 @@ export function PropertiesPanel() {
               </div>
 
               {/* Font Size */}
-              <SliderWithInput
-                label="Font Size"
-                value={style.fontSize || 14}
-                onChange={(val) => updateNodeStyle(selectedNode.id, { fontSize: val })}
-                min={8}
-                max={48}
-                step={1}
-                unit="px"
-              />
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Font Size: {style.fontSize || 14}px</Label>
+                <Slider
+                  value={[style.fontSize || 14]}
+                  onValueChange={([value]) => updateNodeStyle(selectedNode.id, { fontSize: value })}
+                  min={8}
+                  max={48}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
 
               {/* Text Color */}
               <div className="space-y-2">
@@ -1142,11 +988,9 @@ export function PropertiesPanel() {
                     variant={(style.fontWeight || 'normal') === 'bold' ? 'default' : 'outline'}
                     size="sm"
                     className="h-8 w-8 p-0"
-                    onClick={() =>
-                      updateNodeStyle(selectedNode.id, {
-                        fontWeight: style.fontWeight === 'bold' ? 'normal' : 'bold',
-                      })
-                    }
+                    onClick={() => updateNodeStyle(selectedNode.id, {
+                      fontWeight: style.fontWeight === 'bold' ? 'normal' : 'bold'
+                    })}
                   >
                     <Bold className="w-4 h-4" />
                   </Button>
@@ -1154,11 +998,9 @@ export function PropertiesPanel() {
                     variant={(style.fontStyle || 'normal') === 'italic' ? 'default' : 'outline'}
                     size="sm"
                     className="h-8 w-8 p-0"
-                    onClick={() =>
-                      updateNodeStyle(selectedNode.id, {
-                        fontStyle: style.fontStyle === 'italic' ? 'normal' : 'italic',
-                      })
-                    }
+                    onClick={() => updateNodeStyle(selectedNode.id, {
+                      fontStyle: style.fontStyle === 'italic' ? 'normal' : 'italic'
+                    })}
                   >
                     <Italic className="w-4 h-4" />
                   </Button>
@@ -1166,11 +1008,9 @@ export function PropertiesPanel() {
                     variant={(style.textDecoration || 'none') === 'underline' ? 'default' : 'outline'}
                     size="sm"
                     className="h-8 w-8 p-0"
-                    onClick={() =>
-                      updateNodeStyle(selectedNode.id, {
-                        textDecoration: style.textDecoration === 'underline' ? 'none' : 'underline',
-                      })
-                    }
+                    onClick={() => updateNodeStyle(selectedNode.id, {
+                      textDecoration: style.textDecoration === 'underline' ? 'none' : 'underline'
+                    })}
                   >
                     <Underline className="w-4 h-4" />
                   </Button>
@@ -1178,33 +1018,13 @@ export function PropertiesPanel() {
                     variant={(style.textDecoration || 'none') === 'line-through' ? 'default' : 'outline'}
                     size="sm"
                     className="h-8 w-8 p-0"
-                    onClick={() =>
-                      updateNodeStyle(selectedNode.id, {
-                        textDecoration: style.textDecoration === 'line-through' ? 'none' : 'line-through',
-                      })
-                    }
+                    onClick={() => updateNodeStyle(selectedNode.id, {
+                      textDecoration: style.textDecoration === 'line-through' ? 'none' : 'line-through'
+                    })}
                   >
                     <Strikethrough className="w-4 h-4" />
                   </Button>
                 </div>
-              </div>
-
-              {/* Text Wrap */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Text Wrap</Label>
-                <select
-                  value={style.textWrap || 'wrap'}
-                  onChange={(e) =>
-                    updateNodeStyle(selectedNode.id, {
-                      textWrap: e.target.value as 'wrap' | 'nowrap' | 'truncate',
-                    })
-                  }
-                  className="w-full h-8 text-sm border rounded px-2 bg-background"
-                >
-                  <option value="wrap">Wrap</option>
-                  <option value="nowrap">No Wrap</option>
-                  <option value="truncate">Truncate</option>
-                </select>
               </div>
 
               {/* Text Alignment */}
@@ -1289,9 +1109,9 @@ export function PropertiesPanel() {
                     value={Math.round(selectedNode.position.x)}
                     onChange={(e) => {
                       const x = parseInt(e.target.value) || 0
-                      const currentNodes = useEditorStore.getState().nodes
+                      const nodes = useEditorStore.getState().nodes
                       useEditorStore.setState({
-                        nodes: currentNodes.map((n) =>
+                        nodes: nodes.map((n) =>
                           n.id === selectedNode.id ? { ...n, position: { ...n.position, x } } : n
                         ),
                         isDirty: true,
@@ -1307,9 +1127,9 @@ export function PropertiesPanel() {
                     value={Math.round(selectedNode.position.y)}
                     onChange={(e) => {
                       const y = parseInt(e.target.value) || 0
-                      const currentNodes = useEditorStore.getState().nodes
+                      const nodes = useEditorStore.getState().nodes
                       useEditorStore.setState({
-                        nodes: currentNodes.map((n) =>
+                        nodes: nodes.map((n) =>
                           n.id === selectedNode.id ? { ...n, position: { ...n.position, y } } : n
                         ),
                         isDirty: true,
@@ -1329,9 +1149,9 @@ export function PropertiesPanel() {
                     value={(selectedNode.style?.width as number) || 120}
                     onChange={(e) => {
                       const width = parseInt(e.target.value) || 120
-                      const currentNodes = useEditorStore.getState().nodes
+                      const nodes = useEditorStore.getState().nodes
                       useEditorStore.setState({
-                        nodes: currentNodes.map((n) =>
+                        nodes: nodes.map((n) =>
                           n.id === selectedNode.id ? { ...n, style: { ...n.style, width } } : n
                         ),
                         isDirty: true,
@@ -1347,9 +1167,9 @@ export function PropertiesPanel() {
                     value={(selectedNode.style?.height as number) || 60}
                     onChange={(e) => {
                       const height = parseInt(e.target.value) || 60
-                      const currentNodes = useEditorStore.getState().nodes
+                      const nodes = useEditorStore.getState().nodes
                       useEditorStore.setState({
-                        nodes: currentNodes.map((n) =>
+                        nodes: nodes.map((n) =>
                           n.id === selectedNode.id ? { ...n, style: { ...n.style, height } } : n
                         ),
                         isDirty: true,
@@ -1362,24 +1182,7 @@ export function PropertiesPanel() {
 
               {/* Rotation */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-medium">Rotation</Label>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      value={style.rotation || 0}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0
-                        const clamped = Math.max(0, Math.min(360, val))
-                        updateNodeStyle(selectedNode.id, { rotation: clamped })
-                      }}
-                      min={0}
-                      max={360}
-                      className="h-6 w-14 text-xs text-center px-1"
-                    />
-                    <span className="text-xs text-muted-foreground w-3">°</span>
-                  </div>
-                </div>
+                <Label className="text-xs font-medium">Rotation: {style.rotation || 0}°</Label>
                 <div className="flex gap-2 items-center">
                   <Slider
                     value={[style.rotation || 0]}
@@ -1401,15 +1204,19 @@ export function PropertiesPanel() {
               </div>
 
               {/* Overall Opacity */}
-              <SliderWithInput
-                label="Shape Opacity"
-                value={Math.round((style.opacity ?? 1) * 100)}
-                onChange={(value) => updateNodeStyle(selectedNode.id, { opacity: value / 100 })}
-                min={10}
-                max={100}
-                step={5}
-                unit="%"
-              />
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">
+                  Shape Opacity: {Math.round((style.opacity ?? 1) * 100)}%
+                </Label>
+                <Slider
+                  value={[(style.opacity ?? 1) * 100]}
+                  onValueChange={([value]) => updateNodeStyle(selectedNode.id, { opacity: value / 100 })}
+                  min={10}
+                  max={100}
+                  step={5}
+                  className="w-full"
+                />
+              </div>
             </AccordionContent>
           </AccordionItem>
 
@@ -1425,74 +1232,40 @@ export function PropertiesPanel() {
               {/* Z-Order */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Layer Order</Label>
-                <div className="grid grid-cols-2 gap-1">
+                <div className="flex gap-1">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs"
+                    className="h-8 flex-1 text-xs"
                     onClick={() => {
-                      const currentNodes = useEditorStore.getState().nodes
-                      const idx = currentNodes.findIndex((n) => n.id === selectedNode.id)
-                      if (idx < currentNodes.length - 1) {
-                        const newNodes = [...currentNodes]
-                        const node = newNodes.splice(idx, 1)[0]
-                        newNodes.push(node) // Move to end (front)
-                        useEditorStore.setState({ nodes: newNodes, isDirty: true })
-                      }
-                    }}
-                  >
-                    <ChevronUp className="w-3 h-3 mr-1" />
-                    To Front
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs"
-                    onClick={() => {
-                      const currentNodes = useEditorStore.getState().nodes
-                      const idx = currentNodes.findIndex((n) => n.id === selectedNode.id)
-                      if (idx > 0) {
-                        const newNodes = [...currentNodes]
-                        const node = newNodes.splice(idx, 1)[0]
-                        newNodes.unshift(node) // Move to beginning (back)
-                        useEditorStore.setState({ nodes: newNodes, isDirty: true })
-                      }
-                    }}
-                  >
-                    <ChevronDown className="w-3 h-3 mr-1" />
-                    To Back
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs"
-                    onClick={() => {
-                      const currentNodes = useEditorStore.getState().nodes
-                      const idx = currentNodes.findIndex((n) => n.id === selectedNode.id)
-                      if (idx < currentNodes.length - 1) {
-                        const newNodes = [...currentNodes]
+                      const nodes = useEditorStore.getState().nodes
+                      const idx = nodes.findIndex((n) => n.id === selectedNode.id)
+                      if (idx < nodes.length - 1) {
+                        const newNodes = [...nodes]
                         ;[newNodes[idx], newNodes[idx + 1]] = [newNodes[idx + 1], newNodes[idx]]
                         useEditorStore.setState({ nodes: newNodes, isDirty: true })
                       }
                     }}
                   >
+                    <ChevronUp className="w-3 h-3 mr-1" />
                     Forward
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs"
+                    className="h-8 flex-1 text-xs"
                     onClick={() => {
-                      const currentNodes = useEditorStore.getState().nodes
-                      const idx = currentNodes.findIndex((n) => n.id === selectedNode.id)
+                      const nodes = useEditorStore.getState().nodes
+                      const idx = nodes.findIndex((n) => n.id === selectedNode.id)
                       if (idx > 0) {
-                        const newNodes = [...currentNodes]
+                        const newNodes = [...nodes]
                         ;[newNodes[idx], newNodes[idx - 1]] = [newNodes[idx - 1], newNodes[idx]]
                         useEditorStore.setState({ nodes: newNodes, isDirty: true })
                       }
                     }}
                   >
-                    Backward
+                    <ChevronDown className="w-3 h-3 mr-1" />
+                    Back
                   </Button>
                 </div>
               </div>
@@ -1526,11 +1299,21 @@ export function PropertiesPanel() {
 
       {/* Actions Footer */}
       <div className="p-3 border-t space-y-2">
-        <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={handleDuplicate}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full h-8 text-xs"
+          onClick={handleDuplicate}
+        >
           <Copy className="w-3 h-3 mr-1" />
           Duplicate
         </Button>
-        <Button variant="destructive" size="sm" className="w-full h-8 text-xs" onClick={deleteSelected}>
+        <Button
+          variant="destructive"
+          size="sm"
+          className="w-full h-8 text-xs"
+          onClick={deleteSelected}
+        >
           <Trash2 className="w-3 h-3 mr-1" />
           Delete
         </Button>
@@ -1538,3 +1321,90 @@ export function PropertiesPanel() {
     </div>
   )
 }
+```
+
+---
+
+## FIX 4: Update CustomNode to Apply New Styles
+
+Update the baseStyle and shape rendering in CustomNode.tsx to use the new properties:
+
+```tsx
+// In CustomNode.tsx, update baseStyle:
+const baseStyle = {
+  backgroundColor: style?.backgroundColor || '#ffffff',
+  borderColor: style?.borderColor || '#9ca3af',
+  borderWidth: style?.borderWidth || 1,
+  borderStyle: style?.borderStyle || 'solid',
+  borderRadius: style?.borderRadius || 8,
+  color: style?.textColor || '#1f2937',
+  fontSize: style?.fontSize || 14,
+  fontFamily: style?.fontFamily || 'Inter',
+  fontWeight: style?.fontWeight || 'normal',
+  fontStyle: style?.fontStyle || 'normal',
+  textDecoration: style?.textDecoration || 'none',
+  textAlign: (style?.textAlign || 'center') as 'left' | 'center' | 'right',
+  opacity: style?.backgroundOpacity ?? 1,
+  // Shadow
+  boxShadow: style?.shadowEnabled 
+    ? `${style.shadowOffsetX || 4}px ${style.shadowOffsetY || 4}px ${style.shadowBlur || 10}px ${style.shadowColor || 'rgba(0,0,0,0.2)}'`
+    : 'none',
+  // Rotation
+  transform: style?.rotation ? `rotate(${style.rotation}deg)` : undefined,
+}
+
+// Apply vertical alignment in shape class:
+const getVerticalAlignClass = () => {
+  switch (style?.verticalAlign) {
+    case 'top': return 'items-start pt-2'
+    case 'bottom': return 'items-end pb-2'
+    default: return 'items-center'
+  }
+}
+
+const shapeClass = cn(
+  'w-full h-full flex justify-center text-center overflow-hidden transition-all duration-150',
+  getVerticalAlignClass(),
+  locked && 'opacity-75',
+  isTarget && 'ring-2 ring-green-500 ring-offset-2'
+)
+```
+
+---
+
+## SUMMARY OF ENHANCEMENTS
+
+### Shape Properties Added:
+| Category | Properties |
+|----------|------------|
+| **Fill** | Background color, Background opacity, Color presets |
+| **Border** | Color, Width, Style (solid/dashed/dotted/none), Radius, Color presets |
+| **Shadow** | Enable/disable, Color, Blur, Offset X/Y |
+| **Text** | Label, Font family (8 options), Size, Color, Bold/Italic/Underline/Strikethrough, Horizontal align, Vertical align |
+| **Size** | X, Y, Width, Height, Rotation (0-360°), Overall opacity |
+| **Arrange** | Bring forward, Send back, Lock/Unlock |
+
+### Connector Properties Added:
+| Category | Properties |
+|----------|------------|
+| **Line Style** | Path type (4 options), Line style (solid/dashed/dotted), Color + presets, Width, Opacity |
+| **Arrows** | Quick presets (4 options), Start/End arrow type, Arrow size slider |
+| **Label** | Text, Background color, Clear background |
+| **Animation** | Enable/disable animated flow |
+
+---
+
+## TESTING CHECKLIST
+
+- [ ] Resize handles appear on all 8 corners/edges
+- [ ] Can resize from any corner
+- [ ] Connectors have smaller default arrows (12px)
+- [ ] All shape fill properties work
+- [ ] All border properties work (including style)
+- [ ] Shadow can be enabled and customized
+- [ ] All text properties work
+- [ ] Rotation slider works
+- [ ] Connector color presets work
+- [ ] Connector arrow presets work
+- [ ] Arrow size slider works
+- [ ] Connector label with background works

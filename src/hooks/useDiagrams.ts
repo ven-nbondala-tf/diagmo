@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { diagramService } from '@/services/diagramService'
-import type { DiagramNode, DiagramEdge } from '@/types'
+import type { Diagram, DiagramNode, DiagramEdge } from '@/types'
 
 export const diagramKeys = {
   all: ['diagrams'] as const,
@@ -58,8 +58,28 @@ export function useUpdateDiagram() {
       edges?: DiagramEdge[]
       thumbnail?: string
     }) => diagramService.update(id, input),
-    onSuccess: (data) => {
-      queryClient.setQueryData(diagramKeys.detail(data.id), data)
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: diagramKeys.lists() })
+      const previousLists = queryClient.getQueriesData<Diagram[]>({ queryKey: diagramKeys.lists() })
+
+      previousLists.forEach(([queryKey]) => {
+        queryClient.setQueryData<Diagram[]>(queryKey, (old) => {
+          if (!old) return old
+          return old.map((d) =>
+            d.id === variables.id ? { ...d, ...variables, updatedAt: new Date().toISOString() } : d
+          )
+        })
+      })
+
+      return { previousLists }
+    },
+    onError: (_err, _variables, context) => {
+      context?.previousLists.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data)
+      })
+    },
+    onSettled: (data) => {
+      if (data) queryClient.setQueryData(diagramKeys.detail(data.id), data)
       queryClient.invalidateQueries({ queryKey: diagramKeys.lists() })
     },
   })
@@ -70,7 +90,25 @@ export function useDeleteDiagram() {
 
   return useMutation({
     mutationFn: (id: string) => diagramService.delete(id),
-    onSuccess: (_data, id) => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: diagramKeys.lists() })
+      const previousLists = queryClient.getQueriesData<Diagram[]>({ queryKey: diagramKeys.lists() })
+
+      previousLists.forEach(([queryKey]) => {
+        queryClient.setQueryData<Diagram[]>(queryKey, (old) => {
+          if (!old) return old
+          return old.filter((d) => d.id !== id)
+        })
+      })
+
+      return { previousLists }
+    },
+    onError: (_err, _id, context) => {
+      context?.previousLists.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data)
+      })
+    },
+    onSettled: (_data, _err, id) => {
       queryClient.removeQueries({ queryKey: diagramKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: diagramKeys.lists() })
     },
@@ -101,8 +139,28 @@ export function useMoveDiagramToFolder() {
   return useMutation({
     mutationFn: ({ id, folderId }: { id: string; folderId: string | null }) =>
       diagramService.moveToFolder(id, folderId),
-    onSuccess: (data) => {
-      queryClient.setQueryData(diagramKeys.detail(data.id), data)
+    onMutate: async ({ id, folderId }) => {
+      await queryClient.cancelQueries({ queryKey: diagramKeys.lists() })
+      const previousLists = queryClient.getQueriesData<Diagram[]>({ queryKey: diagramKeys.lists() })
+
+      previousLists.forEach(([queryKey]) => {
+        queryClient.setQueryData<Diagram[]>(queryKey, (old) => {
+          if (!old) return old
+          return old.map((d) =>
+            d.id === id ? { ...d, folderId: folderId || undefined } : d
+          )
+        })
+      })
+
+      return { previousLists }
+    },
+    onError: (_err, _variables, context) => {
+      context?.previousLists.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data)
+      })
+    },
+    onSettled: (data) => {
+      if (data) queryClient.setQueryData(diagramKeys.detail(data.id), data)
       queryClient.invalidateQueries({ queryKey: diagramKeys.lists() })
     },
   })

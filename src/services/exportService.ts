@@ -11,6 +11,8 @@ export const exportService = {
       quality: options?.quality || 0.95,
       backgroundColor: options?.backgroundColor || '#ffffff',
       pixelRatio: 2,
+      ...(options?.width ? { width: options.width } : {}),
+      ...(options?.height ? { height: options.height } : {}),
     })
     return dataUrl
   },
@@ -21,6 +23,8 @@ export const exportService = {
   ): Promise<string> {
     const dataUrl = await toSvg(element, {
       backgroundColor: options?.backgroundColor || '#ffffff',
+      ...(options?.width ? { width: options.width } : {}),
+      ...(options?.height ? { height: options.height } : {}),
     })
     return dataUrl
   },
@@ -33,6 +37,8 @@ export const exportService = {
       quality: options?.quality || 0.95,
       backgroundColor: options?.backgroundColor || '#ffffff',
       pixelRatio: 2,
+      ...(options?.width ? { width: options.width } : {}),
+      ...(options?.height ? { height: options.height } : {}),
     })
 
     const img = new Image()

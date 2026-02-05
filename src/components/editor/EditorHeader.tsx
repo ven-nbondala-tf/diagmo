@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
 import { useEditorStore } from '@/stores/editorStore'
 import { useUpdateDiagram } from '@/hooks'
 import { exportService } from '@/services/exportService'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import type { Diagram } from '@/types'
 import {
   Button,
@@ -58,11 +60,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
   const edges = useEditorStore((state) => state.edges)
   const isDirty = useEditorStore((state) => state.isDirty)
   const setDirty = useEditorStore((state) => state.setDirty)
-  const undo = useEditorStore((state) => state.undo)
-  const redo = useEditorStore((state) => state.redo)
   const zoom = useEditorStore((state) => state.zoom)
-  const copyNodes = useEditorStore((state) => state.copyNodes)
-  const pasteNodes = useEditorStore((state) => state.pasteNodes)
 
   const updateDiagram = useUpdateDiagram()
 
@@ -110,29 +108,63 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
       return
     }
 
-    const viewport = document.querySelector('.react-flow__viewport') as HTMLElement
-    if (!viewport) {
-      toast.error('Failed to export: canvas not found')
+    const viewportEl = document.querySelector('.react-flow__viewport') as HTMLElement
+    if (!viewportEl || nodes.length === 0) {
+      toast.error('Failed to export: canvas not found or empty')
       return
     }
 
     try {
       toast.loading('Exporting...')
+
+      // Calculate bounds of all nodes to capture the full diagram
+      const padding = 50
+      const bounds = getNodesBounds(nodes)
+      const imageWidth = (bounds.width + padding * 2) * 2 // 2x for retina
+      const imageHeight = (bounds.height + padding * 2) * 2
+      const viewport = getViewportForBounds(
+        bounds,
+        imageWidth,
+        imageHeight,
+        0.5,
+        2,
+        padding
+      )
+
+      // Temporarily transform the viewport element to show full diagram
+      const originalTransform = viewportEl.style.transform
+      viewportEl.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
+
+      // Capture at the calculated dimensions
+      const captureOptions = {
+        width: imageWidth,
+        height: imageHeight,
+      }
+
       switch (format) {
         case 'png': {
-          const dataUrl = await exportService.exportToPng(viewport)
+          const dataUrl = await exportService.exportToPng(viewportEl, captureOptions)
           exportService.downloadFile(dataUrl, `${name}.png`)
           break
         }
         case 'svg': {
-          const dataUrl = await exportService.exportToSvg(viewport)
+          const dataUrl = await exportService.exportToSvg(viewportEl, captureOptions)
           exportService.downloadFile(dataUrl, `${name}.svg`)
           break
         }
       }
+
+      // Restore the original viewport transform
+      viewportEl.style.transform = originalTransform
+
       toast.dismiss()
       toast.success(`Exported as ${format.toUpperCase()}`)
     } catch (error) {
+      // Restore viewport on error too
+      const viewportRestore = document.querySelector('.react-flow__viewport') as HTMLElement
+      if (viewportRestore) {
+        viewportRestore.style.transform = ''
+      }
       toast.dismiss()
       toast.error('Export failed')
       console.error('Export error:', error)
@@ -150,50 +182,12 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
     return () => clearInterval(interval)
   }, [isDirty, handleSave])
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger shortcuts when typing in inputs
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        // Only allow save shortcut in inputs
-        if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-          e.preventDefault()
-          handleSave()
-        }
-        return
-      }
-
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault()
-        handleSave()
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault()
-        undo()
-      }
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
-        e.preventDefault()
-        redo()
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
-        e.preventDefault()
-        copyNodes()
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
-        e.preventDefault()
-        pasteNodes()
-      }
-      if (e.key === '?') {
-        setShowShortcuts(true)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleSave, undo, redo, copyNodes, pasteNodes])
+  // Centralized keyboard shortcuts (save + show shortcuts dialog are header-specific)
+  const shortcutCallbacks = useMemo(() => ({
+    onSave: handleSave,
+    onShowShortcuts: () => setShowShortcuts(true),
+  }), [handleSave])
+  useKeyboardShortcuts(shortcutCallbacks)
 
   return (
     <>

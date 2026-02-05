@@ -81,47 +81,72 @@
   }
 }
 
-/* ========== REACT FLOW GLOBAL ========== */
+/* ========== REACT FLOW - LUCIDCHART STYLE ========== */
 
+/* Base node styling */
 .react-flow__node {
   transition: box-shadow 0.15s ease;
 }
 
-/* ========== CONNECTION HANDLES - LUCIDCHART STYLE ========== */
-
-/* Base handle - smooth transitions */
-.react-flow__handle {
-  transition: opacity 0.15s ease, background-color 0.15s ease;
+/* Node being dragged */
+.react-flow__node.dragging {
+  cursor: grabbing !important;
+  z-index: 1000 !important;
 }
 
-/* Custom handle - small, subtle, professional */
+.react-flow__node.dragging > div {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ========== CONNECTION HANDLES ========== */
+
+/* Base handle - hidden by default, smooth transitions */
+.react-flow__handle {
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.15s ease, background-color 0.15s ease;
+}
+
+/* Show handles on node hover or selection */
+.react-flow__node:hover .react-flow__handle,
+.react-flow__node.selected .react-flow__handle {
+  opacity: 1;
+}
+
+/* Show all handles during connection drag */
+.react-flow__node .react-flow__handle {
+  /* Will be shown via !opacity-100 class when connection in progress */
+}
+
+/* Custom handle style - Lucidchart periwinkle blue circles */
 .react-flow__handle.custom-handle {
-  width: 6px !important;
-  height: 6px !important;
-  min-width: 6px !important;
-  min-height: 6px !important;
-  background-color: #93c5fd !important; /* Light blue - like Lucidchart */
-  border: 1px solid #3b82f6 !important; /* Blue border */
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  min-height: 8px !important;
+  background-color: #a5b4fc !important; /* Indigo-300 - periwinkle */
+  border: 1.5px solid #6366f1 !important; /* Indigo-500 */
   border-radius: 50% !important;
   cursor: crosshair !important;
-  z-index: 5 !important;
+  z-index: 10 !important;
 }
 
-/* NO transform/scale on hover - just color change (Lucidchart style) */
+/* Handle hover - slightly larger and brighter */
 .react-flow__handle.custom-handle:hover {
-  background-color: #60a5fa !important;
-  border-color: #2563eb !important;
+  background-color: #818cf8 !important; /* Indigo-400 */
+  border-color: #4f46e5 !important; /* Indigo-600 */
+  transform: scale(1.15);
 }
 
-/* Valid connection target - subtle green */
+/* Valid connection target - green highlight */
 .react-flow__handle.custom-handle.valid-target {
-  background-color: #86efac !important;
-  border-color: #22c55e !important;
+  background-color: #86efac !important; /* Green-300 */
+  border-color: #22c55e !important; /* Green-500 */
+  transform: scale(1.2);
 }
 
-/* Active connection source */
+/* Active connection in progress */
 .react-flow__handle.connecting {
-  background-color: #22c55e !important;
+  background-color: #4ade80 !important;
   border-color: #16a34a !important;
 }
 
@@ -129,16 +154,16 @@
 
 .react-flow__connection-line {
   stroke: #22c55e;
-  stroke-width: 1.5;
+  stroke-width: 2;
 }
 
 .react-flow__connection-path {
   stroke: #22c55e;
-  stroke-dasharray: 5, 5;
-  animation: dash 0.5s linear infinite;
+  stroke-dasharray: 6, 4;
+  animation: connectionDash 0.5s linear infinite;
 }
 
-@keyframes dash {
+@keyframes connectionDash {
   to {
     stroke-dashoffset: -10;
   }
@@ -151,69 +176,68 @@
   stroke-linejoin: round;
 }
 
+/* Edge hover */
 .react-flow__edge:hover .react-flow__edge-path {
-  stroke: #3b82f6;
+  stroke: #3b82f6 !important;
+  stroke-width: 2.5px !important;
   cursor: pointer;
 }
 
+/* Edge selected - more prominent */
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: #3b82f6 !important;
-  stroke-width: 2px !important;
+  stroke: #2563eb !important;
+  stroke-width: 2.5px !important;
 }
 
-/* Node being dragged */
-.react-flow__node.dragging {
-  cursor: grabbing !important;
-  z-index: 1000 !important;
+/* Edge waypoint handle styling */
+.react-flow__edge.selected circle {
+  pointer-events: all !important;
 }
 
-.react-flow__node.dragging > div {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+/* Make edges easier to click */
+.react-flow__edge {
+  cursor: pointer;
 }
 
-/* Source node during connection */
-.react-flow__node.connecting {
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
-}
-
-/* Prevent marker clipping */
+/* Ensure SVG doesn't clip markers */
 .react-flow svg {
   overflow: visible;
 }
 
 /* ========== RESIZE HANDLES - LUCIDCHART STYLE ========== */
 
-/* Selection border line */
+/* Selection border */
 .react-flow__resize-control.line {
   border: 1px solid #3b82f6 !important;
   background: transparent !important;
   border-radius: 0 !important;
 }
 
-/* All resize handles - small blue squares */
+/* Resize handle squares */
 .react-flow__resize-control[class*="handle"] {
-  width: 6px !important;
-  height: 6px !important;
+  width: 8px !important;
+  height: 8px !important;
   background: #3b82f6 !important;
-  border: none !important;
-  border-radius: 1px !important;
+  border: 1px solid #1d4ed8 !important;
+  border-radius: 2px !important;
   z-index: 100 !important;
 }
 
-/* Hover - just darken, no scale */
+/* Resize handle hover */
 .react-flow__resize-control[class*="handle"]:hover {
   background: #2563eb !important;
+  transform: scale(1.1);
 }
 
-/* Cursor styles */
-[class*="resize-control"][class*="nw"],
-[class*="resize-control"][class*="se"] { cursor: nwse-resize !important; }
-[class*="resize-control"][class*="ne"],
-[class*="resize-control"][class*="sw"] { cursor: nesw-resize !important; }
-[class*="resize-control"][class*="handle-n"]:not([class*="nw"]):not([class*="ne"]),
-[class*="resize-control"][class*="handle-s"]:not([class*="sw"]):not([class*="se"]) { cursor: ns-resize !important; }
-[class*="resize-control"][class*="handle-e"]:not([class*="ne"]):not([class*="se"]),
-[class*="resize-control"][class*="handle-w"]:not([class*="nw"]):not([class*="sw"]) { cursor: ew-resize !important; }
+/* Cursor styles for resize handles */
+.react-flow__resize-control[class*="nw"],
+.react-flow__resize-control[class*="se"] { cursor: nwse-resize !important; }
+.react-flow__resize-control[class*="ne"],
+.react-flow__resize-control[class*="sw"] { cursor: nesw-resize !important; }
+.react-flow__resize-control[class*="handle-n"]:not([class*="nw"]):not([class*="ne"]),
+.react-flow__resize-control[class*="handle-s"]:not([class*="sw"]):not([class*="se"]) { cursor: ns-resize !important; }
+.react-flow__resize-control[class*="handle-e"]:not([class*="ne"]):not([class*="se"]),
+.react-flow__resize-control[class*="handle-w"]:not([class*="nw"]):not([class*="sw"]) { cursor: ew-resize !important; }
 
 /* ========== CLOUD ICON SCALING ========== */
 /* Cloud icons scale to fit container while maintaining aspect ratio */

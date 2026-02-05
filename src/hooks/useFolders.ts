@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { folderService } from '@/services/folderService'
+import type { Folder } from '@/types'
 
 export const folderKeys = {
   all: ['folders'] as const,
@@ -48,8 +49,28 @@ export function useUpdateFolder() {
       name?: string
       parentId?: string
     }) => folderService.update(id, input),
-    onSuccess: (data) => {
-      queryClient.setQueryData(folderKeys.detail(data.id), data)
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: folderKeys.lists() })
+      const previousLists = queryClient.getQueriesData<Folder[]>({ queryKey: folderKeys.lists() })
+
+      previousLists.forEach(([queryKey]) => {
+        queryClient.setQueryData<Folder[]>(queryKey, (old) => {
+          if (!old) return old
+          return old.map((f) =>
+            f.id === variables.id ? { ...f, ...variables, updatedAt: new Date().toISOString() } : f
+          )
+        })
+      })
+
+      return { previousLists }
+    },
+    onError: (_err, _variables, context) => {
+      context?.previousLists.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data)
+      })
+    },
+    onSettled: (data) => {
+      if (data) queryClient.setQueryData(folderKeys.detail(data.id), data)
       queryClient.invalidateQueries({ queryKey: folderKeys.lists() })
     },
   })
@@ -60,7 +81,25 @@ export function useDeleteFolder() {
 
   return useMutation({
     mutationFn: (id: string) => folderService.delete(id),
-    onSuccess: (_data, id) => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: folderKeys.lists() })
+      const previousLists = queryClient.getQueriesData<Folder[]>({ queryKey: folderKeys.lists() })
+
+      previousLists.forEach(([queryKey]) => {
+        queryClient.setQueryData<Folder[]>(queryKey, (old) => {
+          if (!old) return old
+          return old.filter((f) => f.id !== id)
+        })
+      })
+
+      return { previousLists }
+    },
+    onError: (_err, _id, context) => {
+      context?.previousLists.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data)
+      })
+    },
+    onSettled: (_data, _err, id) => {
       queryClient.removeQueries({ queryKey: folderKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: folderKeys.lists() })
     },

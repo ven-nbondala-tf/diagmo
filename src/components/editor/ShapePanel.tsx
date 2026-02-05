@@ -10,11 +10,16 @@ import {
   TooltipContent,
   TooltipTrigger,
   Input,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
 } from '@/components/ui'
-import { SHAPE_CATEGORIES, SHAPE_LABELS } from '@/constants'
-import type { ShapeType } from '@/types'
-import { Search } from 'lucide-react'
+import { SHAPE_CATEGORIES, SHAPE_LABELS, CLOUD_PROVIDER_CATEGORIES } from '@/constants'
+import type { ShapeType, WebImageResult } from '@/types'
+import { Search, ChevronRight, Shapes, ImageIcon } from 'lucide-react'
 import { cloudIconComponents, type CloudIconType } from './icons'
+import { WebImageSearch } from './WebImageSearch'
 
 // SVG Shape Preview Component - matches actual canvas shapes
 const ShapePreview = ({ type }: { type: ShapeType }) => {
@@ -396,20 +401,109 @@ const ShapePreview = ({ type }: { type: ShapeType }) => {
 
     // ===== CLOUD PROVIDER ICONS (AWS, Azure, GCP) =====
     // Use official icons from cloudIconComponents
+    // AWS Compute
     case 'aws-ec2':
-    case 'aws-s3':
     case 'aws-lambda':
-    case 'aws-rds':
-    case 'aws-dynamodb':
-    case 'aws-api-gateway':
-    case 'aws-sns':
-    case 'aws-sqs':
-    case 'aws-cloudfront':
-    case 'aws-route53':
-    case 'aws-vpc':
-    case 'aws-iam':
+    case 'aws-elastic-beanstalk':
+    case 'aws-lightsail':
+    case 'aws-outposts':
+    case 'aws-wavelength':
+    case 'aws-local-zones':
+    case 'aws-batch':
+    // AWS Containers
     case 'aws-ecs':
     case 'aws-eks':
+    case 'aws-fargate':
+    case 'aws-ecr':
+    case 'aws-app-runner':
+    // AWS Storage
+    case 'aws-s3':
+    case 'aws-ebs':
+    case 'aws-efs':
+    case 'aws-fsx':
+    case 'aws-storage-gateway':
+    case 'aws-backup':
+    case 'aws-snow-family':
+    // AWS Database
+    case 'aws-rds':
+    case 'aws-dynamodb':
+    case 'aws-elasticache':
+    case 'aws-redshift':
+    case 'aws-neptune':
+    case 'aws-documentdb':
+    case 'aws-qldb':
+    case 'aws-timestream':
+    case 'aws-memorydb':
+    case 'aws-keyspaces':
+    // AWS Networking
+    case 'aws-vpc':
+    case 'aws-cloudfront':
+    case 'aws-route53':
+    case 'aws-api-gateway':
+    case 'aws-direct-connect':
+    case 'aws-global-accelerator':
+    case 'aws-transit-gateway':
+    case 'aws-privatelink':
+    case 'aws-elb':
+    // AWS Security
+    case 'aws-iam':
+    case 'aws-cognito':
+    case 'aws-secrets-manager':
+    case 'aws-kms':
+    case 'aws-waf':
+    case 'aws-shield':
+    case 'aws-guardduty':
+    case 'aws-inspector':
+    case 'aws-macie':
+    case 'aws-security-hub':
+    // AWS Analytics
+    case 'aws-kinesis':
+    case 'aws-athena':
+    case 'aws-emr':
+    case 'aws-glue':
+    case 'aws-lake-formation':
+    case 'aws-quicksight':
+    case 'aws-data-pipeline':
+    case 'aws-msk':
+    case 'aws-opensearch':
+    // AWS ML/AI
+    case 'aws-sagemaker':
+    case 'aws-rekognition':
+    case 'aws-comprehend':
+    case 'aws-lex':
+    case 'aws-polly':
+    case 'aws-transcribe':
+    case 'aws-translate':
+    case 'aws-textract':
+    case 'aws-bedrock':
+    // AWS Integration
+    case 'aws-sns':
+    case 'aws-sqs':
+    case 'aws-eventbridge':
+    case 'aws-step-functions':
+    case 'aws-appsync':
+    case 'aws-mq':
+    case 'aws-app-mesh':
+    // AWS Developer
+    case 'aws-codecommit':
+    case 'aws-codebuild':
+    case 'aws-codedeploy':
+    case 'aws-codepipeline':
+    case 'aws-cloud9':
+    case 'aws-xray':
+    case 'aws-cloudshell':
+    // AWS Management
+    case 'aws-cloudwatch':
+    case 'aws-cloudtrail':
+    case 'aws-config':
+    case 'aws-systems-manager':
+    case 'aws-cloudformation':
+    case 'aws-service-catalog':
+    case 'aws-trusted-advisor':
+    case 'aws-organizations':
+    case 'aws-control-tower':
+    case 'aws-amplify':
+    // Azure - Core
     case 'azure-vm':
     case 'azure-storage':
     case 'azure-functions':
@@ -420,15 +514,175 @@ const ShapePreview = ({ type }: { type: ShapeType }) => {
     case 'azure-cdn':
     case 'azure-vnet':
     case 'azure-keyvault':
+    case 'azure-event-hub':
+    case 'azure-service-bus':
+    case 'azure-logic-apps':
+    case 'azure-databricks':
+    case 'azure-active-directory':
+    case 'azure-container-registry':
+    case 'azure-redis-cache':
+    case 'azure-app-gateway':
+    case 'azure-front-door':
+    case 'azure-monitor':
+    // Azure - Analytics
+    case 'azure-synapse':
+    case 'azure-data-factory':
+    case 'azure-stream-analytics':
+    case 'azure-hdinsight':
+    case 'azure-data-lake':
+    case 'azure-analysis-services':
+    case 'azure-log-analytics':
+    case 'azure-purview':
+    // Azure - Compute
+    case 'azure-vm-scale-sets':
+    case 'azure-batch':
+    case 'azure-cloud-services':
+    case 'azure-service-fabric':
+    // Azure - Containers
+    case 'azure-container-instances':
+    case 'azure-container-apps':
+    // Azure - Databases
+    case 'azure-mysql':
+    case 'azure-postgresql':
+    case 'azure-mariadb':
+    case 'azure-sql-managed-instance':
+    case 'azure-table-storage':
+    // Azure - Networking
+    case 'azure-load-balancer':
+    case 'azure-vpn-gateway':
+    case 'azure-expressroute':
+    case 'azure-traffic-manager':
+    case 'azure-dns':
+    case 'azure-private-link':
+    case 'azure-bastion':
+    case 'azure-nat-gateway':
+    // Azure - Security
+    case 'azure-security-center':
+    case 'azure-sentinel':
+    case 'azure-ddos-protection':
+    case 'azure-firewall':
+    case 'azure-defender':
+    // Azure - AI + ML
+    case 'azure-cognitive-services':
+    case 'azure-machine-learning':
+    case 'azure-bot-service':
+    case 'azure-openai':
+    // Azure - Integration
+    case 'azure-api-management':
+    case 'azure-event-grid':
+    // Azure - Storage
+    case 'azure-blob-storage':
+    case 'azure-file-storage':
+    case 'azure-queue-storage':
+    case 'azure-data-lake-storage':
+    case 'azure-netapp-files':
+    // Azure - Identity
+    case 'azure-b2c':
+    case 'azure-managed-identities':
+    case 'azure-entra-id':
+    // Azure - DevOps
+    case 'azure-devops':
+    case 'azure-repos':
+    case 'azure-pipelines':
+    case 'azure-boards':
+    case 'azure-test-plans':
+    case 'azure-artifacts':
+    // Azure - Web
+    case 'azure-static-web-apps':
+    case 'azure-signalr':
+    case 'azure-notification-hubs':
+    // GCP Compute
     case 'gcp-compute':
-    case 'gcp-storage':
     case 'gcp-functions':
-    case 'gcp-bigquery':
-    case 'gcp-pubsub':
-    case 'gcp-gke':
+    case 'gcp-app-engine':
     case 'gcp-cloud-run':
+    case 'gcp-gke':
+    // GCP Storage
+    case 'gcp-storage':
+    case 'gcp-persistent-disk':
+    case 'gcp-filestore':
+    case 'gcp-storage-transfer':
+    // GCP Database
+    case 'gcp-cloud-sql':
     case 'gcp-firestore':
-    case 'gcp-cloud-sql': {
+    case 'gcp-bigtable':
+    case 'gcp-spanner':
+    case 'gcp-memorystore':
+    case 'gcp-alloydb':
+    // GCP Networking
+    case 'gcp-vpc':
+    case 'gcp-load-balancing':
+    case 'gcp-cloud-cdn':
+    case 'gcp-cloud-dns':
+    case 'gcp-cloud-nat':
+    case 'gcp-cloud-armor':
+    case 'gcp-cloud-interconnect':
+    case 'gcp-network-connectivity':
+    // GCP Security
+    case 'gcp-iam':
+    case 'gcp-cloud-kms':
+    case 'gcp-secret-manager':
+    case 'gcp-security-command-center':
+    case 'gcp-beyondcorp':
+    case 'gcp-certificate-manager':
+    // GCP Analytics
+    case 'gcp-bigquery':
+    case 'gcp-dataflow':
+    case 'gcp-dataproc':
+    case 'gcp-pubsub':
+    case 'gcp-data-fusion':
+    case 'gcp-looker':
+    case 'gcp-dataform':
+    // GCP AI/ML
+    case 'gcp-vertex-ai':
+    case 'gcp-vision-ai':
+    case 'gcp-natural-language':
+    case 'gcp-speech-to-text':
+    case 'gcp-translation':
+    case 'gcp-document-ai':
+    case 'gcp-recommendations-ai':
+    case 'gcp-automl':
+    // GCP Developer
+    case 'gcp-cloud-build':
+    case 'gcp-artifact-registry':
+    case 'gcp-cloud-source-repos':
+    case 'gcp-cloud-deploy':
+    case 'gcp-cloud-workstations':
+    // GCP Management
+    case 'gcp-cloud-monitoring':
+    case 'gcp-cloud-logging':
+    case 'gcp-cloud-trace':
+    case 'gcp-error-reporting':
+    case 'gcp-cloud-debugger':
+    case 'gcp-cloud-profiler':
+    // GCP Integration
+    case 'gcp-cloud-tasks':
+    case 'gcp-cloud-scheduler':
+    case 'gcp-workflows':
+    case 'gcp-eventarc':
+    case 'gcp-api-gateway':
+    // Generic
+    case 'kubernetes':
+    case 'docker':
+    case 'generic-api':
+    case 'generic-database':
+    case 'generic-cache':
+    case 'generic-queue':
+    case 'generic-load-balancer':
+    case 'generic-cdn':
+    // Microsoft Office
+    case 'office-word':
+    case 'office-excel':
+    case 'office-powerpoint':
+    case 'office-outlook':
+    case 'office-teams':
+    case 'office-onedrive':
+    case 'office-sharepoint':
+    case 'office-onenote':
+    case 'office-access':
+    case 'office-publisher':
+    case 'office-visio':
+    case 'office-project': {
       const IconComponent = cloudIconComponents[type as CloudIconType]
       if (IconComponent) {
         return <IconComponent size={size} />
@@ -445,11 +699,20 @@ const ShapePreview = ({ type }: { type: ShapeType }) => {
   }
 }
 
+
+// Helper to count total shapes in a cloud provider
+const countCloudProviderShapes = (subcategories: Record<string, { shapes: ShapeType[] }>) => {
+  return Object.values(subcategories).reduce((total, sub) => total + sub.shapes.length, 0)
+}
+
 export function ShapePanel() {
   const addNode = useEditorStore((state) => state.addNode)
+  const [mainTab, setMainTab] = useState<'shapes' | 'images'>('shapes')
   const [searchQuery, setSearchQuery] = useState('')
   // Start with empty array = all collapsed by default
   const [expandedCategories, setExpandedCategories] = useState<string[]>([])
+  const [expandedCloudProviders, setExpandedCloudProviders] = useState<string[]>([])
+  const [expandedSubcategories, setExpandedSubcategories] = useState<string[]>([])
 
   const onDragStart = useCallback(
     (event: React.DragEvent, nodeType: ShapeType) => {
@@ -462,6 +725,37 @@ export function ShapePanel() {
   const handleClick = useCallback(
     (shapeType: ShapeType) => {
       addNode(shapeType, { x: 250, y: 250 })
+    },
+    [addNode]
+  )
+
+  // Handle web image selection (click to add)
+  const handleImageSelect = useCallback(
+    (image: WebImageResult) => {
+      const noBorder = image.type === 'icon' || image.type === 'gif'
+      // Icons/GIFs: tight 48x48 square like cloud icons. Photos: 200px max.
+      const maxSize = noBorder ? 48 : 200
+      const aspectRatio = image.width / image.height
+      let width = maxSize
+      let height = maxSize
+      if (!noBorder) {
+        if (aspectRatio > 1) {
+          height = maxSize / aspectRatio
+        } else {
+          width = maxSize * aspectRatio
+        }
+      }
+
+      addNode('web-image', { x: 250, y: 250 }, {
+        imageUrl: image.downloadUrl,
+        thumbnailUrl: image.thumbnailUrl,
+        imageType: image.type,
+        imageAlt: image.alt,
+        objectFit: noBorder ? 'contain' : 'cover',
+        attribution: image.attribution,
+        // Icons/GIFs get transparent background, no border (like cloud icons)
+        ...(noBorder ? { style: { backgroundColor: 'transparent', borderWidth: 0, borderRadius: 0 } } : {}),
+      }, { width, height })
     },
     [addNode]
   )
@@ -492,6 +786,49 @@ export function ShapePanel() {
     return filtered
   }, [searchQuery])
 
+  // Filter cloud provider categories based on search query
+  const filteredCloudCategories = useMemo(() => {
+    type CloudProvider = {
+      label: string
+      icon: string
+      subcategories: Record<string, { label: string; shapes: ShapeType[] }>
+    }
+
+    if (!searchQuery.trim()) {
+      return CLOUD_PROVIDER_CATEGORIES as Record<string, CloudProvider>
+    }
+
+    const query = searchQuery.toLowerCase()
+    const filtered: Record<string, CloudProvider> = {}
+
+    for (const [providerKey, provider] of Object.entries(CLOUD_PROVIDER_CATEGORIES)) {
+      const filteredSubcategories: Record<string, { label: string; shapes: ShapeType[] }> = {}
+
+      for (const [subKey, subcategory] of Object.entries(provider.subcategories)) {
+        const matchingShapes = subcategory.shapes.filter((shape: ShapeType) => {
+          const label = SHAPE_LABELS[shape] || shape
+          return label.toLowerCase().includes(query) || shape.toLowerCase().includes(query)
+        })
+
+        if (matchingShapes.length > 0) {
+          filteredSubcategories[subKey] = {
+            ...subcategory,
+            shapes: matchingShapes,
+          }
+        }
+      }
+
+      if (Object.keys(filteredSubcategories).length > 0) {
+        filtered[providerKey] = {
+          ...provider,
+          subcategories: filteredSubcategories,
+        }
+      }
+    }
+
+    return filtered
+  }, [searchQuery])
+
   // Auto-expand categories when searching
   const effectiveExpanded = useMemo(() => {
     if (searchQuery.trim()) {
@@ -500,78 +837,176 @@ export function ShapePanel() {
     return expandedCategories
   }, [searchQuery, filteredCategories, expandedCategories])
 
+  const effectiveCloudExpanded = useMemo(() => {
+    if (searchQuery.trim()) {
+      return Object.keys(filteredCloudCategories)
+    }
+    return expandedCloudProviders
+  }, [searchQuery, filteredCloudCategories, expandedCloudProviders])
+
+  const effectiveSubExpanded = useMemo(() => {
+    if (searchQuery.trim()) {
+      const allSubs: string[] = []
+      for (const provider of Object.values(filteredCloudCategories)) {
+        allSubs.push(...Object.keys(provider.subcategories))
+      }
+      return allSubs
+    }
+    return expandedSubcategories
+  }, [searchQuery, filteredCloudCategories, expandedSubcategories])
+
+  const renderShapeGrid = (shapes: ShapeType[]) => (
+    <div className="grid grid-cols-3 gap-2 px-3">
+      {shapes.map((shape) => (
+        <Tooltip key={shape}>
+          <TooltipTrigger asChild>
+            <button
+              className="aspect-square flex items-center justify-center border rounded-md hover:bg-accent hover:border-primary transition-colors cursor-grab active:cursor-grabbing p-1"
+              draggable
+              onDragStart={(e) => onDragStart(e, shape)}
+              onClick={() => handleClick(shape)}
+            >
+              <ShapePreview type={shape} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="flex items-center gap-2 p-2">
+            <ShapePreview type={shape} />
+            <span>{SHAPE_LABELS[shape]}</span>
+          </TooltipContent>
+        </Tooltip>
+      ))}
+    </div>
+  )
+
+  const hasResults = Object.keys(filteredCategories).length > 0 || Object.keys(filteredCloudCategories).length > 0
+
   return (
     <div className="w-64 border-r bg-background flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b">
-        <h2 className="font-semibold">Shapes</h2>
+        <h2 className="font-semibold">Library</h2>
         <p className="text-xs text-muted-foreground">Drag or click to add</p>
       </div>
 
-      {/* Search */}
-      <div className="p-3 border-b">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search shapes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-9 text-sm"
-          />
+      {/* Main tabs: Shapes | Web Images */}
+      <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'shapes' | 'images')} className="flex-1 flex flex-col">
+        <div className="px-3 pt-2 border-b pb-2">
+          <TabsList className="w-full grid grid-cols-2 h-9">
+            <TabsTrigger value="shapes" className="text-xs">
+              <Shapes className="w-3.5 h-3.5 mr-1.5" />
+              Shapes
+            </TabsTrigger>
+            <TabsTrigger value="images" className="text-xs">
+              <ImageIcon className="w-3.5 h-3.5 mr-1.5" />
+              Web Images
+            </TabsTrigger>
+          </TabsList>
         </div>
-      </div>
 
-      {/* Shape categories with accordion */}
-      <ScrollArea className="flex-1">
-        <Accordion
-          type="multiple"
-          value={effectiveExpanded}
-          onValueChange={setExpandedCategories}
-          className="w-full"
-        >
-          {Object.entries(filteredCategories).map(([key, category]) => (
-            <AccordionItem key={key} value={key} className="border-b last:border-0">
-              <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline hover:bg-accent/50">
-                <span className="flex items-center gap-2">
-                  {category.label}
-                  <span className="text-xs text-muted-foreground">
-                    ({category.shapes.length})
-                  </span>
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="grid grid-cols-3 gap-2 px-3">
-                  {category.shapes.map((shape) => (
-                    <Tooltip key={shape}>
-                      <TooltipTrigger asChild>
-                        <button
-                          className="aspect-square flex items-center justify-center border rounded-md hover:bg-accent hover:border-primary transition-colors cursor-grab active:cursor-grabbing p-1"
-                          draggable
-                          onDragStart={(e) => onDragStart(e, shape)}
-                          onClick={() => handleClick(shape)}
-                        >
-                          <ShapePreview type={shape} />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="flex items-center gap-2 p-2">
-                        <ShapePreview type={shape} />
-                        <span>{SHAPE_LABELS[shape]}</span>
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-
-        {Object.keys(filteredCategories).length === 0 && searchQuery && (
-          <div className="p-4 text-center text-sm text-muted-foreground">
-            No shapes found for "{searchQuery}"
+        {/* Shapes Tab Content */}
+        <TabsContent value="shapes" className="flex-1 flex flex-col mt-0 data-[state=inactive]:hidden">
+          {/* Search */}
+          <div className="p-3 border-b">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search shapes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-9 text-sm"
+              />
+            </div>
           </div>
-        )}
-      </ScrollArea>
+
+          {/* Shape categories with accordion */}
+          <ScrollArea className="flex-1">
+            {/* Basic shape categories */}
+            <Accordion
+              type="multiple"
+              value={effectiveExpanded}
+              onValueChange={setExpandedCategories}
+              className="w-full"
+            >
+              {Object.entries(filteredCategories).map(([key, category]) => (
+                <AccordionItem key={key} value={key} className="border-b last:border-0">
+                  <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline hover:bg-accent/50">
+                    <span className="flex items-center gap-2">
+                      {category.label}
+                      <span className="text-xs text-muted-foreground">
+                        ({category.shapes.length})
+                      </span>
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-3">
+                    {renderShapeGrid(category.shapes)}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+
+            {/* Cloud Provider Categories */}
+            {Object.keys(filteredCloudCategories).length > 0 && (
+              <Accordion
+                type="multiple"
+                value={effectiveCloudExpanded}
+                onValueChange={setExpandedCloudProviders}
+                className="w-full"
+              >
+                {Object.entries(filteredCloudCategories).map(([providerKey, provider]) => (
+                  <AccordionItem key={providerKey} value={providerKey} className="border-b last:border-0">
+                    <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline hover:bg-accent/50">
+                      <span className="flex items-center gap-2">
+                        {provider.label}
+                        <span className="text-xs text-muted-foreground">
+                          ({countCloudProviderShapes(provider.subcategories)})
+                        </span>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-0">
+                      {/* Nested subcategories */}
+                      <Accordion
+                        type="multiple"
+                        value={effectiveSubExpanded}
+                        onValueChange={setExpandedSubcategories}
+                        className="w-full"
+                      >
+                        {Object.entries(provider.subcategories).map(([subKey, subcategory]) => (
+                          <AccordionItem key={subKey} value={subKey} className="border-0">
+                            <AccordionTrigger className="px-6 py-1.5 text-sm hover:no-underline hover:bg-accent/30">
+                              <span className="flex items-center gap-2">
+                                <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                                {subcategory.label}
+                                <span className="text-xs text-muted-foreground">
+                                  ({subcategory.shapes.length})
+                                </span>
+                              </span>
+                            </AccordionTrigger>
+                            <AccordionContent className="pb-2 pl-2">
+                              {renderShapeGrid(subcategory.shapes)}
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
+
+            {!hasResults && searchQuery && (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No shapes found for "{searchQuery}"
+              </div>
+            )}
+          </ScrollArea>
+        </TabsContent>
+
+        {/* Web Images Tab Content */}
+        <TabsContent value="images" className="flex-1 mt-0 data-[state=inactive]:hidden">
+          <WebImageSearch onImageSelect={handleImageSelect} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
