@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import { SHAPE_SECTIONS } from './shared'
 import { EdgeProperties } from './EdgeProperties'
-import { ImageSection, FillSection, BorderSection, ShadowSection, TextSection, SizeSection, ArrangeSection } from './sections'
+import { ImageSection, FillSection, BorderSection, ShadowSection, TextSection, SizeSection, ArrangeSection, UMLClassDataSection, DatabaseDataSection } from './sections'
 import { PresetPicker } from './sections/PresetPicker'
 
 export function PropertiesPanel() {
@@ -110,6 +110,12 @@ export function PropertiesPanel() {
   const data = selectedNode.data
   const style = data.style || {}
 
+  // Check if shape has extended data (UML class, database)
+  const isUMLClass = data.type === 'uml-class'
+  const isUMLInterface = data.type === 'uml-interface'
+  const isDatabase = data.type === 'database'
+  const hasDataTab = isUMLClass || isUMLInterface || isDatabase
+
   const handleDuplicate = () => {
     copyNodes()
     pasteNodes()
@@ -156,9 +162,12 @@ export function PropertiesPanel() {
       </div>
 
       {/* Tabbed content */}
-      <Tabs defaultValue="style" className="flex-1 flex flex-col overflow-hidden">
+      <Tabs defaultValue={hasDataTab ? 'data' : 'style'} className="flex-1 flex flex-col overflow-hidden">
         <div className="px-3 pt-2 border-b">
           <TabsList className="w-full">
+            {hasDataTab && (
+              <TabsTrigger value="data" className="flex-1 text-xs">Data</TabsTrigger>
+            )}
             <TabsTrigger value="style" className="flex-1 text-xs">Style</TabsTrigger>
             <TabsTrigger value="text" className="flex-1 text-xs">Text</TabsTrigger>
             <TabsTrigger value="layout" className="flex-1 text-xs">Layout</TabsTrigger>
@@ -166,6 +175,15 @@ export function PropertiesPanel() {
         </div>
 
         <ScrollArea className="flex-1">
+          {hasDataTab && (
+            <TabsContent value="data" className="m-0 p-0">
+              <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full">
+                {(isUMLClass || isUMLInterface) && <UMLClassDataSection {...sectionProps} />}
+                {isDatabase && <DatabaseDataSection {...sectionProps} />}
+              </Accordion>
+            </TabsContent>
+          )}
+
           <TabsContent value="style" className="m-0 p-0">
             <PresetPicker
               currentStyle={style}

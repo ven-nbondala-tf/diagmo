@@ -1,38 +1,77 @@
 import { cn } from '@/utils'
 import { registerShape } from '../registry'
 import type { ShapeRenderProps } from '../types'
+import type { UMLAttribute, UMLMethod } from '@/types'
 
-function UMLClassShape({ label, locked, baseStyle, getShapeStyle }: ShapeRenderProps) {
+// Default attributes and methods for new UML classes
+const DEFAULT_ATTRIBUTES: UMLAttribute[] = [
+  { visibility: '+', name: 'attribute', type: 'Type' },
+  { visibility: '-', name: 'privateAttr', type: 'Type' },
+]
+
+const DEFAULT_METHODS: UMLMethod[] = [
+  { visibility: '+', name: 'method', parameters: '', returnType: 'void' },
+  { visibility: '-', name: 'privateMethod', parameters: '', returnType: '' },
+]
+
+function UMLClassShape({ label, locked, baseStyle, getShapeStyle, data }: ShapeRenderProps) {
+  const attributes = data.umlAttributes ?? DEFAULT_ATTRIBUTES
+  const methods = data.umlMethods ?? DEFAULT_METHODS
+  const stereotype = data.umlStereotype
+
   return (
     <div
       className={cn('w-full h-full flex flex-col', locked && 'opacity-75')}
       style={getShapeStyle({ borderRadius: 4 })}
     >
+      {/* Class name header */}
       <div
-        className="border-b px-2 py-1 font-bold text-center"
+        className="border-b px-2 py-1 text-center"
         style={{ borderColor: baseStyle.borderColor, color: baseStyle.color, fontFamily: baseStyle.fontFamily }}
       >
-        {label || 'ClassName'}
+        {stereotype && (
+          <div className="text-xs italic">«{stereotype}»</div>
+        )}
+        <div className="font-bold">{label || 'ClassName'}</div>
       </div>
+
+      {/* Attributes section */}
       <div
-        className="flex-1 border-b px-2 py-1 text-xs text-left"
+        className="border-b px-2 py-1 text-xs text-left min-h-[24px]"
         style={{ borderColor: baseStyle.borderColor, color: baseStyle.color, fontFamily: baseStyle.fontFamily }}
       >
-        <div>+ attribute: Type</div>
-        <div>- privateAttr: Type</div>
+        {attributes.length > 0 ? (
+          attributes.map((attr, i) => (
+            <div key={i}>{attr.visibility} {attr.name}: {attr.type}</div>
+          ))
+        ) : (
+          <div className="text-muted-foreground italic">No attributes</div>
+        )}
       </div>
+
+      {/* Methods section */}
       <div
-        className="flex-1 px-2 py-1 text-xs text-left"
+        className="flex-1 px-2 py-1 text-xs text-left min-h-[24px]"
         style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}
       >
-        <div>+ method(): void</div>
-        <div>- privateMethod()</div>
+        {methods.length > 0 ? (
+          methods.map((method, i) => (
+            <div key={i}>
+              {method.visibility} {method.name}({method.parameters || ''})
+              {method.returnType ? `: ${method.returnType}` : ''}
+            </div>
+          ))
+        ) : (
+          <div className="text-muted-foreground italic">No methods</div>
+        )}
       </div>
     </div>
   )
 }
 
-function UMLInterfaceShape({ label, locked, baseStyle, getShapeStyle }: ShapeRenderProps) {
+function UMLInterfaceShape({ label, locked, baseStyle, getShapeStyle, data }: ShapeRenderProps) {
+  const methods = data.umlMethods ?? [{ visibility: '+' as const, name: 'method', parameters: '', returnType: 'void' }]
+
   return (
     <div
       className={cn('w-full h-full flex flex-col', locked && 'opacity-75')}
@@ -51,10 +90,15 @@ function UMLInterfaceShape({ label, locked, baseStyle, getShapeStyle }: ShapeRen
         {label}
       </div>
       <div
-        className="flex-1 px-2 py-1 text-xs"
+        className="flex-1 px-2 py-1 text-xs text-left"
         style={{ color: baseStyle.color, fontFamily: baseStyle.fontFamily }}
       >
-        + method(): void
+        {methods.map((method, i) => (
+          <div key={i}>
+            {method.visibility} {method.name}({method.parameters || ''})
+            {method.returnType ? `: ${method.returnType}` : ''}
+          </div>
+        ))}
       </div>
     </div>
   )

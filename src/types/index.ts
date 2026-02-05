@@ -33,6 +33,28 @@ export interface Diagram {
   updatedAt: string
 }
 
+// UML Class attribute/method types
+export interface UMLAttribute {
+  visibility: '+' | '-' | '#' | '~'  // public, private, protected, package
+  name: string
+  type: string
+}
+
+export interface UMLMethod {
+  visibility: '+' | '-' | '#' | '~'
+  name: string
+  parameters?: string
+  returnType?: string
+}
+
+// Database column type
+export interface DBColumn {
+  name: string
+  type: string
+  isPrimaryKey?: boolean
+  isNullable?: boolean
+}
+
 export interface DiagramNode extends Node {
   data: {
     label: string
@@ -51,6 +73,12 @@ export interface DiagramNode extends Node {
       url: string
       source: string
     }
+    // UML Class specific properties
+    umlAttributes?: UMLAttribute[]
+    umlMethods?: UMLMethod[]
+    umlStereotype?: string
+    // Database specific properties
+    dbColumns?: DBColumn[]
   }
 }
 
