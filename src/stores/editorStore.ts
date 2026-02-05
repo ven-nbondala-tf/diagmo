@@ -36,6 +36,8 @@ interface EditorState {
   layers: Layer[]
   activeLayerId: string | null
   layersPanelOpen: boolean
+  // Version history
+  versionHistoryPanelOpen: boolean
 }
 
 interface EditorActions {
@@ -98,6 +100,8 @@ interface EditorActions {
   assignNodesToLayer: (nodeIds: string[], layerId: string | null) => void
   toggleLayersPanel: () => void
   setLayers: (layers: Layer[]) => void
+  // Version history
+  toggleVersionHistoryPanel: () => void
 }
 
 type EditorStore = EditorState & EditorActions
@@ -132,6 +136,8 @@ const initialState: EditorState = {
   layers: [DEFAULT_LAYER],
   activeLayerId: 'default-layer',
   layersPanelOpen: false,
+  // Version history
+  versionHistoryPanelOpen: false,
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -997,6 +1003,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   setLayers: (layers) => {
     set({ layers })
+  },
+
+  toggleVersionHistoryPanel: () => {
+    set((state) => ({ versionHistoryPanelOpen: !state.versionHistoryPanelOpen }))
   },
 }))
 

@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Diagram, DiagramNode, DiagramEdge } from '@/types'
+import type { Diagram, DiagramNode, DiagramEdge, DiagramVersion, Layer } from '@/types'
 
 interface CreateDiagramInput {
   name: string
@@ -143,5 +143,74 @@ export const diagramService = {
 
   async moveToFolder(id: string, folderId: string | null): Promise<Diagram> {
     return this.update(id, { folderId: folderId || undefined })
+  },
+
+  // Version history functions
+  async getVersions(diagramId: string): Promise<DiagramVersion[]> {
+    const { data, error } = await supabase
+      .from('diagram_versions')
+      .select('*')
+      .eq('diagram_id', diagramId)
+      .order('version', { ascending: false })
+
+    if (error) throw error
+    return (data || []).map((row) => ({
+      id: row.id as string,
+      diagramId: row.diagram_id as string,
+      version: row.version as number,
+      nodes: (row.nodes as DiagramNode[]) || [],
+      edges: (row.edges as DiagramEdge[]) || [],
+      createdAt: row.created_at as string,
+    }))
+  },
+
+  async createVersion(diagramId: string, nodes: DiagramNode[], edges: DiagramEdge[]): Promise<DiagramVersion> {
+    // Get the latest version number
+    const { data: existing } = await supabase
+      .from('diagram_versions')
+      .select('version')
+      .eq('diagram_id', diagramId)
+      .order('version', { ascending: false })
+      .limit(1)
+
+    const nextVersion = existing && existing.length > 0 ? (existing[0].version as number) + 1 : 1
+
+    const { data, error } = await supabase
+      .from('diagram_versions')
+      .insert({
+        diagram_id: diagramId,
+        version: nextVersion,
+        nodes,
+        edges,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return {
+      id: data.id as string,
+      diagramId: data.diagram_id as string,
+      version: data.version as number,
+      nodes: (data.nodes as DiagramNode[]) || [],
+      edges: (data.edges as DiagramEdge[]) || [],
+      createdAt: data.created_at as string,
+    }
+  },
+
+  async deleteVersion(versionId: string): Promise<void> {
+    const { error } = await supabase
+      .from('diagram_versions')
+      .delete()
+      .eq('id', versionId)
+
+    if (error) throw error
+  },
+
+  async restoreVersion(diagramId: string, version: DiagramVersion): Promise<Diagram> {
+    // Update the diagram with the version's nodes and edges
+    return this.update(diagramId, {
+      nodes: version.nodes,
+      edges: version.edges,
+    })
   },
 }

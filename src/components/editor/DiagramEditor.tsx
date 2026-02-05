@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { nanoid } from 'nanoid'
-import { PanelRightOpen, Layers } from 'lucide-react'
+import { PanelRightOpen, Layers, History } from 'lucide-react'
 import { useEditorStore } from '@/stores/editorStore'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import type { Diagram, DiagramNode, DiagramEdge, ShapeType } from '@/types'
@@ -23,6 +23,7 @@ import { edgeTypes } from './edges'
 import { ShapePanel } from './ShapePanel'
 import { PropertiesPanel } from './properties'
 import { LayersPanel } from './LayersPanel'
+import { VersionHistoryPanel } from './VersionHistoryPanel'
 import { ZoomControls } from './ZoomControls'
 import { SelectionToolbar } from './SelectionToolbar'
 import { QuickShapeBar } from './QuickShapeBar'
@@ -78,6 +79,8 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const togglePropertiesPanel = useEditorStore((state) => state.togglePropertiesPanel)
   const layersPanelOpen = useEditorStore((state) => state.layersPanelOpen)
   const toggleLayersPanel = useEditorStore((state) => state.toggleLayersPanel)
+  const versionHistoryPanelOpen = useEditorStore((state) => state.versionHistoryPanelOpen)
+  const toggleVersionHistoryPanel = useEditorStore((state) => state.toggleVersionHistoryPanel)
   const interactionMode = useEditorStore((state) => state.interactionMode)
   const layers = useEditorStore((state) => state.layers)
 
@@ -313,6 +316,17 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         <ZoomControls />
         {/* Toggle buttons when panels are closed */}
         <div className="absolute right-4 top-4 z-10 flex gap-2">
+          {!versionHistoryPanelOpen && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 bg-background shadow-md"
+              onClick={toggleVersionHistoryPanel}
+              title="Open Version History"
+            >
+              <History className="w-4 h-4" />
+            </Button>
+          )}
           {!layersPanelOpen && (
             <Button
               variant="outline"
@@ -337,6 +351,11 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           )}
         </div>
       </div>
+      {versionHistoryPanelOpen && (
+        <ErrorBoundary>
+          <VersionHistoryPanel diagramId={diagram.id} />
+        </ErrorBoundary>
+      )}
       {layersPanelOpen && (
         <ErrorBoundary>
           <LayersPanel />
