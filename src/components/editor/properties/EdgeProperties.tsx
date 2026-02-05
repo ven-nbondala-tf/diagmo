@@ -22,9 +22,69 @@ import {
   PanelRightClose,
   ChevronsUpDown,
   ChevronsDownUp,
+  Route,
 } from 'lucide-react'
+import { cn } from '@/utils/cn'
 import type { DiagramEdge } from '@/types'
 import { SliderWithInput, IconButton, ColorPicker, FONT_FAMILIES, EDGE_SECTIONS } from './shared'
+
+// Visual route type icons
+const RouteIcon = ({ type, className }: { type: string; className?: string }) => {
+  const iconProps = { className: cn('w-full h-full', className), strokeWidth: 2 }
+
+  switch (type) {
+    case 'straight':
+      return (
+        <svg viewBox="0 0 40 24" fill="none" stroke="currentColor" {...iconProps}>
+          <circle cx="4" cy="12" r="3" fill="currentColor" stroke="none" />
+          <line x1="7" y1="12" x2="33" y2="12" />
+          <circle cx="36" cy="12" r="3" fill="currentColor" stroke="none" />
+        </svg>
+      )
+    case 'smoothstep':
+      return (
+        <svg viewBox="0 0 40 24" fill="none" stroke="currentColor" {...iconProps}>
+          <circle cx="4" cy="4" r="3" fill="currentColor" stroke="none" />
+          <path d="M7 4 H16 Q20 4 20 8 V16 Q20 20 24 20 H33" fill="none" />
+          <circle cx="36" cy="20" r="3" fill="currentColor" stroke="none" />
+        </svg>
+      )
+    case 'step':
+      return (
+        <svg viewBox="0 0 40 24" fill="none" stroke="currentColor" {...iconProps}>
+          <circle cx="4" cy="4" r="3" fill="currentColor" stroke="none" />
+          <path d="M7 4 H20 V20 H33" fill="none" />
+          <circle cx="36" cy="20" r="3" fill="currentColor" stroke="none" />
+        </svg>
+      )
+    case 'bezier':
+      return (
+        <svg viewBox="0 0 40 24" fill="none" stroke="currentColor" {...iconProps}>
+          <circle cx="4" cy="4" r="3" fill="currentColor" stroke="none" />
+          <path d="M7 4 C20 4 20 20 33 20" fill="none" />
+          <circle cx="36" cy="20" r="3" fill="currentColor" stroke="none" />
+        </svg>
+      )
+    case 'labeled':
+    default:
+      return (
+        <svg viewBox="0 0 40 24" fill="none" stroke="currentColor" {...iconProps}>
+          <circle cx="4" cy="4" r="3" fill="currentColor" stroke="none" />
+          <path d="M7 4 H14 Q18 4 18 8 V16 Q18 20 22 20 H33" fill="none" />
+          <circle cx="36" cy="20" r="3" fill="currentColor" stroke="none" />
+          <text x="20" y="13" fontSize="6" fill="currentColor" stroke="none" textAnchor="middle">A</text>
+        </svg>
+      )
+  }
+}
+
+const ROUTE_TYPES = [
+  { value: 'labeled', label: 'Auto', description: 'Smart orthogonal routing' },
+  { value: 'straight', label: 'Direct', description: 'Straight line connection' },
+  { value: 'smoothstep', label: 'Smooth', description: 'Rounded orthogonal path' },
+  { value: 'step', label: 'Step', description: 'Sharp orthogonal path' },
+  { value: 'bezier', label: 'Curved', description: 'Bezier curve connection' },
+]
 
 interface EdgePropertiesProps {
   selectedEdge: DiagramEdge
@@ -39,7 +99,7 @@ export function EdgeProperties({ selectedEdge, updateEdge, deleteSelected, toggl
   // Auto-expand relevant sections when edge is selected
   useEffect(() => {
     if (selectedEdge) {
-      const defaults = ['line-style', 'arrows']
+      const defaults = ['routing', 'line-style', 'arrows']
       setExpandedSections((prev) => [...new Set([...prev, ...defaults])])
     }
   }, [selectedEdge.id])
@@ -97,6 +157,38 @@ export function EdgeProperties({ selectedEdge, updateEdge, deleteSelected, toggl
 
       <ScrollArea className="flex-1">
         <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full">
+          {/* ROUTING */}
+          <AccordionItem value="routing" className="border-b">
+            <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline hover:bg-accent/50">
+              <span className="flex items-center gap-2"><Route className="w-4 h-4" />Routing</span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 space-y-3">
+              <div className="grid grid-cols-5 gap-1">
+                {ROUTE_TYPES.map((route) => (
+                  <button
+                    key={route.value}
+                    onClick={() => updateEdge(selectedEdge.id, { type: route.value })}
+                    className={cn(
+                      'flex flex-col items-center p-1.5 rounded border transition-colors',
+                      edgeType === route.value
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-transparent hover:border-border hover:bg-muted/50'
+                    )}
+                    title={route.description}
+                  >
+                    <div className="w-10 h-6">
+                      <RouteIcon type={route.value} />
+                    </div>
+                    <span className="text-[10px] mt-0.5">{route.label}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                {ROUTE_TYPES.find(r => r.value === edgeType)?.description || 'Select a routing style'}
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+
           {/* LINE STYLE */}
           <AccordionItem value="line-style" className="border-b">
             <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline hover:bg-accent/50">
@@ -105,16 +197,6 @@ export function EdgeProperties({ selectedEdge, updateEdge, deleteSelected, toggl
             <AccordionContent className="px-4 pb-4 space-y-3">
               <div className="flex items-center gap-2">
                 <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground mb-1 block">Type</Label>
-                  <select value={edgeType} onChange={(e) => updateEdge(selectedEdge.id, { type: e.target.value })} className="w-full h-7 text-xs border rounded px-1.5 bg-background">
-                    <option value="labeled">Auto</option>
-                    <option value="straight">Straight</option>
-                    <option value="smoothstep">Smooth</option>
-                    <option value="step">Step</option>
-                    <option value="bezier">Curved</option>
-                  </select>
-                </div>
-                <div className="w-20">
                   <Label className="text-xs text-muted-foreground mb-1 block">Style</Label>
                   <select
                     value={lineStyle}

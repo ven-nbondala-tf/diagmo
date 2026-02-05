@@ -2,7 +2,7 @@ export const STYLE_SECTIONS = ['image', 'fill', 'border', 'shadow']
 export const TEXT_SECTIONS = ['text']
 export const LAYOUT_SECTIONS = ['size', 'arrange']
 export const SHAPE_SECTIONS = [...STYLE_SECTIONS, ...TEXT_SECTIONS, ...LAYOUT_SECTIONS]
-export const EDGE_SECTIONS = ['line-style', 'arrows', 'line-label', 'animation']
+export const EDGE_SECTIONS = ['routing', 'line-style', 'arrows', 'line-label', 'animation']
 
 export const FONT_FAMILIES = [
   { value: 'Inter', label: 'Inter' },
