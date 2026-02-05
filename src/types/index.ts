@@ -133,6 +133,9 @@ export interface EdgeStyle {
   labelFontWeight?: 'normal' | 'bold' | 'light'
   labelFontStyle?: 'normal' | 'italic'
   labelTextDecoration?: 'none' | 'underline' | 'line-through'
+
+  // Label placement along edge
+  labelPlacement?: 'start' | 'middle' | 'end'
 }
 
 // Shape types

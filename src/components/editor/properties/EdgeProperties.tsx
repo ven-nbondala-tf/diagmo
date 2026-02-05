@@ -253,17 +253,33 @@ export function EdgeProperties({ selectedEdge, updateEdge, deleteSelected, toggl
               <span className="flex items-center gap-2"><Type className="w-4 h-4" />Label</span>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4 space-y-3">
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground mb-1 block">Text</Label>
-                  <Input value={(selectedEdge.label as string) || ''} onChange={(e) => updateEdge(selectedEdge.id, { label: e.target.value })} placeholder="Label..." className="h-7 text-xs" />
+              <div className="space-y-2">
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground mb-1 block">Text</Label>
+                    <Input value={(selectedEdge.label as string) || ''} onChange={(e) => updateEdge(selectedEdge.id, { label: e.target.value })} placeholder="Label..." className="h-7 text-xs" />
+                  </div>
                 </div>
-                <div className="w-24">
-                  <Label className="text-xs text-muted-foreground mb-1 block">Position</Label>
-                  <select value={(selectedEdge.data as { labelPosition?: string })?.labelPosition || 'on-line'} onChange={(e) => updateEdge(selectedEdge.id, { data: { ...selectedEdge.data, labelPosition: e.target.value as 'on-line' | 'outside' } })} className="w-full h-7 text-xs border rounded px-1.5 bg-background">
-                    <option value="on-line">On Line</option>
-                    <option value="outside">Above</option>
-                  </select>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground mb-1 block">Placement</Label>
+                    <select
+                      value={(selectedEdge.data as { style?: { labelPlacement?: string } })?.style?.labelPlacement || 'middle'}
+                      onChange={(e) => updateEdge(selectedEdge.id, { data: { ...selectedEdge.data, style: { ...(selectedEdge.data as { style?: object })?.style, labelPlacement: e.target.value as 'start' | 'middle' | 'end' } } })}
+                      className="w-full h-7 text-xs border rounded px-1.5 bg-background"
+                    >
+                      <option value="start">Start</option>
+                      <option value="middle">Middle</option>
+                      <option value="end">End</option>
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground mb-1 block">Vertical</Label>
+                    <select value={(selectedEdge.data as { labelPosition?: string })?.labelPosition || 'on-line'} onChange={(e) => updateEdge(selectedEdge.id, { data: { ...selectedEdge.data, labelPosition: e.target.value as 'on-line' | 'outside' } })} className="w-full h-7 text-xs border rounded px-1.5 bg-background">
+                      <option value="on-line">On Line</option>
+                      <option value="outside">Above</option>
+                    </select>
+                  </div>
                 </div>
               </div>
               {selectedEdge.label && (

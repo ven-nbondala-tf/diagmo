@@ -81,6 +81,7 @@ export function LabeledEdge({
 
   const waypointOffset = edgeData?.waypointOffset || { x: 0, y: 0 }
   const labelPosition = edgeData?.labelPosition || 'on-line'
+  const labelPlacement = edgeStyle?.labelPlacement || 'middle'
 
   // Sync label text
   useEffect(() => {
@@ -209,6 +210,24 @@ export function LabeledEdge({
     }
   }
 
+  // Adjust label position based on labelPlacement (start, middle, end)
+  // For 'middle' we use the default labelX/labelY from path generation
+  // For 'start' and 'end' we interpolate along the edge
+  let finalLabelX = labelX
+  let finalLabelY = labelY
+
+  if (labelPlacement === 'start') {
+    // Position near source (20% along the edge)
+    const t = 0.2
+    finalLabelX = sourceX + (targetX - sourceX) * t
+    finalLabelY = sourceY + (targetY - sourceY) * t
+  } else if (labelPlacement === 'end') {
+    // Position near target (80% along the edge)
+    const t = 0.8
+    finalLabelX = sourceX + (targetX - sourceX) * t
+    finalLabelY = sourceY + (targetY - sourceY) * t
+  }
+
   // Waypoint handle position (at label position when not dragged)
   const waypointX = hasWaypointOffset ? baseMidX + waypointOffset.x : labelX
   const waypointY = hasWaypointOffset ? baseMidY + waypointOffset.y : labelY
@@ -304,15 +323,15 @@ export function LabeledEdge({
         />
       )}
 
-      {/* Label - positioned based on labelPosition setting */}
+      {/* Label - positioned based on labelPosition and labelPlacement settings */}
       <EdgeLabelRenderer>
         <div
           style={{
             position: 'absolute',
             // 'on-line' = on the line with background, 'outside' = above line without background
             transform: labelPosition === 'outside'
-              ? `translate(-50%, -100%) translate(${labelX}px, ${labelY - 12}px)`
-              : `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              ? `translate(-50%, -100%) translate(${finalLabelX}px, ${finalLabelY - 12}px)`
+              : `translate(-50%, -50%) translate(${finalLabelX}px, ${finalLabelY}px)`,
             pointerEvents: 'none',
             zIndex: 0, // Below node labels
           }}
