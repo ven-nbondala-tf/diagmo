@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
 import { useEditorStore } from '@/stores/editorStore'
 import { useUpdateDiagram } from '@/hooks'
 import { exportService } from '@/services/exportService'
@@ -99,7 +98,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
     }
   }, [diagram.id, diagram.name, name, nodes, edges, isDirty, updateDiagram, setDirty])
 
-  const handleExport = async (format: 'png' | 'svg' | 'json') => {
+  const handleExport = async (format: 'png' | 'svg' | 'pdf' | 'json') => {
     // JSON export doesn't need the viewport
     if (format === 'json') {
       try {
@@ -128,56 +127,30 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
     }
 
     try {
-      toast.loading('Exporting...')
+      toast.loading('Exporting full diagram...')
 
-      // Calculate bounds of all nodes to capture the full diagram
-      const padding = 50
-      const bounds = getNodesBounds(nodes)
-      const imageWidth = (bounds.width + padding * 2) * 2 // 2x for retina
-      const imageHeight = (bounds.height + padding * 2) * 2
-      const viewport = getViewportForBounds(
-        bounds,
-        imageWidth,
-        imageHeight,
-        0.5,
-        2,
-        padding
-      )
-
-      // Temporarily transform the viewport element to show full diagram
-      const originalTransform = viewportEl.style.transform
-      viewportEl.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
-
-      // Capture at the calculated dimensions
-      const captureOptions = {
-        width: imageWidth,
-        height: imageHeight,
-      }
-
+      // Use the new full diagram export methods (offscreen clone, no visual glitch)
       switch (format) {
         case 'png': {
-          const dataUrl = await exportService.exportToPng(viewportEl, captureOptions)
+          const dataUrl = await exportService.exportFullDiagramToPng(viewportEl, nodes)
           exportService.downloadFile(dataUrl, `${name}.png`)
           break
         }
         case 'svg': {
-          const dataUrl = await exportService.exportToSvg(viewportEl, captureOptions)
+          const dataUrl = await exportService.exportFullDiagramToSvg(viewportEl, nodes)
           exportService.downloadFile(dataUrl, `${name}.svg`)
+          break
+        }
+        case 'pdf': {
+          const blob = await exportService.exportFullDiagramToPdf(viewportEl, nodes)
+          exportService.downloadFile(blob, `${name}.pdf`)
           break
         }
       }
 
-      // Restore the original viewport transform
-      viewportEl.style.transform = originalTransform
-
       toast.dismiss()
       toast.success(`Exported as ${format.toUpperCase()}`)
     } catch (error) {
-      // Restore viewport on error too
-      const viewportRestore = document.querySelector('.react-flow__viewport') as HTMLElement
-      if (viewportRestore) {
-        viewportRestore.style.transform = ''
-      }
       toast.dismiss()
       toast.error('Export failed')
       console.error('Export error:', error)

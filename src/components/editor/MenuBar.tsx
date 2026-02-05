@@ -24,7 +24,7 @@ import {
 interface MenuBarProps {
   diagramName: string
   onSave: () => void
-  onExport: (format: 'png' | 'svg' | 'json') => void
+  onExport: (format: 'png' | 'svg' | 'pdf' | 'json') => void
   onImport: () => void
   saving: boolean
 }
@@ -97,6 +97,9 @@ export function MenuBar({ onSave, onExport, onImport, saving }: MenuBarProps) {
                 </MenubarItem>
                 <MenubarItem onClick={() => onExport('svg')}>
                   Export as SVG
+                </MenubarItem>
+                <MenubarItem onClick={() => onExport('pdf')}>
+                  Export as PDF
                 </MenubarItem>
                 <MenubarItem onClick={() => onExport('json')}>
                   Export as JSON

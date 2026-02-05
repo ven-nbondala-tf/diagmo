@@ -64,6 +64,136 @@ export const exportService = {
     return pdf.output('blob')
   },
 
+  /**
+   * Export the full diagram (all nodes) regardless of current viewport
+   * Uses offscreen clone to avoid visual glitches
+   */
+  async exportFullDiagramToPng(
+    viewportElement: HTMLElement,
+    nodes: DiagramNode[],
+    options?: Partial<ExportOptions>
+  ): Promise<string> {
+    if (nodes.length === 0) {
+      throw new Error('No nodes to export')
+    }
+
+    const padding = options?.padding ?? 50
+    const bounds = getNodesBounds(nodes)
+
+    // Calculate dimensions for the export
+    const exportWidth = bounds.width + padding * 2
+    const exportHeight = bounds.height + padding * 2
+
+    // Get viewport transform to fit all nodes
+    const viewport = getViewportForBounds(
+      bounds,
+      exportWidth,
+      exportHeight,
+      0.5,
+      2,
+      padding
+    )
+
+    // Clone the viewport element for offscreen rendering
+    const clone = viewportElement.cloneNode(true) as HTMLElement
+    clone.style.position = 'absolute'
+    clone.style.left = '-99999px'
+    clone.style.top = '-99999px'
+    clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
+    document.body.appendChild(clone)
+
+    try {
+      const dataUrl = await toPng(clone, {
+        quality: options?.quality || 0.95,
+        backgroundColor: options?.backgroundColor || '#ffffff',
+        width: exportWidth,
+        height: exportHeight,
+        pixelRatio: 2,
+      })
+      return dataUrl
+    } finally {
+      document.body.removeChild(clone)
+    }
+  },
+
+  /**
+   * Export the full diagram as SVG
+   */
+  async exportFullDiagramToSvg(
+    viewportElement: HTMLElement,
+    nodes: DiagramNode[],
+    options?: Partial<ExportOptions>
+  ): Promise<string> {
+    if (nodes.length === 0) {
+      throw new Error('No nodes to export')
+    }
+
+    const padding = options?.padding ?? 50
+    const bounds = getNodesBounds(nodes)
+
+    const exportWidth = bounds.width + padding * 2
+    const exportHeight = bounds.height + padding * 2
+
+    const viewport = getViewportForBounds(
+      bounds,
+      exportWidth,
+      exportHeight,
+      0.5,
+      2,
+      padding
+    )
+
+    const clone = viewportElement.cloneNode(true) as HTMLElement
+    clone.style.position = 'absolute'
+    clone.style.left = '-99999px'
+    clone.style.top = '-99999px'
+    clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
+    document.body.appendChild(clone)
+
+    try {
+      const dataUrl = await toSvg(clone, {
+        backgroundColor: options?.backgroundColor || '#ffffff',
+        width: exportWidth,
+        height: exportHeight,
+      })
+      return dataUrl
+    } finally {
+      document.body.removeChild(clone)
+    }
+  },
+
+  /**
+   * Export the full diagram as PDF
+   */
+  async exportFullDiagramToPdf(
+    viewportElement: HTMLElement,
+    nodes: DiagramNode[],
+    options?: Partial<ExportOptions>
+  ): Promise<Blob> {
+    const pngDataUrl = await this.exportFullDiagramToPng(viewportElement, nodes, options)
+
+    const img = new Image()
+    img.src = pngDataUrl
+
+    await new Promise((resolve) => {
+      img.onload = resolve
+    })
+
+    const pdfPadding = 20
+    const width = img.width + pdfPadding * 2
+    const height = img.height + pdfPadding * 2
+
+    const pdf = new jsPDF({
+      orientation: width > height ? 'landscape' : 'portrait',
+      unit: 'px',
+      format: [width, height],
+    })
+
+    pdf.addImage(pngDataUrl, 'PNG', pdfPadding, pdfPadding, img.width, img.height)
+
+    return pdf.output('blob')
+  },
+
   async generateThumbnail(
     element: HTMLElement,
     nodes: DiagramNode[],
