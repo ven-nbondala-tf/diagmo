@@ -79,6 +79,10 @@ export interface DiagramNode extends Node {
     umlStereotype?: string
     // Database specific properties
     dbColumns?: DBColumn[]
+    // Container/Swimlane properties
+    parentId?: string  // ID of parent container
+    isCollapsed?: boolean
+    containerColor?: string  // Header color for containers
   }
 }
 
@@ -179,6 +183,10 @@ export type ShapeType =
   | 'custom-shape'
   // Web images (photos, icons, GIFs)
   | 'web-image'
+  // Containers and Swimlanes
+  | 'container'
+  | 'swimlane'
+  | 'swimlane-horizontal'
   // Basic shapes
   | 'rectangle'
   | 'rounded-rectangle'

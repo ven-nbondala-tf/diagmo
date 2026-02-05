@@ -21,6 +21,14 @@ export const DEFAULT_EDGE_STYLE = {
 
 // Simple categories (non-nested)
 export const SHAPE_CATEGORIES = {
+  containers: {
+    label: 'Containers',
+    shapes: [
+      'container',
+      'swimlane',
+      'swimlane-horizontal',
+    ] as ShapeType[],
+  },
   basic: {
     label: 'Basic Shapes',
     shapes: [
@@ -544,8 +552,14 @@ export const CLOUD_PROVIDER_CATEGORIES = {
 }
 
 export const SHAPE_LABELS: Record<ShapeType, string> = {
+  // Custom shapes
+  'custom-shape': 'Custom Shape',
   // Web images
   'web-image': 'Web Image',
+  // Containers and Swimlanes
+  container: 'Container',
+  swimlane: 'Swimlane',
+  'swimlane-horizontal': 'Swimlane (Horizontal)',
   // Basic shapes
   rectangle: 'Rectangle',
   'rounded-rectangle': 'Rounded Rectangle',
