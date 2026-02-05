@@ -21,6 +21,7 @@ import {
 import { SHAPE_SECTIONS } from './shared'
 import { EdgeProperties } from './EdgeProperties'
 import { ImageSection, FillSection, BorderSection, ShadowSection, TextSection, SizeSection, ArrangeSection } from './sections'
+import { PresetPicker } from './sections/PresetPicker'
 
 export function PropertiesPanel() {
   const nodes = useEditorStore((state) => state.nodes)
@@ -166,6 +167,10 @@ export function PropertiesPanel() {
 
         <ScrollArea className="flex-1">
           <TabsContent value="style" className="m-0 p-0">
+            <PresetPicker
+              currentStyle={style}
+              onApply={updateAllSelectedStyles}
+            />
             <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full">
               <ImageSection {...sectionProps} />
               <FillSection {...sectionProps} />

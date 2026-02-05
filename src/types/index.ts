@@ -156,6 +156,7 @@ export type ShapeType =
   | 'callout'
   | 'note'
   | 'text'
+  | 'junction'
   // Flowchart shapes
   | 'process'
   | 'decision'

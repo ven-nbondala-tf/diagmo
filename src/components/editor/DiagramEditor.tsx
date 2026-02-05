@@ -10,12 +10,14 @@ import {
   SelectionMode,
   MarkerType,
   type OnSelectionChangeParams,
+  type Edge,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
+import { nanoid } from 'nanoid'
 import { PanelRightOpen } from 'lucide-react'
 import { useEditorStore } from '@/stores/editorStore'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
-import type { Diagram, ShapeType } from '@/types'
+import type { Diagram, DiagramNode, DiagramEdge, ShapeType } from '@/types'
 import { nodeTypes } from './nodes'
 import { edgeTypes } from './edges'
 import { ShapePanel } from './ShapePanel'
@@ -53,7 +55,7 @@ interface DiagramEditorProps {
 
 export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
-  const { screenToFlowPosition } = useReactFlow()
+  const { screenToFlowPosition, setCenter } = useReactFlow()
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -68,6 +70,9 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const gridSize = useEditorStore((state) => state.gridSize)
   const loadDiagram = useEditorStore((state) => state.loadDiagram)
   const setZoom = useEditorStore((state) => state.setZoom)
+  const pushHistory = useEditorStore((state) => state.pushHistory)
+  const setNodes = useEditorStore((state) => state.setNodes)
+  const setEdges = useEditorStore((state) => state.setEdges)
   const propertiesPanelOpen = useEditorStore((state) => state.propertiesPanelOpen)
   const togglePropertiesPanel = useEditorStore((state) => state.togglePropertiesPanel)
   const interactionMode = useEditorStore((state) => state.interactionMode)
@@ -89,6 +94,83 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
     event.preventDefault()
     event.dataTransfer.dropEffect = 'move'
   }, [])
+
+  // Click on minimap to navigate
+  const handleMinimapClick = useCallback(
+    (_event: React.MouseEvent, position: { x: number; y: number }) => {
+      setCenter(position.x, position.y, { duration: 300 })
+    },
+    [setCenter]
+  )
+
+  // Double-click on edge to insert a junction node
+  const handleEdgeDoubleClick = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.stopPropagation()
+
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      })
+
+      pushHistory()
+
+      const junctionId = nanoid()
+      const edgeStroke = (edge.style?.stroke as string) || '#64748b'
+
+      const junctionNode: DiagramNode = {
+        id: junctionId,
+        type: 'custom',
+        position: { x: position.x - 8, y: position.y - 8 },
+        style: { width: 16, height: 16 },
+        data: {
+          label: '',
+          type: 'junction',
+          style: {
+            backgroundColor: edgeStroke,
+            borderColor: edgeStroke,
+            borderWidth: 0,
+            borderRadius: 100,
+          },
+        },
+      }
+
+      const edge1: DiagramEdge = {
+        id: nanoid(),
+        source: edge.source,
+        sourceHandle: edge.sourceHandle ?? null,
+        target: junctionId,
+        targetHandle: null,
+        type: edge.type || 'labeled',
+        markerEnd: edge.markerEnd,
+        style: edge.style,
+        data: { waypointOffset: { x: 0, y: 0 } },
+      }
+
+      const edge2: DiagramEdge = {
+        id: nanoid(),
+        source: junctionId,
+        sourceHandle: null,
+        target: edge.target,
+        targetHandle: edge.targetHandle ?? null,
+        type: edge.type || 'labeled',
+        markerEnd: edge.markerEnd,
+        style: edge.style,
+        data: { waypointOffset: { x: 0, y: 0 } },
+      }
+
+      const currentNodes = useEditorStore.getState().nodes
+      const currentEdges = useEditorStore.getState().edges
+
+      setNodes([...currentNodes, junctionNode])
+      setEdges([
+        ...currentEdges.filter((e) => e.id !== edge.id),
+        edge1,
+        edge2,
+      ])
+    },
+    [screenToFlowPosition, pushHistory, setNodes, setEdges]
+  )
 
   // Double-click on canvas to add a rectangle
   const onPaneDoubleClick = useCallback((event: React.MouseEvent) => {
@@ -165,6 +247,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           onSelectionChange={onSelectionChange}
           onDragOver={onDragOver}
           onDrop={onDrop}
+          onEdgeDoubleClick={handleEdgeDoubleClick}
           onMoveEnd={(_, viewport) => setZoom(viewport.zoom)}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
@@ -203,6 +286,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             nodeStrokeColor="#374151"
             nodeColor="#ffffff"
             nodeBorderRadius={4}
+            onClick={handleMinimapClick}
           />
         </ReactFlow>
         <SelectionToolbar />

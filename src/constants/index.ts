@@ -566,6 +566,7 @@ export const SHAPE_LABELS: Record<ShapeType, string> = {
   callout: 'Callout',
   note: 'Note',
   text: 'Text',
+  junction: 'Junction',
   // Flowchart shapes
   process: 'Process',
   decision: 'Decision',

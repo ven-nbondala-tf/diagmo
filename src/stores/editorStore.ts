@@ -823,8 +823,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 }))
 
 function getDefaultLabel(type: ShapeType): string {
-  // Web images don't need labels by default
-  if (type === 'web-image') {
+  // Web images and junctions don't need labels
+  if (type === 'web-image' || type === 'junction') {
     return ''
   }
 
@@ -846,6 +846,11 @@ function getDefaultLabel(type: ShapeType): string {
 }
 
 function getDefaultDimensions(type: ShapeType): { width: number; height: number } {
+  // Junction nodes - small circle
+  if (type === 'junction') {
+    return { width: 16, height: 16 }
+  }
+
   // Web images - default size, actual size determined by image
   if (type === 'web-image') {
     return { width: 200, height: 150 }

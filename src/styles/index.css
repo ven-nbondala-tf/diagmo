@@ -215,6 +215,20 @@
   overflow: visible;
 }
 
+/* ========== MINIMAP - GLASS MORPHISM ========== */
+
+.react-flow__minimap {
+  backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark .react-flow__minimap {
+  background-color: rgba(17, 24, 39, 0.8) !important;
+}
+
 /* ========== RESIZE HANDLES - LUCIDCHART STYLE ========== */
 
 /* Selection border */

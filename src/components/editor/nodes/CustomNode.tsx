@@ -96,9 +96,10 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, positio
                       type === 'docker'
   // Web-image icons/gifs should behave like cloud icons (tight bounding box)
   const isWebImageIcon = type === 'web-image' && (data.imageType === 'icon' || data.imageType === 'gif')
-  const isIconLike = isCloudIcon || isWebImageIcon
-  const minWidth = type === 'text' ? 20 : isIconLike ? 24 : 20
-  const minHeight = type === 'text' ? 15 : isIconLike ? 24 : 20
+  const isJunction = type === 'junction'
+  const isIconLike = isCloudIcon || isWebImageIcon || isJunction
+  const minWidth = type === 'text' ? 20 : isJunction ? 8 : isIconLike ? 24 : 20
+  const minHeight = type === 'text' ? 15 : isJunction ? 8 : isIconLike ? 24 : 20
 
   // Default font size: 8 for cloud icons, 14 for other shapes
   const defaultFontSize = isCloudIcon ? 10 : 14
@@ -273,7 +274,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, positio
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Rotation Handle - Lucidchart style: circular rotate icon above the node */}
-      {selected && !locked && (
+      {selected && !locked && !isJunction && (
         <div
           className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center nodrag"
           style={{ top: '-32px' }}
@@ -295,7 +296,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, positio
       )}
 
       {/* Position display - Lucidchart style: shows X, Y coordinates when selected */}
-      {selected && (
+      {selected && !isJunction && (
         <div
           className="absolute left-1/2 -translate-x-1/2 text-xs text-blue-600 whitespace-nowrap pointer-events-none"
           style={{
