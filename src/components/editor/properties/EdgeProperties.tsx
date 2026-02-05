@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MarkerType } from '@xyflow/react'
 import {
   Label,
@@ -35,6 +35,14 @@ interface EdgePropertiesProps {
 
 export function EdgeProperties({ selectedEdge, updateEdge, deleteSelected, togglePropertiesPanel }: EdgePropertiesProps) {
   const [expandedSections, setExpandedSections] = useState<string[]>([])
+
+  // Auto-expand relevant sections when edge is selected
+  useEffect(() => {
+    if (selectedEdge) {
+      const defaults = ['line-style', 'arrows']
+      setExpandedSections((prev) => [...new Set([...prev, ...defaults])])
+    }
+  }, [selectedEdge.id])
 
   const strokeColor = (selectedEdge.style?.stroke as string) || '#6b7280'
   const strokeWidth = (selectedEdge.style?.strokeWidth as number) || 1.5

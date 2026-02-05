@@ -9,7 +9,8 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { FolderSidebar } from '@/components/dashboard/FolderSidebar'
 import { SearchBar } from '@/components/dashboard/SearchBar'
 import { TemplateGallery } from '@/components/dashboard/TemplateGallery'
-import type { DiagramTemplate } from '@/constants/templates'
+import { DIAGRAM_TEMPLATES, type DiagramTemplate } from '@/constants/templates'
+import { TemplateQuickCard } from '@/components/dashboard/TemplateQuickCard'
 import { Plus, FolderOpen } from 'lucide-react'
 
 export function DashboardPage() {
@@ -119,23 +120,27 @@ export function DashboardPage() {
                 </CardHeader>
               </Card>
             ) : (
-              <Card>
-                <CardHeader className="text-center">
-                  <div className="flex justify-center mb-4">
-                    <FolderOpen className="h-12 w-12 text-muted-foreground" />
-                  </div>
-                  <CardTitle>No diagrams yet</CardTitle>
-                  <CardDescription>
-                    Create your first diagram to get started
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex justify-center">
-                  <Button onClick={handleOpenTemplateGallery}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Diagram
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="flex flex-col items-center py-8">
+                <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
+                <h2 className="text-xl font-semibold">Get started</h2>
+                <p className="text-muted-foreground mt-1 mb-8">Choose a template or start from scratch</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl w-full">
+                  {DIAGRAM_TEMPLATES.slice(0, 4).map((template) => (
+                    <TemplateQuickCard
+                      key={template.id}
+                      template={template}
+                      onClick={() => handleCreateDiagram(template)}
+                    />
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  className="mt-6"
+                  onClick={handleOpenTemplateGallery}
+                >
+                  Browse all templates
+                </Button>
+              </div>
             )}
           </div>
         </main>

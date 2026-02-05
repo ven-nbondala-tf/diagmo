@@ -29,6 +29,7 @@ interface EditorState {
   future: HistoryEntry[]
   isDirty: boolean
   propertiesPanelOpen: boolean
+  interactionMode: 'select' | 'pan'
 }
 
 interface EditorActions {
@@ -67,6 +68,7 @@ interface EditorActions {
   toggleLockNodes: () => void
   togglePropertiesPanel: () => void
   setPropertiesPanelOpen: (open: boolean) => void
+  setInteractionMode: (mode: 'select' | 'pan') => void
   // Granular node update actions (replace direct setState)
   updateNodePosition: (id: string, position: { x?: number; y?: number }) => void
   updateNodeDimensions: (ids: string[], dimensions: { width?: number; height?: number }) => void
@@ -89,6 +91,7 @@ const initialState: EditorState = {
   snapToGrid: true,
   gridSize: 20,
   propertiesPanelOpen: true,
+  interactionMode: 'select',
   past: [],
   future: [],
   isDirty: false,
@@ -687,6 +690,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   setPropertiesPanelOpen: (open: boolean) => {
     set({ propertiesPanelOpen: open })
+  },
+
+  setInteractionMode: (mode: 'select' | 'pan') => {
+    set({ interactionMode: mode })
   },
 
   // Update a single node's position (for properties panel X/Y inputs)

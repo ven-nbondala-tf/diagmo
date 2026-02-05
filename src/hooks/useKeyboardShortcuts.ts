@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { toast } from 'sonner'
 import { useEditorStore } from '@/stores/editorStore'
 
 interface KeyboardShortcutCallbacks {
@@ -71,13 +72,21 @@ export function useKeyboardShortcuts(callbacks?: KeyboardShortcutCallbacks) {
       // Undo: Ctrl+Z
       if (isMod && event.key === 'z' && !event.shiftKey) {
         event.preventDefault()
-        undo()
+        const { past } = useEditorStore.getState()
+        if (past.length > 0) {
+          undo()
+          toast('Undone', { duration: 1500 })
+        }
       }
 
       // Redo: Ctrl+Shift+Z or Ctrl+Y
       if ((isMod && event.key === 'z' && event.shiftKey) || (isMod && event.key === 'y')) {
         event.preventDefault()
-        redo()
+        const { future } = useEditorStore.getState()
+        if (future.length > 0) {
+          redo()
+          toast('Redone', { duration: 1500 })
+        }
       }
 
       // Select All: Ctrl+A

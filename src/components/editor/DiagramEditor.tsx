@@ -21,7 +21,8 @@ import { edgeTypes } from './edges'
 import { ShapePanel } from './ShapePanel'
 import { PropertiesPanel } from './properties'
 import { ZoomControls } from './ZoomControls'
-import { EditorToolbar } from './EditorToolbar'
+import { SelectionToolbar } from './SelectionToolbar'
+import { QuickShapeBar } from './QuickShapeBar'
 import { Button } from '@/components/ui'
 
 const defaultEdgeOptions = {
@@ -69,6 +70,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const setZoom = useEditorStore((state) => state.setZoom)
   const propertiesPanelOpen = useEditorStore((state) => state.propertiesPanelOpen)
   const togglePropertiesPanel = useEditorStore((state) => state.togglePropertiesPanel)
+  const interactionMode = useEditorStore((state) => state.interactionMode)
 
   // Load diagram on mount
   useEffect(() => {
@@ -87,6 +89,13 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
     event.preventDefault()
     event.dataTransfer.dropEffect = 'move'
   }, [])
+
+  // Double-click on canvas to add a rectangle
+  const onPaneDoubleClick = useCallback((event: React.MouseEvent) => {
+    if (!(event.target as HTMLElement).classList.contains('react-flow__pane')) return
+    const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+    addNode('rectangle', position)
+  }, [screenToFlowPosition, addNode])
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
@@ -146,7 +155,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
       <ErrorBoundary>
         <ShapePanel />
       </ErrorBoundary>
-      <div ref={reactFlowWrapper} className="flex-1 relative">
+      <div ref={reactFlowWrapper} className="flex-1 relative" onDoubleClick={onPaneDoubleClick}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -167,8 +176,8 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           snapToGrid={snapToGrid}
           snapGrid={[gridSize, gridSize]}
           fitView
-          selectionOnDrag={true}
-          panOnDrag={[1, 2]}
+          selectionOnDrag={interactionMode === 'select'}
+          panOnDrag={interactionMode === 'select' ? [1, 2] : true}
           selectionMode={SelectionMode.Partial}
           className="bg-muted/30"
         >
@@ -186,7 +195,8 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             nodeBorderRadius={4}
           />
         </ReactFlow>
-        <EditorToolbar />
+        <SelectionToolbar />
+        <QuickShapeBar />
         <ZoomControls />
         {/* Toggle button when panel is closed */}
         {!propertiesPanelOpen && (

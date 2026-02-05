@@ -1,14 +1,39 @@
 import { useReactFlow } from '@xyflow/react'
 import { useEditorStore } from '@/stores/editorStore'
 import { Button } from '@/components/ui'
-import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
+import { ZoomIn, ZoomOut, Maximize2, MousePointer2, Hand } from 'lucide-react'
 
 export function ZoomControls() {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
   const zoom = useEditorStore((state) => state.zoom)
+  const interactionMode = useEditorStore((state) => state.interactionMode)
+  const setInteractionMode = useEditorStore((state) => state.setInteractionMode)
 
   return (
     <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-background border rounded-md p-1 shadow-sm z-10">
+      {/* Mode toggle */}
+      <Button
+        variant={interactionMode === 'select' ? 'secondary' : 'ghost'}
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => setInteractionMode('select')}
+        title="Select Mode (V)"
+      >
+        <MousePointer2 className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant={interactionMode === 'pan' ? 'secondary' : 'ghost'}
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => setInteractionMode('pan')}
+        title="Pan Mode (H)"
+      >
+        <Hand className="h-4 w-4" />
+      </Button>
+
+      <div className="w-px h-4 bg-border mx-1" />
+
       <Button
         variant="ghost"
         size="icon"

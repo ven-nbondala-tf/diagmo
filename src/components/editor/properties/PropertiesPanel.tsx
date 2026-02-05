@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useEditorStore } from '@/stores/editorStore'
 import type { NodeStyle, DiagramNode } from '@/types'
 import {
@@ -38,6 +38,18 @@ export function PropertiesPanel() {
   const sendToBack = useEditorStore((state) => state.sendToBack)
 
   const [expandedSections, setExpandedSections] = useState<string[]>([])
+
+  // Auto-expand relevant sections when selection changes
+  useEffect(() => {
+    if (selectedNodes.length > 0) {
+      const node = nodes.find((n) => selectedNodes.includes(n.id))
+      if (node) {
+        const defaults = ['fill', 'text', 'size']
+        if (node.data.type === 'web-image') defaults.unshift('image')
+        setExpandedSections((prev) => [...new Set([...prev, ...defaults])])
+      }
+    }
+  }, [selectedNodes.join(',')])
 
   const updateAllSelectedStyles = useCallback((styleUpdate: Partial<NodeStyle>) => {
     selectedNodes.forEach((nodeId) => {
