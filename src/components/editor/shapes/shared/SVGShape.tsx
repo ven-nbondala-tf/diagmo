@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useId } from 'react'
 import { cn } from '@/utils'
 import type { ShapeRenderProps } from '../types'
 
@@ -10,6 +10,7 @@ interface SVGShapeProps {
 
 export function SVGShape({ points, children, renderProps }: SVGShapeProps) {
   const { style, baseStyle, locked, getDropShadowFilter, getVerticalAlignClass, getHorizontalAlignClass } = renderProps
+  const gradientId = useId()
 
   const getStrokeDasharray = () => {
     switch (style?.borderStyle) {
@@ -21,6 +22,13 @@ export function SVGShape({ points, children, renderProps }: SVGShapeProps) {
   }
 
   const strokeWidth = style?.borderStyle === 'none' ? 0 : (baseStyle.borderWidth || 1)
+
+  // Gradient support for SVG shapes
+  const gradientEnabled = style?.gradientEnabled && style?.gradientColor
+  const gradientAngle = style?.gradientDirection === 'vertical' ? { x1: '0%', y1: '0%', x2: '0%', y2: '100%' } :
+                        style?.gradientDirection === 'diagonal' ? { x1: '0%', y1: '0%', x2: '100%', y2: '100%' } :
+                        { x1: '0%', y1: '0%', x2: '100%', y2: '0%' } // horizontal default
+  const fillValue = gradientEnabled ? `url(#${gradientId})` : baseStyle.backgroundColor
 
   return (
     <div
@@ -35,10 +43,18 @@ export function SVGShape({ points, children, renderProps }: SVGShapeProps) {
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
       >
+        {gradientEnabled && (
+          <defs>
+            <linearGradient id={gradientId} {...gradientAngle}>
+              <stop offset="0%" stopColor={baseStyle.backgroundColor} stopOpacity={baseStyle.opacity} />
+              <stop offset="100%" stopColor={style.gradientColor} stopOpacity={baseStyle.opacity} />
+            </linearGradient>
+          </defs>
+        )}
         <polygon
           points={points}
-          fill={baseStyle.backgroundColor}
-          fillOpacity={baseStyle.opacity}
+          fill={fillValue}
+          fillOpacity={gradientEnabled ? 1 : baseStyle.opacity}
           stroke={style?.borderStyle === 'none' ? 'none' : baseStyle.borderColor}
           strokeWidth={strokeWidth}
           strokeDasharray={getStrokeDasharray()}
@@ -60,7 +76,7 @@ export function SVGShape({ points, children, renderProps }: SVGShapeProps) {
           fontWeight: baseStyle.fontWeight,
           fontStyle: baseStyle.fontStyle,
           textDecoration: baseStyle.textDecoration,
-          padding: '8px',
+          padding: `${style?.textPadding ?? 8}px`,
         }}
       >
         {children}

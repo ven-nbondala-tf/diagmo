@@ -97,6 +97,7 @@ export interface NodeStyle {
   lineHeight?: number
   letterSpacing?: number
   textWrap?: 'wrap' | 'nowrap' | 'truncate'
+  textPadding?: number
 
   // Effects
   opacity?: number
@@ -112,6 +113,8 @@ export interface EdgeStyle {
   strokeOpacity?: number
   strokeDasharray?: string
   lineType?: 'solid' | 'dashed' | 'dotted'
+  lineCap?: 'butt' | 'round' | 'square'
+  lineJoin?: 'miter' | 'round' | 'bevel'
 
   // Markers
   markerStart?: 'none' | 'arrow' | 'arrowClosed' | 'circle' | 'diamond'
@@ -134,6 +137,8 @@ export interface EdgeStyle {
 
 // Shape types
 export type ShapeType =
+  // Custom shapes from user libraries
+  | 'custom-shape'
   // Web images (photos, icons, GIFs)
   | 'web-image'
   // Basic shapes
@@ -483,6 +488,27 @@ export interface Folder {
   parentId?: string
   createdAt: string
   updatedAt: string
+}
+
+// Shape Library types
+export interface ShapeLibrary {
+  id: string
+  userId: string
+  name: string
+  description?: string
+  isPublic: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CustomShape {
+  id: string
+  libraryId: string
+  name: string
+  svgContent: string
+  thumbnailUrl?: string
+  category?: string
+  createdAt: string
 }
 
 // Diagram version for history

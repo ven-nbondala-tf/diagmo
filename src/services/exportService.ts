@@ -74,11 +74,16 @@ export const exportService = {
     const bounds = getNodesBounds(nodes)
     const viewport = getViewportForBounds(bounds, width, height, 0.5, 2, padding)
 
-    const originalTransform = element.style.transform
-    element.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
+    // Clone the element to avoid modifying the visible DOM
+    const clone = element.cloneNode(true) as HTMLElement
+    clone.style.position = 'absolute'
+    clone.style.left = '-9999px'
+    clone.style.top = '-9999px'
+    clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
+    document.body.appendChild(clone)
 
     try {
-      const dataUrl = await toPng(element, {
+      const dataUrl = await toPng(clone, {
         quality: 0.8,
         backgroundColor: '#ffffff',
         width,
@@ -87,7 +92,7 @@ export const exportService = {
       })
       return dataUrl
     } finally {
-      element.style.transform = originalTransform
+      document.body.removeChild(clone)
     }
   },
 

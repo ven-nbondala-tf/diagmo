@@ -1,11 +1,19 @@
-import { Label, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui'
-import { Palette } from 'lucide-react'
-import { SliderWithInput, ColorPicker } from '../shared'
+import { Label, AccordionItem, AccordionTrigger, AccordionContent, Switch } from '@/components/ui'
+import { Palette, ArrowRight, ArrowDown, ArrowDownRight } from 'lucide-react'
+import { SliderWithInput, ColorPicker, IconButton } from '../shared'
 import type { ShapeSectionProps } from '../types'
 
 type Props = Pick<ShapeSectionProps, 'style' | 'updateAllSelectedStyles'>
 
+const GRADIENT_DIRECTIONS = [
+  { value: 'horizontal', icon: ArrowRight, label: 'Horizontal' },
+  { value: 'vertical', icon: ArrowDown, label: 'Vertical' },
+  { value: 'diagonal', icon: ArrowDownRight, label: 'Diagonal' },
+] as const
+
 export function FillSection({ style, updateAllSelectedStyles }: Props) {
+  const gradientEnabled = style.gradientEnabled ?? false
+
   return (
     <AccordionItem value="fill" className="border-b">
       <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline hover:bg-accent/50">
@@ -33,6 +41,56 @@ export function FillSection({ style, updateAllSelectedStyles }: Props) {
           step={5}
           unit="%"
         />
+
+        {/* Gradient Section */}
+        <div className="pt-2 border-t space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Gradient</Label>
+            <Switch
+              checked={gradientEnabled}
+              onCheckedChange={(checked) => updateAllSelectedStyles({ gradientEnabled: checked })}
+            />
+          </div>
+
+          {gradientEnabled && (
+            <>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Second Color</Label>
+                <ColorPicker
+                  value={style.gradientColor || '#3b82f6'}
+                  onChange={(color) => updateAllSelectedStyles({ gradientColor: color })}
+                  presets={['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#22c55e', '#06b6d4', '#6366f1']}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Direction</Label>
+                <div className="flex gap-1">
+                  {GRADIENT_DIRECTIONS.map(({ value, icon: Icon, label }) => (
+                    <IconButton
+                      key={value}
+                      icon={Icon}
+                      tooltip={label}
+                      isActive={(style.gradientDirection || 'horizontal') === value}
+                      onClick={() => updateAllSelectedStyles({ gradientDirection: value })}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Gradient Preview */}
+              <div
+                className="h-6 rounded border"
+                style={{
+                  background: `linear-gradient(${
+                    style.gradientDirection === 'vertical' ? '180deg' :
+                    style.gradientDirection === 'diagonal' ? '135deg' : '90deg'
+                  }, ${style.backgroundColor || '#ffffff'}, ${style.gradientColor || '#3b82f6'})`,
+                }}
+              />
+            </>
+          )}
+        </div>
       </AccordionContent>
     </AccordionItem>
   )

@@ -7,6 +7,7 @@ import './NetworkShapes'
 import './WebImageShape'
 import './TextShape'
 import './JunctionShape'
+import './CustomShape'
 
 // Re-export the cloud icon fallback renderer
 export { renderCloudIconOrDefault } from './CloudIconShape'

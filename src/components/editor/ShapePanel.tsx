@@ -16,11 +16,13 @@ import {
   TabsContent,
 } from '@/components/ui'
 import { SHAPE_CATEGORIES, SHAPE_LABELS, CLOUD_PROVIDER_CATEGORIES } from '@/constants'
-import type { ShapeType, WebImageResult } from '@/types'
-import { Search, ChevronRight, ChevronLeft, Shapes, ImageIcon, Square, Diamond, Circle, Type, ArrowRight, StickyNote } from 'lucide-react'
+import type { ShapeType, WebImageResult, CustomShape } from '@/types'
+import { Search, ChevronRight, ChevronLeft, Shapes, ImageIcon, Square, Diamond, Circle, Type, ArrowRight, StickyNote, FolderOpen, Settings } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { cloudIconComponents, type CloudIconType } from './icons'
 import { WebImageSearch } from './WebImageSearch'
+import { ShapeLibraryDialog } from './ShapeLibraryDialog'
+import { useShapeLibraries, useShapesByLibrary } from '@/hooks'
 
 // SVG Shape Preview Component - matches actual canvas shapes
 const ShapePreview = ({ type }: { type: ShapeType }) => {
@@ -719,12 +721,17 @@ export function ShapePanel() {
   const addNode = useEditorStore((state) => state.addNode)
   const shapePanelCollapsed = useEditorStore((state) => state.shapePanelCollapsed)
   const toggleShapePanel = useEditorStore((state) => state.toggleShapePanel)
-  const [mainTab, setMainTab] = useState<'shapes' | 'images'>('shapes')
+  const [mainTab, setMainTab] = useState<'shapes' | 'images' | 'libraries'>('shapes')
   const [searchQuery, setSearchQuery] = useState('')
   // Start with empty array = all collapsed by default
   const [expandedCategories, setExpandedCategories] = useState<string[]>([])
   const [expandedCloudProviders, setExpandedCloudProviders] = useState<string[]>([])
   const [expandedSubcategories, setExpandedSubcategories] = useState<string[]>([])
+  const [libraryDialogOpen, setLibraryDialogOpen] = useState(false)
+  const [expandedLibraries, setExpandedLibraries] = useState<string[]>([])
+
+  // Fetch user's shape libraries
+  const { data: shapeLibraries = [] } = useShapeLibraries()
 
   const onDragStart = useCallback(
     (event: React.DragEvent, nodeType: ShapeType) => {
@@ -930,17 +937,21 @@ export function ShapePanel() {
         </Button>
       </div>
 
-      {/* Main tabs: Shapes | Web Images */}
-      <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'shapes' | 'images')} className="flex-1 flex flex-col">
+      {/* Main tabs: Shapes | Web Images | Libraries */}
+      <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'shapes' | 'images' | 'libraries')} className="flex-1 flex flex-col">
         <div className="px-3 pt-2 border-b pb-2">
-          <TabsList className="w-full grid grid-cols-2 h-9">
+          <TabsList className="w-full grid grid-cols-3 h-9">
             <TabsTrigger value="shapes" className="text-xs">
               <Shapes className="w-3.5 h-3.5 mr-1.5" />
               Shapes
             </TabsTrigger>
             <TabsTrigger value="images" className="text-xs">
               <ImageIcon className="w-3.5 h-3.5 mr-1.5" />
-              Web Images
+              Images
+            </TabsTrigger>
+            <TabsTrigger value="libraries" className="text-xs">
+              <FolderOpen className="w-3.5 h-3.5 mr-1.5" />
+              Custom
             </TabsTrigger>
           </TabsList>
         </div>
@@ -1048,7 +1059,142 @@ export function ShapePanel() {
         <TabsContent value="images" className="flex-1 mt-0 data-[state=inactive]:hidden">
           <WebImageSearch onImageSelect={handleImageSelect} />
         </TabsContent>
+
+        {/* Libraries Tab Content */}
+        <TabsContent value="libraries" className="flex-1 flex flex-col mt-0 data-[state=inactive]:hidden">
+          <div className="p-3 border-b">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setLibraryDialogOpen(true)}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Manage Libraries
+            </Button>
+          </div>
+
+          <ScrollArea className="flex-1">
+            {shapeLibraries.length === 0 ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                <p>No custom shape libraries yet.</p>
+                <p className="mt-1">Click "Manage Libraries" to create one.</p>
+              </div>
+            ) : (
+              <Accordion
+                type="multiple"
+                value={expandedLibraries}
+                onValueChange={setExpandedLibraries}
+                className="w-full"
+              >
+                {shapeLibraries.map((library) => (
+                  <LibraryShapeCategory
+                    key={library.id}
+                    libraryId={library.id}
+                    libraryName={library.name}
+                    onDragStart={onDragStart}
+                    addNode={addNode}
+                  />
+                ))}
+              </Accordion>
+            )}
+          </ScrollArea>
+        </TabsContent>
       </Tabs>
+
+      {/* Shape Library Dialog */}
+      <ShapeLibraryDialog
+        open={libraryDialogOpen}
+        onOpenChange={setLibraryDialogOpen}
+      />
     </div>
+  )
+}
+
+// Component to render shapes from a library
+interface LibraryShapeCategoryProps {
+  libraryId: string
+  libraryName: string
+  onDragStart: (event: React.DragEvent, nodeType: ShapeType) => void
+  addNode: (type: ShapeType, position: { x: number; y: number }, data?: Record<string, unknown>, size?: { width: number; height: number }) => void
+}
+
+function LibraryShapeCategory({ libraryId, libraryName, onDragStart, addNode }: LibraryShapeCategoryProps) {
+  const { data: shapes = [] } = useShapesByLibrary(libraryId)
+
+  const handleCustomShapeDrag = useCallback((e: React.DragEvent, shape: CustomShape) => {
+    // Store custom shape data in drag transfer
+    e.dataTransfer.setData('application/reactflow', 'custom-shape')
+    e.dataTransfer.setData('application/custom-shape', JSON.stringify({
+      id: shape.id,
+      name: shape.name,
+      svgContent: shape.svgContent,
+    }))
+    e.dataTransfer.effectAllowed = 'move'
+  }, [])
+
+  const handleCustomShapeClick = useCallback((shape: CustomShape) => {
+    // Add custom shape as a node with embedded SVG
+    addNode('custom-shape' as ShapeType, { x: 250, y: 250 }, {
+      customShapeId: shape.id,
+      customShapeName: shape.name,
+      customShapeSvg: shape.svgContent,
+    }, { width: 64, height: 64 })
+  }, [addNode])
+
+  if (shapes.length === 0) {
+    return (
+      <AccordionItem value={libraryId} className="border-b last:border-0">
+        <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline hover:bg-accent/50">
+          <span className="flex items-center gap-2">
+            <FolderOpen className="w-4 h-4" />
+            {libraryName}
+            <span className="text-xs text-muted-foreground">(0)</span>
+          </span>
+        </AccordionTrigger>
+        <AccordionContent className="pb-3 px-4">
+          <p className="text-xs text-muted-foreground text-center py-2">
+            No shapes in this library
+          </p>
+        </AccordionContent>
+      </AccordionItem>
+    )
+  }
+
+  return (
+    <AccordionItem value={libraryId} className="border-b last:border-0">
+      <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline hover:bg-accent/50">
+        <span className="flex items-center gap-2">
+          <FolderOpen className="w-4 h-4" />
+          {libraryName}
+          <span className="text-xs text-muted-foreground">({shapes.length})</span>
+        </span>
+      </AccordionTrigger>
+      <AccordionContent className="pb-3">
+        <div className="grid grid-cols-3 gap-2 px-3">
+          {shapes.map((shape) => (
+            <Tooltip key={shape.id}>
+              <TooltipTrigger asChild>
+                <button
+                  className="aspect-square flex items-center justify-center border rounded-md hover:bg-accent hover:border-primary transition-colors cursor-grab active:cursor-grabbing p-1 overflow-hidden"
+                  draggable
+                  onDragStart={(e) => handleCustomShapeDrag(e, shape)}
+                  onClick={() => handleCustomShapeClick(shape)}
+                >
+                  <div
+                    className="w-full h-full flex items-center justify-center"
+                    dangerouslySetInnerHTML={{ __html: shape.svgContent }}
+                    style={{ maxWidth: 32, maxHeight: 32 }}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <span>{shape.name}</span>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </AccordionContent>
+    </AccordionItem>
   )
 }

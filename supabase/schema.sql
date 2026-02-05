@@ -193,3 +193,116 @@ CREATE POLICY "Users can delete versions for own diagrams"
       AND diagrams.user_id = auth.uid()
     )
   );
+
+-- =============================================
+-- Custom Shape Libraries
+-- =============================================
+
+-- Shape libraries table
+CREATE TABLE IF NOT EXISTS shape_libraries (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  is_public BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Custom shapes table
+CREATE TABLE IF NOT EXISTS custom_shapes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  library_id UUID REFERENCES shape_libraries(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  svg_content TEXT NOT NULL,
+  thumbnail_url TEXT,
+  category TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for shape libraries
+CREATE INDEX IF NOT EXISTS idx_shape_libraries_user_id ON shape_libraries(user_id);
+CREATE INDEX IF NOT EXISTS idx_custom_shapes_library_id ON custom_shapes(library_id);
+
+-- Updated at trigger for shape_libraries
+DROP TRIGGER IF EXISTS update_shape_libraries_updated_at ON shape_libraries;
+CREATE TRIGGER update_shape_libraries_updated_at
+  BEFORE UPDATE ON shape_libraries
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Enable RLS
+ALTER TABLE shape_libraries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE custom_shapes ENABLE ROW LEVEL SECURITY;
+
+-- Shape libraries policies
+CREATE POLICY "Users can view own libraries"
+  ON shape_libraries FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view public libraries"
+  ON shape_libraries FOR SELECT
+  USING (is_public = true);
+
+CREATE POLICY "Users can create own libraries"
+  ON shape_libraries FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own libraries"
+  ON shape_libraries FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own libraries"
+  ON shape_libraries FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Custom shapes policies
+CREATE POLICY "Users can view shapes in own libraries"
+  ON custom_shapes FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM shape_libraries
+      WHERE shape_libraries.id = custom_shapes.library_id
+      AND shape_libraries.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can view shapes in public libraries"
+  ON custom_shapes FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM shape_libraries
+      WHERE shape_libraries.id = custom_shapes.library_id
+      AND shape_libraries.is_public = true
+    )
+  );
+
+CREATE POLICY "Users can create shapes in own libraries"
+  ON custom_shapes FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM shape_libraries
+      WHERE shape_libraries.id = custom_shapes.library_id
+      AND shape_libraries.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update shapes in own libraries"
+  ON custom_shapes FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM shape_libraries
+      WHERE shape_libraries.id = custom_shapes.library_id
+      AND shape_libraries.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete shapes in own libraries"
+  ON custom_shapes FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM shape_libraries
+      WHERE shape_libraries.id = custom_shapes.library_id
+      AND shape_libraries.user_id = auth.uid()
+    )
+  );

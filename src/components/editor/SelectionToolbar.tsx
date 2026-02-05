@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { useReactFlow, getNodesBounds } from '@xyflow/react'
 import { useEditorStore } from '@/stores/editorStore'
 import {
   Button,
@@ -43,8 +42,6 @@ export function SelectionToolbar() {
   const ungroupNodes = useEditorStore((state) => state.ungroupNodes)
   const updateNodeStyle = useEditorStore((state) => state.updateNodeStyle)
 
-  const { flowToScreenPosition } = useReactFlow()
-
   const selectedNodeObjects = useMemo(
     () => nodes.filter((n) => selectedNodes.includes(n.id)),
     [nodes, selectedNodes]
@@ -56,17 +53,6 @@ export function SelectionToolbar() {
   const hasThreeOrMore = selectedNodes.length >= 3
 
   if (selectedNodes.length === 0) return null
-
-  const bounds = getNodesBounds(selectedNodeObjects)
-  const screenPos = flowToScreenPosition({
-    x: bounds.x + bounds.width / 2,
-    y: bounds.y,
-  })
-
-  // Clamp to viewport
-  const toolbarWidth = 340
-  const left = Math.max(8, Math.min(screenPos.x - toolbarWidth / 2, window.innerWidth - toolbarWidth - 8))
-  const top = Math.max(8, screenPos.y - 48)
 
   const handleDuplicate = () => {
     copyNodes()
@@ -81,8 +67,7 @@ export function SelectionToolbar() {
 
   return (
     <div
-      className="fixed flex items-center gap-1 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 shadow-lg ring-1 ring-black/5 rounded-xl p-1 z-50"
-      style={{ left, top }}
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 shadow-lg ring-1 ring-black/5 rounded-xl p-1 z-50"
     >
       {/* Color quick-change */}
       <DropdownMenu>

@@ -19,3 +19,17 @@ export {
 } from './useFolders'
 
 export { useExport } from './useExport'
+
+export {
+  useShapeLibraries,
+  usePublicShapeLibraries,
+  useShapeLibrary,
+  useCreateShapeLibrary,
+  useUpdateShapeLibrary,
+  useDeleteShapeLibrary,
+  useShapesByLibrary,
+  useCreateShape,
+  useUpdateShape,
+  useDeleteShape,
+  useUploadShape,
+} from './useShapeLibraries'

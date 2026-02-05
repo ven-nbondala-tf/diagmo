@@ -57,6 +57,7 @@ export {
 } from './alert-dialog'
 export { Skeleton } from './skeleton'
 export { Slider } from './slider'
+export { Switch } from './switch'
 export { Toaster } from './toaster'
 export {
   ContextMenu,

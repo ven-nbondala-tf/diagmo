@@ -22,7 +22,7 @@ const getShapeConnectionPoints = (_type: ShapeType) => {
   ]
 }
 
-export const CustomNode = memo(function CustomNode({ id, data, selected, positionAbsoluteX, positionAbsoluteY }: CustomNodeProps) {
+export const CustomNode = memo(function CustomNode({ id, data, selected }: CustomNodeProps) {
   const { label, type, style, locked, groupId } = data
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(label)
@@ -104,8 +104,20 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, positio
   // Default font size: 8 for cloud icons, 14 for other shapes
   const defaultFontSize = isCloudIcon ? 10 : 14
 
+  // Generate gradient or solid background
+  const getBackground = () => {
+    const bgColor = style?.backgroundColor || '#ffffff'
+    if (style?.gradientEnabled && style?.gradientColor) {
+      const angle = style.gradientDirection === 'vertical' ? '180deg' :
+                    style.gradientDirection === 'diagonal' ? '135deg' : '90deg'
+      return `linear-gradient(${angle}, ${bgColor}, ${style.gradientColor})`
+    }
+    return bgColor
+  }
+
   const baseStyle = {
-    backgroundColor: style?.backgroundColor || '#ffffff',
+    backgroundColor: style?.gradientEnabled ? undefined : (style?.backgroundColor || '#ffffff'),
+    background: style?.gradientEnabled ? getBackground() : undefined,
     borderColor: style?.borderColor || '#9ca3af',
     borderWidth: style?.borderWidth || 1,
     borderStyle: style?.borderStyle || 'solid',
@@ -128,6 +140,8 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, positio
       style?.scaleX !== undefined && style?.scaleX !== 1 ? `scaleX(${style.scaleX})` : '',
       style?.scaleY !== undefined && style?.scaleY !== 1 ? `scaleY(${style.scaleY})` : '',
     ].filter(Boolean).join(' ') || undefined,
+    // Text padding
+    padding: style?.textPadding ?? 8,
   }
 
   // Get vertical alignment class
@@ -217,6 +231,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, positio
     // Helper function to build complete style object that respects user settings
     const getShapeStyle = (overrides: CSSProperties = {}): CSSProperties => ({
       backgroundColor: baseStyle.backgroundColor,
+      background: baseStyle.background,
       borderColor: baseStyle.borderColor,
       borderWidth: baseStyle.borderWidth,
       borderStyle: baseStyle.borderStyle as CSSProperties['borderStyle'],
@@ -231,6 +246,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, positio
       opacity: baseStyle.opacity,
       boxShadow: baseStyle.boxShadow,
       transform: baseStyle.transform,
+      padding: baseStyle.padding,
       ...overrides,
     })
 
@@ -273,40 +289,25 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, positio
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Rotation Handle - Lucidchart style: circular rotate icon above the node */}
+      {/* Rotation Handle - Lucidchart style: at top-left corner outside selection */}
       {selected && !locked && !isJunction && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center nodrag"
-          style={{ top: '-32px' }}
+          className="absolute nodrag"
+          style={{ top: '-24px', left: '-24px', zIndex: 100 }}
         >
-          {/* Connecting line from rotation handle to node */}
-          <div className="w-px h-3 bg-blue-400" />
-          {/* Rotation handle */}
           <div
             className={cn(
-              'w-6 h-6 rounded-full bg-white border-2 border-blue-500 flex items-center justify-center cursor-grab shadow-sm hover:bg-blue-50 transition-colors',
-              isRotating && 'bg-blue-100 cursor-grabbing'
+              'w-6 h-6 rounded-full bg-white border border-gray-300 flex items-center justify-center cursor-grab shadow-md hover:bg-gray-50 hover:border-blue-400 transition-colors',
+              isRotating && 'bg-blue-50 border-blue-500 cursor-grabbing'
             )}
             onMouseDown={handleRotationMouseDown}
             title="Drag to rotate"
           >
-            <RotateCw className="w-3.5 h-3.5 text-blue-600" />
+            <RotateCw className="w-3.5 h-3.5 text-gray-600" />
           </div>
         </div>
       )}
 
-      {/* Position display - Lucidchart style: shows X, Y coordinates when selected */}
-      {selected && !isJunction && (
-        <div
-          className="absolute left-1/2 -translate-x-1/2 text-xs text-blue-600 whitespace-nowrap pointer-events-none"
-          style={{
-            bottom: isIconLike ? '-40px' : '-20px',
-            fontFamily: 'monospace',
-          }}
-        >
-          X: {Math.round(positionAbsoluteX)} px, Y: {Math.round(positionAbsoluteY)} px
-        </div>
-      )}
 
       {/* NodeResizer - Lucidchart style: larger blue circles */}
       {/* Cloud icons and web-image icons maintain 1:1 aspect ratio when resizing */}

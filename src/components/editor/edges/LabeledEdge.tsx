@@ -108,7 +108,9 @@ export function LabeledEdge({
     } else if (style?.strokeDasharray) {
       strokeDasharray = style.strokeDasharray as string
     }
-    return { ...style, stroke, strokeWidth, strokeDasharray }
+    const strokeLinecap = edgeStyle?.lineCap || 'round'
+    const strokeLinejoin = edgeStyle?.lineJoin || 'round'
+    return { ...style, stroke, strokeWidth, strokeDasharray, strokeLinecap, strokeLinejoin }
   }, [style, edgeStyle])
 
   const effectiveMarkerEnd = useMemo((): string | undefined => {

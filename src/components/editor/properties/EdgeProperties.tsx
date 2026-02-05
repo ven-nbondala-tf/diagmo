@@ -142,6 +142,32 @@ export function EdgeProperties({ selectedEdge, updateEdge, deleteSelected, toggl
                   <SliderWithInput label="Opacity" value={Math.round(strokeOpacity * 100)} onChange={(value) => updateEdge(selectedEdge.id, { style: { ...selectedEdge.style, opacity: value / 100 } })} min={10} max={100} step={5} unit="%" />
                 </div>
               </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Label className="text-xs text-muted-foreground mb-1 block">Line Cap</Label>
+                  <select
+                    value={(selectedEdge.data as { style?: { lineCap?: string } })?.style?.lineCap || 'round'}
+                    onChange={(e) => updateEdge(selectedEdge.id, { data: { ...selectedEdge.data, style: { ...(selectedEdge.data as { style?: object })?.style, lineCap: e.target.value as 'butt' | 'round' | 'square' } } })}
+                    className="w-full h-7 text-xs border rounded px-1.5 bg-background"
+                  >
+                    <option value="butt">Butt</option>
+                    <option value="round">Round</option>
+                    <option value="square">Square</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <Label className="text-xs text-muted-foreground mb-1 block">Line Join</Label>
+                  <select
+                    value={(selectedEdge.data as { style?: { lineJoin?: string } })?.style?.lineJoin || 'round'}
+                    onChange={(e) => updateEdge(selectedEdge.id, { data: { ...selectedEdge.data, style: { ...(selectedEdge.data as { style?: object })?.style, lineJoin: e.target.value as 'miter' | 'round' | 'bevel' } } })}
+                    className="w-full h-7 text-xs border rounded px-1.5 bg-background"
+                  >
+                    <option value="miter">Miter</option>
+                    <option value="round">Round</option>
+                    <option value="bevel">Bevel</option>
+                  </select>
+                </div>
+              </div>
             </AccordionContent>
           </AccordionItem>
 

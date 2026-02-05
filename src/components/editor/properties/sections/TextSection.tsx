@@ -12,7 +12,7 @@ import {
   AlignVerticalJustifyCenter,
   AlignVerticalJustifyEnd,
 } from 'lucide-react'
-import { IconButton, FONT_FAMILIES } from '../shared'
+import { IconButton, SliderWithInput, FONT_FAMILIES } from '../shared'
 import type { ShapeSectionProps } from '../types'
 
 type Props = Pick<ShapeSectionProps, 'style' | 'data' | 'selectedNode' | 'multipleSelected' | 'updateAllSelectedStyles' | 'updateNode'>
@@ -170,6 +170,16 @@ export function TextSection({ style, data, selectedNode, multipleSelected, updat
             <option value="truncate">Truncate</option>
           </select>
         </div>
+
+        <SliderWithInput
+          label="Padding"
+          value={style.textPadding ?? 8}
+          onChange={(val) => updateAllSelectedStyles({ textPadding: val })}
+          min={0}
+          max={32}
+          step={2}
+          unit="px"
+        />
       </AccordionContent>
     </AccordionItem>
   )

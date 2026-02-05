@@ -4,7 +4,7 @@ import type { ShapeRenderProps } from '../types'
 
 function RectangleShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
   return (
-    <div className={cn(shapeClass, 'p-1')} style={getShapeStyle()}>
+    <div className={shapeClass} style={getShapeStyle()}>
       {label}
     </div>
   )
@@ -13,7 +13,7 @@ function RectangleShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) 
 function EllipseShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
   return (
     <div
-      className={cn(shapeClass, 'rounded-full p-1')}
+      className={cn(shapeClass, 'rounded-full')}
       style={getShapeStyle({ borderRadius: '50%' })}
     >
       {label}
@@ -24,7 +24,7 @@ function EllipseShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
 function CircleShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
   return (
     <div
-      className={cn(shapeClass, 'rounded-full p-1 aspect-square')}
+      className={cn(shapeClass, 'rounded-full aspect-square')}
       style={getShapeStyle({ borderRadius: '50%' })}
     >
       {label}
@@ -35,7 +35,7 @@ function CircleShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
 function RoundedRectangleShape({ label, style, shapeClass, getShapeStyle }: ShapeRenderProps) {
   return (
     <div
-      className={cn(shapeClass, 'p-1')}
+      className={shapeClass}
       style={getShapeStyle({ borderRadius: style?.borderRadius ?? 16 })}
     >
       {label}
@@ -46,7 +46,7 @@ function RoundedRectangleShape({ label, style, shapeClass, getShapeStyle }: Shap
 function CylinderShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
   return (
     <div
-      className={cn(shapeClass, 'p-1')}
+      className={shapeClass}
       style={getShapeStyle({ borderRadius: '10px 10px 50% 50% / 10px 10px 20px 20px' })}
     >
       {label}
@@ -57,7 +57,7 @@ function CylinderShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
 function CloudShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
   return (
     <div
-      className={cn(shapeClass, 'p-1')}
+      className={shapeClass}
       style={getShapeStyle({ borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%' })}
     >
       {label}
@@ -68,7 +68,7 @@ function CloudShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
 function TerminatorShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
   return (
     <div
-      className={cn(shapeClass, 'rounded-full p-1')}
+      className={cn(shapeClass, 'rounded-full')}
       style={getShapeStyle({ borderRadius: 9999 })}
     >
       {label}
@@ -79,7 +79,7 @@ function TerminatorShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps)
 function DelayShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
   return (
     <div
-      className={cn(shapeClass, 'p-1')}
+      className={shapeClass}
       style={getShapeStyle({ borderRadius: '0 50% 50% 0' })}
     >
       {label}
