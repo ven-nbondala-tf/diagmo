@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/context-menu'
 import * as ContextMenuPrimitive from '@radix-ui/react-context-menu'
 import { useEditorStore } from '@/stores/editorStore'
+import type { ShapeType } from '@/types'
 import {
   Copy,
   Clipboard,
@@ -27,7 +28,60 @@ import {
   FlipHorizontal,
   FlipVertical,
   RotateCcw,
+  Shapes,
+  Square,
+  Hexagon,
+  ArrowRight,
 } from 'lucide-react'
+
+// Quick morph shape options organized by category
+const MORPH_SHAPES: { label: string; icon: React.ElementType; shapes: { type: ShapeType; label: string }[] }[] = [
+  {
+    label: 'Basic',
+    icon: Square,
+    shapes: [
+      { type: 'rectangle', label: 'Rectangle' },
+      { type: 'rounded-rectangle', label: 'Rounded Rectangle' },
+      { type: 'circle', label: 'Circle' },
+      { type: 'ellipse', label: 'Ellipse' },
+      { type: 'diamond', label: 'Diamond' },
+      { type: 'triangle', label: 'Triangle' },
+    ],
+  },
+  {
+    label: 'Flowchart',
+    icon: Hexagon,
+    shapes: [
+      { type: 'process', label: 'Process' },
+      { type: 'decision', label: 'Decision' },
+      { type: 'terminator', label: 'Terminator' },
+      { type: 'data', label: 'Data' },
+      { type: 'document', label: 'Document' },
+      { type: 'database', label: 'Database' },
+    ],
+  },
+  {
+    label: 'Arrows',
+    icon: ArrowRight,
+    shapes: [
+      { type: 'arrow', label: 'Arrow' },
+      { type: 'double-arrow', label: 'Double Arrow' },
+      { type: 'callout', label: 'Callout' },
+    ],
+  },
+  {
+    label: 'Shapes',
+    icon: Shapes,
+    shapes: [
+      { type: 'pentagon', label: 'Pentagon' },
+      { type: 'hexagon', label: 'Hexagon' },
+      { type: 'octagon', label: 'Octagon' },
+      { type: 'star', label: 'Star' },
+      { type: 'cloud', label: 'Cloud' },
+      { type: 'cylinder', label: 'Cylinder' },
+    ],
+  },
+]
 
 interface NodeContextMenuProps {
   children: React.ReactNode
@@ -49,6 +103,12 @@ export function NodeContextMenu({ children, nodeId, isLocked, isGrouped }: NodeC
   const bringForward = useEditorStore((state) => state.bringForward)
   const sendBackward = useEditorStore((state) => state.sendBackward)
   const sendToBack = useEditorStore((state) => state.sendToBack)
+  const morphShape = useEditorStore((state) => state.morphShape)
+  const nodes = useEditorStore((state) => state.nodes)
+
+  // Get current node type to show current selection
+  const currentNode = nodes.find((n) => n.id === nodeId)
+  const currentType = currentNode?.data.type
 
   // Ensure this node is selected before performing actions
   const ensureSelected = useCallback(() => {
@@ -134,6 +194,17 @@ export function NodeContextMenu({ children, nodeId, isLocked, isGrouped }: NodeC
   const handleResetRotation = useCallback(() => {
     updateNodeStyle(nodeId, { rotation: 0 })
   }, [nodeId, updateNodeStyle])
+
+  // Shape morphing
+  const handleMorphShape = useCallback((newType: ShapeType) => {
+    morphShape(nodeId, newType)
+  }, [nodeId, morphShape])
+
+  // Check if current shape type can be morphed (not junction, custom-shape, or web-image)
+  const canMorph = currentType &&
+    currentType !== 'junction' &&
+    currentType !== 'custom-shape' &&
+    currentType !== 'web-image'
 
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
 
@@ -229,6 +300,40 @@ export function NodeContextMenu({ children, nodeId, isLocked, isGrouped }: NodeC
             </ContextMenuItem>
           </ContextMenuSubContent>
         </ContextMenuSub>
+
+        {/* Change Shape (morph) */}
+        {canMorph && (
+          <ContextMenuSub>
+            <ContextMenuSubTrigger>
+              <Shapes className="w-4 h-4 mr-2" />
+              Change Shape
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent className="w-48">
+              {MORPH_SHAPES.map((category) => (
+                <ContextMenuSub key={category.label}>
+                  <ContextMenuSubTrigger>
+                    <category.icon className="w-4 h-4 mr-2" />
+                    {category.label}
+                  </ContextMenuSubTrigger>
+                  <ContextMenuSubContent className="w-44">
+                    {category.shapes.map((shape) => (
+                      <ContextMenuItem
+                        key={shape.type}
+                        onClick={() => handleMorphShape(shape.type)}
+                        disabled={currentType === shape.type}
+                      >
+                        {shape.label}
+                        {currentType === shape.type && (
+                          <span className="ml-auto text-xs text-muted-foreground">(current)</span>
+                        )}
+                      </ContextMenuItem>
+                    ))}
+                  </ContextMenuSubContent>
+                </ContextMenuSub>
+              ))}
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+        )}
 
         <ContextMenuSeparator />
 

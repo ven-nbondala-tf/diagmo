@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useEditorStore } from '@/stores/editorStore'
+import type { ShapeType } from '@/types'
 import {
   Button,
   DropdownMenu,
@@ -25,8 +26,21 @@ import {
   ChevronDown,
   Group,
   Ungroup,
+  Shapes,
 } from 'lucide-react'
 import { ColorPicker } from './properties/shared/ColorPicker'
+
+// Quick morph shape options
+const MORPH_SHAPES: { type: ShapeType; label: string }[] = [
+  { type: 'rectangle', label: 'Rectangle' },
+  { type: 'rounded-rectangle', label: 'Rounded Rect' },
+  { type: 'circle', label: 'Circle' },
+  { type: 'diamond', label: 'Diamond' },
+  { type: 'process', label: 'Process' },
+  { type: 'decision', label: 'Decision' },
+  { type: 'database', label: 'Database' },
+  { type: 'cloud', label: 'Cloud' },
+]
 
 export function SelectionToolbar() {
   const nodes = useEditorStore((state) => state.nodes)
@@ -41,6 +55,7 @@ export function SelectionToolbar() {
   const groupNodes = useEditorStore((state) => state.groupNodes)
   const ungroupNodes = useEditorStore((state) => state.ungroupNodes)
   const updateNodeStyle = useEditorStore((state) => state.updateNodeStyle)
+  const morphSelectedShapes = useEditorStore((state) => state.morphSelectedShapes)
 
   const selectedNodeObjects = useMemo(
     () => nodes.filter((n) => selectedNodes.includes(n.id)),
@@ -51,6 +66,13 @@ export function SelectionToolbar() {
   const hasGroupedNodes = selectedNodeObjects.some((n) => n.data.groupId)
   const hasMultiple = selectedNodes.length >= 2
   const hasThreeOrMore = selectedNodes.length >= 3
+
+  // Check if selected nodes can be morphed (not junction, custom-shape, or web-image)
+  const canMorph = selectedNodeObjects.some((n) =>
+    n.data.type !== 'junction' &&
+    n.data.type !== 'custom-shape' &&
+    n.data.type !== 'web-image'
+  )
 
   if (selectedNodes.length === 0) return null
 
@@ -83,6 +105,33 @@ export function SelectionToolbar() {
           <ColorPicker value={currentFill} onChange={handleFillChange} />
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Change Shape dropdown */}
+      {canMorph && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2"
+              title="Change Shape"
+            >
+              <Shapes className="h-4 w-4 mr-1" />
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {MORPH_SHAPES.map((shape) => (
+              <DropdownMenuItem
+                key={shape.type}
+                onClick={() => morphSelectedShapes(shape.type)}
+              >
+                {shape.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
 
       <Separator orientation="vertical" className="h-6 mx-0.5" />
 

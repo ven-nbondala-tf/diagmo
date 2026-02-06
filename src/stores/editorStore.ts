@@ -116,6 +116,9 @@ interface EditorActions {
   // Find & Replace
   toggleFindReplace: () => void
   setFindReplaceOpen: (open: boolean) => void
+  // Shape morphing
+  morphShape: (nodeId: string, newType: ShapeType) => void
+  morphSelectedShapes: (newType: ShapeType) => void
 }
 
 type EditorStore = EditorState & EditorActions
@@ -1049,6 +1052,93 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   setFindReplaceOpen: (open) => {
     set({ findReplaceOpen: open })
+  },
+
+  // Shape morphing - change shape type while preserving connections
+  morphShape: (nodeId, newType) => {
+    const { nodes, pushHistory } = get()
+    const node = nodes.find((n) => n.id === nodeId)
+    if (!node) return
+
+    // Don't morph if same type
+    if (node.data.type === newType) return
+
+    // Push history before morphing
+    pushHistory()
+
+    // Get default dimensions for new shape type
+    const newDimensions = getDefaultDimensions(newType)
+
+    // Update the node type while preserving all other data
+    set({
+      nodes: nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              // Update dimensions if changing to/from icon type
+              style: {
+                ...n.style,
+                width: newDimensions.width,
+                height: newDimensions.height,
+              },
+              data: {
+                ...n.data,
+                type: newType,
+                // Update label if it was auto-generated (matches old type name)
+                label: n.data.label === getDefaultLabel(n.data.type)
+                  ? getDefaultLabel(newType)
+                  : n.data.label,
+              },
+            }
+          : n
+      ),
+      isDirty: true,
+    })
+  },
+
+  morphSelectedShapes: (newType) => {
+    const { selectedNodes, nodes, pushHistory } = get()
+    if (selectedNodes.length === 0) return
+
+    // Filter to only morph valid nodes (not junctions, not custom shapes)
+    const morphableNodes = selectedNodes.filter((id) => {
+      const node = nodes.find((n) => n.id === id)
+      if (!node) return false
+      // Don't morph junction nodes or custom shapes
+      return node.data.type !== 'junction' && node.data.type !== 'custom-shape'
+    })
+
+    if (morphableNodes.length === 0) return
+
+    // Push history before morphing
+    pushHistory()
+
+    const newDimensions = getDefaultDimensions(newType)
+
+    set({
+      nodes: nodes.map((n) => {
+        if (!morphableNodes.includes(n.id)) return n
+        // Don't morph if same type
+        if (n.data.type === newType) return n
+
+        return {
+          ...n,
+          style: {
+            ...n.style,
+            width: newDimensions.width,
+            height: newDimensions.height,
+          },
+          data: {
+            ...n.data,
+            type: newType,
+            label: n.data.label === getDefaultLabel(n.data.type)
+              ? getDefaultLabel(newType)
+              : n.data.label,
+          },
+        }
+      }),
+      isDirty: true,
+    })
   },
 }))
 
