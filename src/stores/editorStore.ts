@@ -40,6 +40,8 @@ interface EditorState {
   versionHistoryPanelOpen: boolean
   // Presentation mode
   presentationModeOpen: boolean
+  // Comments
+  commentsPanelOpen: boolean
 }
 
 interface EditorActions {
@@ -107,6 +109,8 @@ interface EditorActions {
   // Presentation mode
   togglePresentationMode: () => void
   setPresentationModeOpen: (open: boolean) => void
+  // Comments
+  toggleCommentsPanel: () => void
 }
 
 type EditorStore = EditorState & EditorActions
@@ -145,6 +149,8 @@ const initialState: EditorState = {
   versionHistoryPanelOpen: false,
   // Presentation mode
   presentationModeOpen: false,
+  // Comments
+  commentsPanelOpen: false,
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -1022,6 +1028,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   setPresentationModeOpen: (open) => {
     set({ presentationModeOpen: open })
+  },
+
+  toggleCommentsPanel: () => {
+    set((state) => ({ commentsPanelOpen: !state.commentsPanelOpen }))
   },
 }))
 

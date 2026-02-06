@@ -306,3 +306,102 @@ CREATE POLICY "Users can delete shapes in own libraries"
       AND shape_libraries.user_id = auth.uid()
     )
   );
+
+-- =============================================
+-- Diagram Comments
+-- =============================================
+
+-- Comments table
+CREATE TABLE IF NOT EXISTS diagram_comments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  diagram_id UUID REFERENCES diagrams(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  node_id TEXT,  -- Optional: ID of the node this comment is attached to
+  position_x FLOAT,  -- X position on canvas (if not attached to node)
+  position_y FLOAT,  -- Y position on canvas (if not attached to node)
+  content TEXT NOT NULL,
+  resolved BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Comment replies table
+CREATE TABLE IF NOT EXISTS comment_replies (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  comment_id UUID REFERENCES diagram_comments(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for comments
+CREATE INDEX IF NOT EXISTS idx_diagram_comments_diagram_id ON diagram_comments(diagram_id);
+CREATE INDEX IF NOT EXISTS idx_diagram_comments_node_id ON diagram_comments(node_id);
+CREATE INDEX IF NOT EXISTS idx_comment_replies_comment_id ON comment_replies(comment_id);
+
+-- Updated at trigger for comments
+DROP TRIGGER IF EXISTS update_diagram_comments_updated_at ON diagram_comments;
+CREATE TRIGGER update_diagram_comments_updated_at
+  BEFORE UPDATE ON diagram_comments
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Enable RLS
+ALTER TABLE diagram_comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comment_replies ENABLE ROW LEVEL SECURITY;
+
+-- Comments policies (users can view/edit comments on diagrams they own)
+CREATE POLICY "Users can view comments on own diagrams"
+  ON diagram_comments FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM diagrams
+      WHERE diagrams.id = diagram_comments.diagram_id
+      AND diagrams.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can create comments on own diagrams"
+  ON diagram_comments FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM diagrams
+      WHERE diagrams.id = diagram_comments.diagram_id
+      AND diagrams.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update own comments"
+  ON diagram_comments FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own comments"
+  ON diagram_comments FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Comment replies policies
+CREATE POLICY "Users can view replies on accessible comments"
+  ON comment_replies FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM diagram_comments
+      JOIN diagrams ON diagrams.id = diagram_comments.diagram_id
+      WHERE diagram_comments.id = comment_replies.comment_id
+      AND diagrams.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can create replies on accessible comments"
+  ON comment_replies FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM diagram_comments
+      JOIN diagrams ON diagrams.id = diagram_comments.diagram_id
+      WHERE diagram_comments.id = comment_replies.comment_id
+      AND diagrams.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete own replies"
+  ON comment_replies FOR DELETE
+  USING (auth.uid() = user_id);

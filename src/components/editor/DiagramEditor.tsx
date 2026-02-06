@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { nanoid } from 'nanoid'
-import { PanelRightOpen, Layers, History } from 'lucide-react'
+import { PanelRightOpen, Layers, History, MessageSquare } from 'lucide-react'
 import { useEditorStore } from '@/stores/editorStore'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import type { Diagram, DiagramNode, DiagramEdge, ShapeType } from '@/types'
@@ -24,6 +24,7 @@ import { ShapePanel } from './ShapePanel'
 import { PropertiesPanel } from './properties'
 import { LayersPanel } from './LayersPanel'
 import { VersionHistoryPanel } from './VersionHistoryPanel'
+import { CommentsPanel } from './CommentsPanel'
 import { ZoomControls } from './ZoomControls'
 import { SelectionToolbar } from './SelectionToolbar'
 import { QuickShapeBar } from './QuickShapeBar'
@@ -81,6 +82,8 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const toggleLayersPanel = useEditorStore((state) => state.toggleLayersPanel)
   const versionHistoryPanelOpen = useEditorStore((state) => state.versionHistoryPanelOpen)
   const toggleVersionHistoryPanel = useEditorStore((state) => state.toggleVersionHistoryPanel)
+  const commentsPanelOpen = useEditorStore((state) => state.commentsPanelOpen)
+  const toggleCommentsPanel = useEditorStore((state) => state.toggleCommentsPanel)
   const interactionMode = useEditorStore((state) => state.interactionMode)
   const layers = useEditorStore((state) => state.layers)
 
@@ -316,6 +319,17 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         <ZoomControls />
         {/* Toggle buttons when panels are closed */}
         <div className="absolute right-4 top-4 z-10 flex gap-2">
+          {!commentsPanelOpen && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 bg-background shadow-md"
+              onClick={toggleCommentsPanel}
+              title="Open Comments Panel"
+            >
+              <MessageSquare className="w-4 h-4" />
+            </Button>
+          )}
           {!versionHistoryPanelOpen && (
             <Button
               variant="outline"
@@ -351,6 +365,11 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           )}
         </div>
       </div>
+      {commentsPanelOpen && (
+        <ErrorBoundary>
+          <CommentsPanel diagramId={diagram.id} />
+        </ErrorBoundary>
+      )}
       {versionHistoryPanelOpen && (
         <ErrorBoundary>
           <VersionHistoryPanel diagramId={diagram.id} />

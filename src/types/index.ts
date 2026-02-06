@@ -580,6 +580,32 @@ export interface DiagramVersion {
   createdAt: string
 }
 
+// Comment type for diagram annotations
+export interface DiagramComment {
+  id: string
+  diagramId: string
+  userId: string
+  userName?: string
+  userAvatar?: string
+  nodeId?: string  // Optional: attached to a specific node
+  position?: { x: number; y: number }  // Position on canvas if not attached to node
+  content: string
+  resolved: boolean
+  createdAt: string
+  updatedAt: string
+  replies?: CommentReply[]
+}
+
+export interface CommentReply {
+  id: string
+  commentId: string
+  userId: string
+  userName?: string
+  userAvatar?: string
+  content: string
+  createdAt: string
+}
+
 // Editor state types
 export interface EditorState {
   selectedNodes: string[]
