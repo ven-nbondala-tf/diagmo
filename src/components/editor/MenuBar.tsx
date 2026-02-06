@@ -27,6 +27,7 @@ interface MenuBarProps {
   onExport: (format: 'png' | 'svg' | 'pdf' | 'json') => void
   onExportCode: () => void
   onEmbed: () => void
+  onAutoLayout: () => void
   onImport: () => void
   onImportMermaid: () => void
   onImportDrawio: () => void
@@ -34,7 +35,7 @@ interface MenuBarProps {
   saving: boolean
 }
 
-export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onImport, onImportMermaid, onImportDrawio, onImportTerraform, saving }: MenuBarProps) {
+export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout, onImport, onImportMermaid, onImportDrawio, onImportTerraform, saving }: MenuBarProps) {
   const navigate = useNavigate()
   const [showShortcuts, setShowShortcuts] = useState(false)
   const { fitView, zoomIn, zoomOut } = useReactFlow()
@@ -253,6 +254,10 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onImport, onI
             </MenubarItem>
             <MenubarItem onClick={unlockNodes} disabled={!hasSelection}>
               Unlock
+            </MenubarItem>
+            <MenubarSeparator />
+            <MenubarItem onClick={onAutoLayout}>
+              Auto Layout...
             </MenubarItem>
           </MenubarContent>
         </MenubarMenu>

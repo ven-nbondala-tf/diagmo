@@ -31,6 +31,7 @@ import { ImportDrawioDialog } from './ImportDrawioDialog'
 import { ImportTerraformDialog } from './ImportTerraformDialog'
 import { ExportCodeDialog } from './ExportCodeDialog'
 import { EmbedDialog } from './EmbedDialog'
+import { AutoLayoutDialog } from './AutoLayoutDialog'
 
 interface EditorHeaderProps {
   diagram: Diagram
@@ -65,6 +66,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
   const [showTerraformImport, setShowTerraformImport] = useState(false)
   const [showCodeExport, setShowCodeExport] = useState(false)
   const [showEmbed, setShowEmbed] = useState(false)
+  const [showAutoLayout, setShowAutoLayout] = useState(false)
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -226,6 +228,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           onExport={handleExport}
           onExportCode={() => setShowCodeExport(true)}
           onEmbed={() => setShowEmbed(true)}
+          onAutoLayout={() => setShowAutoLayout(true)}
           onImport={handleImport}
           onImportMermaid={() => setShowMermaidImport(true)}
           onImportDrawio={() => setShowDrawioImport(true)}
@@ -348,6 +351,12 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
         onOpenChange={setShowEmbed}
         diagramId={diagram.id}
         diagramName={name}
+      />
+
+      {/* Auto Layout Dialog */}
+      <AutoLayoutDialog
+        open={showAutoLayout}
+        onOpenChange={setShowAutoLayout}
       />
     </>
   )
