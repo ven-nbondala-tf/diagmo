@@ -22,6 +22,7 @@ import {
 } from '@/components/ui'
 import { SaveAsTemplateDialog } from './SaveAsTemplateDialog'
 import { TemplateGalleryDialog } from './TemplateGalleryDialog'
+import { HotkeyCustomizationDialog } from './HotkeyCustomizationDialog'
 
 interface MenuBarProps {
   diagramName: string
@@ -40,6 +41,7 @@ interface MenuBarProps {
 export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout, onImport, onImportMermaid, onImportDrawio, onImportTerraform, saving }: MenuBarProps) {
   const navigate = useNavigate()
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [showHotkeyCustomization, setShowHotkeyCustomization] = useState(false)
   const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false)
   const [showTemplateGallery, setShowTemplateGallery] = useState(false)
   const { fitView, zoomIn, zoomOut } = useReactFlow()
@@ -281,6 +283,9 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
               Keyboard Shortcuts
               <MenubarShortcut>?</MenubarShortcut>
             </MenubarItem>
+            <MenubarItem onClick={() => setShowHotkeyCustomization(true)}>
+              Customize Shortcuts...
+            </MenubarItem>
             <MenubarSeparator />
             <MenubarItem>
               About Diagmo Pro
@@ -332,6 +337,10 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
       <TemplateGalleryDialog
         open={showTemplateGallery}
         onOpenChange={setShowTemplateGallery}
+      />
+      <HotkeyCustomizationDialog
+        open={showHotkeyCustomization}
+        onOpenChange={setShowHotkeyCustomization}
       />
     </>
   )
