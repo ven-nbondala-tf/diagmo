@@ -23,6 +23,7 @@ import {
 import { SaveAsTemplateDialog } from './SaveAsTemplateDialog'
 import { TemplateGalleryDialog } from './TemplateGalleryDialog'
 import { HotkeyCustomizationDialog } from './HotkeyCustomizationDialog'
+import { GridSettingsDialog } from './GridSettingsDialog'
 
 interface MenuBarProps {
   diagramName: string
@@ -42,6 +43,7 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
   const navigate = useNavigate()
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showHotkeyCustomization, setShowHotkeyCustomization] = useState(false)
+  const [showGridSettings, setShowGridSettings] = useState(false)
   const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false)
   const [showTemplateGallery, setShowTemplateGallery] = useState(false)
   const { fitView, zoomIn, zoomOut } = useReactFlow()
@@ -203,6 +205,9 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
             <MenubarCheckboxItem checked={snapToGrid} onClick={toggleSnapToGrid}>
               Snap to Grid
             </MenubarCheckboxItem>
+            <MenubarItem onClick={() => setShowGridSettings(true)}>
+              Grid Settings...
+            </MenubarItem>
             <MenubarSeparator />
             <MenubarItem onClick={() => fitView({ padding: 0.2 })}>
               Fit to Screen
@@ -341,6 +346,10 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
       <HotkeyCustomizationDialog
         open={showHotkeyCustomization}
         onOpenChange={setShowHotkeyCustomization}
+      />
+      <GridSettingsDialog
+        open={showGridSettings}
+        onOpenChange={setShowGridSettings}
       />
     </>
   )

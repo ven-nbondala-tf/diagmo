@@ -2,6 +2,7 @@ import { useReactFlow } from '@xyflow/react'
 import { useEditorStore } from '@/stores/editorStore'
 import { Button } from '@/components/ui'
 import { ZoomIn, ZoomOut, Maximize2, MousePointer2, Hand } from 'lucide-react'
+import { DiagramStats } from './DiagramStats'
 
 export function ZoomControls() {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
@@ -69,6 +70,10 @@ export function ZoomControls() {
       >
         <Maximize2 className="h-4 w-4" />
       </Button>
+
+      <div className="w-px h-4 bg-border mx-1" />
+
+      <DiagramStats />
     </div>
   )
 }
