@@ -25,6 +25,7 @@ interface MenuBarProps {
   diagramName: string
   onSave: () => void
   onExport: (format: 'png' | 'svg' | 'pdf' | 'json') => void
+  onExportCode: () => void
   onImport: () => void
   onImportMermaid: () => void
   onImportDrawio: () => void
@@ -32,7 +33,7 @@ interface MenuBarProps {
   saving: boolean
 }
 
-export function MenuBar({ onSave, onExport, onImport, onImportMermaid, onImportDrawio, onImportTerraform, saving }: MenuBarProps) {
+export function MenuBar({ onSave, onExport, onExportCode, onImport, onImportMermaid, onImportDrawio, onImportTerraform, saving }: MenuBarProps) {
   const navigate = useNavigate()
   const [showShortcuts, setShowShortcuts] = useState(false)
   const { fitView, zoomIn, zoomOut } = useReactFlow()
@@ -107,6 +108,10 @@ export function MenuBar({ onSave, onExport, onImport, onImportMermaid, onImportD
                 </MenubarItem>
                 <MenubarItem onClick={() => onExport('json')}>
                   Export as JSON
+                </MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem onClick={onExportCode}>
+                  Export as Code...
                 </MenubarItem>
               </MenubarSubContent>
             </MenubarSub>

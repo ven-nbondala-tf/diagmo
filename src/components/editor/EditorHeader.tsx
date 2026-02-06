@@ -29,6 +29,7 @@ import { CommandPalette } from './CommandPalette'
 import { ImportMermaidDialog } from './ImportMermaidDialog'
 import { ImportDrawioDialog } from './ImportDrawioDialog'
 import { ImportTerraformDialog } from './ImportTerraformDialog'
+import { ExportCodeDialog } from './ExportCodeDialog'
 
 interface EditorHeaderProps {
   diagram: Diagram
@@ -61,6 +62,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
   const [showMermaidImport, setShowMermaidImport] = useState(false)
   const [showDrawioImport, setShowDrawioImport] = useState(false)
   const [showTerraformImport, setShowTerraformImport] = useState(false)
+  const [showCodeExport, setShowCodeExport] = useState(false)
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -220,6 +222,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           diagramName={name}
           onSave={handleSave}
           onExport={handleExport}
+          onExportCode={() => setShowCodeExport(true)}
           onImport={handleImport}
           onImportMermaid={() => setShowMermaidImport(true)}
           onImportDrawio={() => setShowDrawioImport(true)}
@@ -328,6 +331,12 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
       <ImportTerraformDialog
         open={showTerraformImport}
         onOpenChange={setShowTerraformImport}
+      />
+
+      {/* Export Code Dialog */}
+      <ExportCodeDialog
+        open={showCodeExport}
+        onOpenChange={setShowCodeExport}
       />
     </>
   )
