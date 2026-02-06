@@ -604,6 +604,18 @@ export interface DiagramVersion {
   createdAt: string
 }
 
+// Diagram page for multi-page support
+export interface DiagramPage {
+  id: string
+  diagramId: string
+  name: string
+  pageOrder: number
+  nodes: DiagramNode[]
+  edges: DiagramEdge[]
+  createdAt: string
+  updatedAt: string
+}
+
 // Comment type for diagram annotations
 export interface DiagramComment {
   id: string

@@ -405,3 +405,74 @@ CREATE POLICY "Users can create replies on accessible comments"
 CREATE POLICY "Users can delete own replies"
   ON comment_replies FOR DELETE
   USING (auth.uid() = user_id);
+
+-- =============================================
+-- Diagram Pages (Multi-page support)
+-- =============================================
+
+-- Diagram pages table
+CREATE TABLE IF NOT EXISTS diagram_pages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  diagram_id UUID REFERENCES diagrams(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL DEFAULT 'Page 1',
+  page_order INTEGER NOT NULL DEFAULT 0,
+  nodes JSONB DEFAULT '[]'::jsonb,
+  edges JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for pages
+CREATE INDEX IF NOT EXISTS idx_diagram_pages_diagram_id ON diagram_pages(diagram_id);
+CREATE INDEX IF NOT EXISTS idx_diagram_pages_order ON diagram_pages(diagram_id, page_order);
+
+-- Updated at trigger for pages
+DROP TRIGGER IF EXISTS update_diagram_pages_updated_at ON diagram_pages;
+CREATE TRIGGER update_diagram_pages_updated_at
+  BEFORE UPDATE ON diagram_pages
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Enable RLS
+ALTER TABLE diagram_pages ENABLE ROW LEVEL SECURITY;
+
+-- Page policies
+CREATE POLICY "Users can view pages of own diagrams"
+  ON diagram_pages FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM diagrams
+      WHERE diagrams.id = diagram_pages.diagram_id
+      AND diagrams.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can create pages for own diagrams"
+  ON diagram_pages FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM diagrams
+      WHERE diagrams.id = diagram_pages.diagram_id
+      AND diagrams.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update pages of own diagrams"
+  ON diagram_pages FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM diagrams
+      WHERE diagrams.id = diagram_pages.diagram_id
+      AND diagrams.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete pages of own diagrams"
+  ON diagram_pages FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM diagrams
+      WHERE diagrams.id = diagram_pages.diagram_id
+      AND diagrams.user_id = auth.uid()
+    )
+  );

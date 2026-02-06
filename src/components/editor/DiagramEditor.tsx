@@ -29,6 +29,7 @@ import { FindReplaceBar } from './FindReplaceBar'
 import { ZoomControls } from './ZoomControls'
 import { SelectionToolbar } from './SelectionToolbar'
 import { QuickShapeBar } from './QuickShapeBar'
+import { PageTabs } from './PageTabs'
 import { Button } from '@/components/ui'
 
 const defaultEdgeOptions = {
@@ -265,7 +266,8 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
       <ErrorBoundary>
         <ShapePanel />
       </ErrorBoundary>
-      <div ref={reactFlowWrapper} className="flex-1 relative" onDoubleClick={onPaneDoubleClick}>
+      <div className="flex-1 flex flex-col">
+        <div ref={reactFlowWrapper} className="flex-1 relative" onDoubleClick={onPaneDoubleClick}>
         <ReactFlow
           nodes={visibleNodes}
           edges={visibleEdges}
@@ -371,6 +373,8 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             </Button>
           )}
         </div>
+        </div>
+        <PageTabs diagramId={diagram.id} />
       </div>
       {commentsPanelOpen && (
         <ErrorBoundary>
