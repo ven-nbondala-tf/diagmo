@@ -774,3 +774,26 @@ export interface CollaborationState {
   collaborators: CollaboratorPresence[]
   myPresenceId: string | null
 }
+
+// =============================================
+// Sharing Types
+// =============================================
+
+export type SharePermission = 'view' | 'edit'
+
+export interface DiagramShare {
+  id: string
+  diagramId: string
+  sharedWithUserId: string | null
+  sharedWithEmail: string | null
+  permission: SharePermission
+  invitedBy: string | null
+  createdAt: string
+  acceptedAt: string | null
+  // Joined from profiles
+  user?: {
+    fullName: string | null
+    avatarUrl: string | null
+    email?: string
+  }
+}

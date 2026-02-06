@@ -25,6 +25,14 @@ export { usePreferencesSync, usePreferencesPersist } from './usePreferencesSync'
 export { useCollaboration } from './useCollaboration'
 
 export {
+  useShares,
+  useShareDiagram,
+  useUpdateSharePermission,
+  useRemoveShare,
+  useSharedWithMe,
+} from './useSharing'
+
+export {
   useShapeLibraries,
   usePublicShapeLibraries,
   useShapeLibrary,

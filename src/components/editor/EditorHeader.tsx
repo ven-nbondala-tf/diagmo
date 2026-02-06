@@ -23,6 +23,7 @@ import {
   ArrowLeft,
   Loader2,
   Check,
+  Share2,
 } from 'lucide-react'
 import { AUTO_SAVE_INTERVAL } from '@/constants'
 import { toast } from 'sonner'
@@ -34,6 +35,7 @@ import { ImportTerraformDialog } from './ImportTerraformDialog'
 import { ExportCodeDialog } from './ExportCodeDialog'
 import { EmbedDialog } from './EmbedDialog'
 import { AutoLayoutDialog } from './AutoLayoutDialog'
+import { ShareDialog } from './ShareDialog'
 
 interface EditorHeaderProps {
   diagram: Diagram
@@ -69,6 +71,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
   const [showCodeExport, setShowCodeExport] = useState(false)
   const [showEmbed, setShowEmbed] = useState(false)
   const [showAutoLayout, setShowAutoLayout] = useState(false)
+  const [showShare, setShowShare] = useState(false)
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -267,6 +270,17 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           {/* Collaboration presence indicators */}
           <PresenceIndicators collaborators={collaborators} />
 
+          {/* Share button */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1.5"
+            onClick={() => setShowShare(true)}
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            Share
+          </Button>
+
           {saving ? (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -365,6 +379,14 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
       <AutoLayoutDialog
         open={showAutoLayout}
         onOpenChange={setShowAutoLayout}
+      />
+
+      {/* Share Dialog */}
+      <ShareDialog
+        open={showShare}
+        onOpenChange={setShowShare}
+        diagramId={diagram.id}
+        diagramName={name}
       />
     </>
   )
