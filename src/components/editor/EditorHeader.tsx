@@ -80,8 +80,9 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
   const setDirty = useEditorStore((state) => state.setDirty)
   const zoom = useEditorStore((state) => state.zoom)
 
-  // Collaboration presence
+  // Collaboration presence and status
   const collaborators = useCollaborationStore((state) => state.collaborators)
+  const connectionStatus = useCollaborationStore((state) => state.connectionStatus)
 
   const updateDiagram = useUpdateDiagram()
 
@@ -271,6 +272,31 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           />
 
           <div className="flex-1" />
+
+          {/* Connection status indicator */}
+          {connectionStatus !== 'connected' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted text-xs">
+                  <div
+                    className={`h-2 w-2 rounded-full ${
+                      connectionStatus === 'reconnecting'
+                        ? 'bg-yellow-500 animate-pulse'
+                        : 'bg-red-500'
+                    }`}
+                  />
+                  <span className="text-muted-foreground">
+                    {connectionStatus === 'reconnecting' ? 'Reconnecting...' : 'Disconnected'}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {connectionStatus === 'reconnecting'
+                  ? 'Attempting to reconnect to collaboration server'
+                  : 'Not connected to collaboration server'}
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {/* Collaboration presence indicators */}
           <PresenceIndicators collaborators={collaborators} />

@@ -57,6 +57,7 @@ interface CollaborationCallbacks {
   onNodeDrag?: (payload: NodeDragPayload) => void
   onNodesDrag?: (payload: NodesDragPayload) => void
   onError?: (error: Error) => void
+  onConnectionStatusChange?: (status: 'connected' | 'disconnected' | 'reconnecting') => void
 }
 
 class CollaborationService {
@@ -69,6 +70,22 @@ class CollaborationService {
   private callbacks: CollaborationCallbacks = {}
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null
   private isSubscribed: boolean = false
+
+  // Reconnection state
+  private reconnectAttempts: number = 0
+  private maxReconnectAttempts: number = 5
+  private reconnectDelay: number = 1000 // Start with 1s, exponential backoff
+  private isReconnecting: boolean = false
+
+  // Last known positions for heartbeat persistence
+  private lastCursorX: number | null = null
+  private lastCursorY: number | null = null
+  private lastViewportX: number | null = null
+  private lastViewportY: number | null = null
+  private lastViewportZoom: number = 1
+
+  // Connection status callback
+  private onConnectionStatusChange?: (status: 'connected' | 'disconnected' | 'reconnecting') => void
 
   /**
    * Join a diagram's collaboration session
@@ -187,6 +204,12 @@ class CollaborationService {
       console.log('[Collaboration] Channel status:', status, err)
       if (status === 'SUBSCRIBED') {
         this.isSubscribed = true
+        this.reconnectAttempts = 0 // Reset on successful connection
+        this.isReconnecting = false
+
+        // Notify connection status
+        this.callbacks.onConnectionStatusChange?.('connected')
+
         // Track this user's presence
         await this.channel?.track({
           visitorId: this.userId,
@@ -199,8 +222,14 @@ class CollaborationService {
       } else if (status === 'CHANNEL_ERROR') {
         console.error('[Collaboration] Channel error:', err)
         this.isSubscribed = false
+        this.callbacks.onConnectionStatusChange?.('disconnected')
+        this.handleDisconnect()
       } else if (status === 'CLOSED') {
         this.isSubscribed = false
+        if (!this.isReconnecting) {
+          this.callbacks.onConnectionStatusChange?.('disconnected')
+          this.handleDisconnect()
+        }
       }
     })
 
@@ -277,11 +306,16 @@ class CollaborationService {
   }
 
   /**
-   * Update cursor position (via Presence)
+   * Update cursor position (via Presence only - no DB writes for scalability)
    */
   async updateCursor(x: number | null, y: number | null): Promise<void> {
     if (!this.channel || !this.userId || !this.isSubscribed) return
 
+    // Store last known position for heartbeat persistence
+    this.lastCursorX = x
+    this.lastCursorY = y
+
+    // Only use WebSocket for real-time cursor updates - no DB writes
     await this.channel.track({
       visitorId: this.userId,
       cursorX: x,
@@ -289,56 +323,82 @@ class CollaborationService {
       color: this.userColor,
       userName: this.userName,
     })
-
-    // Also update DB for persistence
-    await supabase
-      .from('diagram_presence')
-      .update({
-        cursor_x: x,
-        cursor_y: y,
-        last_seen: new Date().toISOString(),
-      })
-      .eq('diagram_id', this.diagramId)
-      .eq('user_id', this.userId)
   }
 
   /**
-   * Update viewport position
+   * Update viewport position (stored locally, persisted via heartbeat)
    */
-  async updateViewport(
-    x: number,
-    y: number,
-    zoom: number
-  ): Promise<void> {
-    if (!this.diagramId || !this.userId) return
-
-    await supabase
-      .from('diagram_presence')
-      .update({
-        viewport_x: x,
-        viewport_y: y,
-        viewport_zoom: zoom,
-        last_seen: new Date().toISOString(),
-      })
-      .eq('diagram_id', this.diagramId)
-      .eq('user_id', this.userId)
+  updateViewport(x: number, y: number, zoom: number): void {
+    // Just store locally - heartbeat will persist to DB every 30s
+    this.lastViewportX = x
+    this.lastViewportY = y
+    this.lastViewportZoom = zoom
   }
 
   /**
-   * Start heartbeat to keep presence alive
+   * Start heartbeat to keep presence alive and persist positions (every 30s)
    */
   private startHeartbeat(): void {
     this.heartbeatInterval = setInterval(async () => {
       if (!this.diagramId || !this.userId) return
 
+      // Persist cursor and viewport positions to DB (only on heartbeat, not every update)
       await supabase
         .from('diagram_presence')
         .update({
+          cursor_x: this.lastCursorX,
+          cursor_y: this.lastCursorY,
+          viewport_x: this.lastViewportX,
+          viewport_y: this.lastViewportY,
+          viewport_zoom: this.lastViewportZoom,
           last_seen: new Date().toISOString(),
         })
         .eq('diagram_id', this.diagramId)
         .eq('user_id', this.userId)
     }, 30000)
+  }
+
+  /**
+   * Handle disconnect and attempt reconnection with exponential backoff
+   */
+  private async handleDisconnect(): Promise<void> {
+    if (this.isReconnecting) return // Already reconnecting
+    if (!this.diagramId) return // No diagram to reconnect to
+
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.log('[Collaboration] Max reconnection attempts reached')
+      this.callbacks.onError?.(new Error('Max reconnection attempts reached. Please refresh the page.'))
+      return
+    }
+
+    this.isReconnecting = true
+    this.reconnectAttempts++
+    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
+
+    console.log(`[Collaboration] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
+    this.callbacks.onConnectionStatusChange?.('reconnecting')
+
+    await new Promise(resolve => setTimeout(resolve, delay))
+
+    try {
+      // Clean up old channel
+      if (this.channel) {
+        await supabase.removeChannel(this.channel)
+        this.channel = null
+      }
+
+      // Rejoin with stored diagram ID and callbacks
+      const savedDiagramId = this.diagramId
+      const savedCallbacks = this.callbacks
+      this.diagramId = null // Reset so join doesn't think we're already connected
+
+      await this.join(savedDiagramId!, savedCallbacks)
+      console.log('[Collaboration] Reconnected successfully')
+    } catch (error) {
+      console.error('[Collaboration] Reconnection failed:', error)
+      this.isReconnecting = false
+      this.handleDisconnect() // Retry
+    }
   }
 
   /**
@@ -431,7 +491,23 @@ class CollaborationService {
    * Check if connected
    */
   isConnected(): boolean {
-    return this.channel !== null
+    return this.channel !== null && this.isSubscribed
+  }
+
+  /**
+   * Check if currently reconnecting
+   */
+  isCurrentlyReconnecting(): boolean {
+    return this.isReconnecting
+  }
+
+  /**
+   * Get connection status
+   */
+  getConnectionStatus(): 'connected' | 'disconnected' | 'reconnecting' {
+    if (this.isReconnecting) return 'reconnecting'
+    if (this.channel && this.isSubscribed) return 'connected'
+    return 'disconnected'
   }
 }
 

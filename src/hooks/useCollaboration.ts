@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { collaborationService } from '@/services/collaborationService'
-import { useCollaborationStore } from '@/stores/collaborationStore'
+import { useCollaborationStore, type ConnectionStatus } from '@/stores/collaborationStore'
 import { useEditorStore } from '@/stores/editorStore'
 import { throttle } from '@/utils'
 import type { CollaborationState, DiagramNode, DiagramEdge } from '@/types'
@@ -20,14 +20,15 @@ export function useCollaboration({
   diagramId,
   enabled = true,
 }: UseCollaborationOptions): CollaborationState & {
+  connectionStatus: ConnectionStatus
   updateCursor: (x: number | null, y: number | null) => void
   updateViewport: (x: number, y: number, zoom: number) => void
   broadcastNodeDrag: (nodeId: string, position: { x: number; y: number }) => void
   broadcastNodesDrag: (nodes: Array<{ id: string; position: { x: number; y: number } }>) => void
   broadcastFullSync: (nodes: DiagramNode[], edges: DiagramEdge[]) => void
 } {
-  const { isConnected, collaborators, myPresenceId } = useCollaborationStore()
-  const setConnected = useCollaborationStore((s) => s.setConnected)
+  const { isConnected, connectionStatus, collaborators, myPresenceId } = useCollaborationStore()
+  const setConnectionStatus = useCollaborationStore((s) => s.setConnectionStatus)
   const setCollaborators = useCollaborationStore((s) => s.setCollaborators)
   const setMyPresenceId = useCollaborationStore((s) => s.setMyPresenceId)
   const reset = useCollaborationStore((s) => s.reset)
@@ -100,11 +101,22 @@ export function useCollaboration({
           },
           onError: (error) => {
             console.error('Collaboration error:', error)
+            toast.error(error.message || 'Collaboration error')
+          },
+          onConnectionStatusChange: (status) => {
+            if (isMountedRef.current) {
+              setConnectionStatus(status)
+              if (status === 'reconnecting') {
+                toast.loading('Reconnecting to collaboration...', { id: 'reconnect' })
+              } else if (status === 'connected') {
+                toast.dismiss('reconnect')
+              }
+            }
           },
         })
 
         if (isMountedRef.current) {
-          setConnected(true)
+          setConnectionStatus('connected')
           setMyPresenceId(collaborationService.getPresenceId())
         }
       } catch (error) {
@@ -130,7 +142,7 @@ export function useCollaboration({
         }
       }, 200)
     }
-  }, [diagramId, enabled, setConnected, setCollaborators, setMyPresenceId, reset])
+  }, [diagramId, enabled, setConnectionStatus, setCollaborators, setMyPresenceId, reset])
 
   // Throttled cursor update (max 30fps)
   const updateCursor = useCallback(
@@ -184,6 +196,7 @@ export function useCollaboration({
 
   return {
     isConnected,
+    connectionStatus,
     collaborators,
     myPresenceId,
     updateCursor,
