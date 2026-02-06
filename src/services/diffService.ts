@@ -62,7 +62,7 @@ export function compareVersions(
   // Check nodes in newer version
   for (const [id, newNode] of newerNodesMap) {
     const oldNode = olderNodesMap.get(id)
-    const label = newNode.data?.label || newNode.data?.shapeType || 'Node'
+    const label = newNode.data?.label || newNode.data?.type || 'Node'
 
     if (!oldNode) {
       // Node was added
@@ -84,7 +84,7 @@ export function compareVersions(
   // Check for removed nodes (in older but not in newer)
   for (const [id, oldNode] of olderNodesMap) {
     if (!newerNodesMap.has(id)) {
-      const label = oldNode.data?.label || oldNode.data?.shapeType || 'Node'
+      const label = oldNode.data?.label || oldNode.data?.type || 'Node'
       nodeDiffs.push({ nodeId: id, label, status: 'removed' })
       summary.nodesRemoved++
     }
@@ -158,7 +158,7 @@ function getNodeChanges(oldNode: DiagramNode, newNode: DiagramNode): string[] {
   }
 
   // Shape type change
-  if (oldNode.data?.shapeType !== newNode.data?.shapeType) {
+  if (oldNode.data?.type !== newNode.data?.type) {
     changes.push('Shape type changed')
   }
 
@@ -214,8 +214,8 @@ function getEdgeChanges(oldEdge: DiagramEdge, newEdge: DiagramEdge): string[] {
   if (oldStyle.strokeWidth !== newStyle.strokeWidth) {
     changes.push('Stroke width changed')
   }
-  if (oldStyle.strokeStyle !== newStyle.strokeStyle) {
-    changes.push('Stroke style changed')
+  if (oldStyle.lineType !== newStyle.lineType) {
+    changes.push('Line type changed')
   }
   if (oldStyle.animated !== newStyle.animated) {
     changes.push('Animation changed')

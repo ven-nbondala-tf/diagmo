@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from 'react-router-dom'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -10,7 +10,7 @@ import {
   useReactFlow,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { Loader2, AlertCircle, ZoomIn, ZoomOut, Maximize } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import { nodeTypes } from '@/components/editor/nodes'
 import { edgeTypes } from '@/components/editor/edges'
 import { diagramService } from '@/services/diagramService'

@@ -81,8 +81,6 @@ function generateSmoothPath(points: Array<{ x: number; y: number }>): string {
       path += ` L ${midX} ${midY}`
     } else if (i === points.length - 2) {
       // Last segment: curve then line to end
-      const prevMidX = (points[i - 1]!.x + current.x) / 2
-      const prevMidY = (points[i - 1]!.y + current.y) / 2
       path += ` Q ${current.x} ${current.y} ${(current.x + next.x) / 2} ${(current.y + next.y) / 2}`
       path += ` L ${next.x} ${next.y}`
     } else {

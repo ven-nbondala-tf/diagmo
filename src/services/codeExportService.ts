@@ -256,7 +256,7 @@ export function exportToMermaid(
 export function exportToPlantUml(
   nodes: DiagramNode[],
   edges: DiagramEdge[],
-  diagramType: 'component' | 'activity' | 'usecase' | 'sequence' | 'class' = 'component'
+  _diagramType: 'component' | 'activity' | 'usecase' | 'sequence' | 'class' = 'component'
 ): ExportResult {
   const warnings: string[] = []
   const lines: string[] = []

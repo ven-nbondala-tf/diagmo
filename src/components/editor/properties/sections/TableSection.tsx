@@ -29,8 +29,10 @@ function resizeTable(
     const row: string[] = []
     for (let c = 0; c < newCols; c++) {
       // Preserve existing cell content or use empty string
-      if (r < oldRows && c < oldCols && cells[r]) {
-        row.push(cells[r][c] || '')
+      const existingRow = r < oldRows ? cells[r] : undefined
+      const existingCell = existingRow && c < oldCols ? existingRow[c] : undefined
+      if (existingCell !== undefined) {
+        row.push(existingCell)
       } else if (r === 0 && rest.headerRow) {
         row.push(`Header ${c + 1}`)
       } else {
