@@ -1,4 +1,4 @@
-import dagre from '@dagrejs/dagre'
+import dagre from 'dagre'
 import type { DiagramNode, DiagramEdge } from '@/types'
 
 export type LayoutDirection = 'TB' | 'LR' | 'BT' | 'RL'
