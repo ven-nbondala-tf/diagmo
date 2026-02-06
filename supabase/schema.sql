@@ -527,3 +527,65 @@ CREATE POLICY "Users can update own templates"
 CREATE POLICY "Users can delete own templates"
   ON diagram_templates FOR DELETE
   USING (auth.uid() = user_id);
+
+-- =============================================
+-- Real-time Collaboration Presence
+-- =============================================
+
+-- Diagram presence table (tracks who is viewing/editing)
+CREATE TABLE IF NOT EXISTS diagram_presence (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  diagram_id UUID REFERENCES diagrams(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  cursor_x FLOAT,
+  cursor_y FLOAT,
+  viewport_x FLOAT,
+  viewport_y FLOAT,
+  viewport_zoom FLOAT DEFAULT 1,
+  color TEXT DEFAULT '#3b82f6',  -- Unique color for cursor display
+  last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(diagram_id, user_id)
+);
+
+-- Indexes for presence
+CREATE INDEX IF NOT EXISTS idx_diagram_presence_diagram_id ON diagram_presence(diagram_id);
+CREATE INDEX IF NOT EXISTS idx_diagram_presence_user_id ON diagram_presence(user_id);
+CREATE INDEX IF NOT EXISTS idx_diagram_presence_last_seen ON diagram_presence(last_seen);
+
+-- Enable RLS
+ALTER TABLE diagram_presence ENABLE ROW LEVEL SECURITY;
+
+-- Presence policies - users can see presence on diagrams they can access
+CREATE POLICY "Users can view presence on own diagrams"
+  ON diagram_presence FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM diagrams
+      WHERE diagrams.id = diagram_presence.diagram_id
+      AND diagrams.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can insert own presence"
+  ON diagram_presence FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own presence"
+  ON diagram_presence FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own presence"
+  ON diagram_presence FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Function to clean up stale presence (older than 5 minutes)
+CREATE OR REPLACE FUNCTION cleanup_stale_presence()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM diagram_presence
+  WHERE last_seen < NOW() - INTERVAL '5 minutes';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Enable Realtime for presence table
+ALTER PUBLICATION supabase_realtime ADD TABLE diagram_presence;

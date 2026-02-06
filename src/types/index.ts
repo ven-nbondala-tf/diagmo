@@ -737,3 +737,40 @@ export interface ExportOptions {
   width?: number
   height?: number
 }
+
+// =============================================
+// Collaboration Types
+// =============================================
+
+export interface CollaboratorPresence {
+  id: string
+  diagramId: string
+  userId: string
+  cursorX: number | null
+  cursorY: number | null
+  viewportX: number | null
+  viewportY: number | null
+  viewportZoom: number
+  color: string
+  lastSeen: string
+  // Joined from profiles table
+  user?: {
+    fullName: string | null
+    avatarUrl: string | null
+  }
+}
+
+export interface CollaboratorCursor {
+  id: string
+  name: string
+  color: string
+  x: number
+  y: number
+  avatarUrl?: string | null
+}
+
+export interface CollaborationState {
+  isConnected: boolean
+  collaborators: CollaboratorPresence[]
+  myPresenceId: string | null
+}

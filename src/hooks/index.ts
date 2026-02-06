@@ -22,6 +22,8 @@ export { useExport } from './useExport'
 
 export { usePreferencesSync, usePreferencesPersist } from './usePreferencesSync'
 
+export { useCollaboration } from './useCollaboration'
+
 export {
   useShapeLibraries,
   usePublicShapeLibraries,

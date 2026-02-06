@@ -17,7 +17,7 @@ import { nanoid } from 'nanoid'
 import { PanelRightOpen, Layers, History, MessageSquare, Wand2 } from 'lucide-react'
 import { useEditorStore } from '@/stores/editorStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
-import { usePreferencesSync, usePreferencesPersist } from '@/hooks'
+import { usePreferencesSync, usePreferencesPersist, useCollaboration } from '@/hooks'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import type { Diagram, DiagramNode, DiagramEdge, ShapeType } from '@/types'
 import { nodeTypes } from './nodes'
@@ -35,6 +35,7 @@ import { PageTabs } from './PageTabs'
 import { ConditionalFormattingPanel } from './ConditionalFormattingPanel'
 import { SmartGuides } from './SmartGuides'
 import { AnnotationLayer } from './AnnotationLayer'
+import { CollaboratorCursors } from './CollaboratorCursors'
 import { Button } from '@/components/ui'
 
 const defaultEdgeOptions = {
@@ -72,6 +73,29 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   usePreferencesSync()
   // Persist preference changes to localStorage
   usePreferencesPersist()
+
+  // Real-time collaboration
+  const { collaborators, updateCursor, updateViewport } = useCollaboration({
+    diagramId: diagram.id,
+    enabled: true,
+  })
+
+  // Track mouse position for collaboration cursors
+  const handleMouseMove = useCallback(
+    (event: React.MouseEvent) => {
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      })
+      updateCursor(position.x, position.y)
+    },
+    [screenToFlowPosition, updateCursor]
+  )
+
+  // Clear cursor when mouse leaves the canvas
+  const handleMouseLeave = useCallback(() => {
+    updateCursor(null, null)
+  }, [updateCursor])
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -303,7 +327,13 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         <ShapePanel />
       </ErrorBoundary>
       <div className="flex-1 flex flex-col">
-        <div ref={reactFlowWrapper} className="flex-1 relative" onDoubleClick={onPaneDoubleClick}>
+        <div
+          ref={reactFlowWrapper}
+          className="flex-1 relative"
+          onDoubleClick={onPaneDoubleClick}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
         <ReactFlow
           nodes={visibleNodes}
           edges={visibleEdges}
@@ -314,7 +344,10 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           onDragOver={onDragOver}
           onDrop={onDrop}
           onEdgeDoubleClick={handleEdgeDoubleClick}
-          onMoveEnd={(_, viewport) => setZoom(viewport.zoom)}
+          onMoveEnd={(_, viewport) => {
+            setZoom(viewport.zoom)
+            updateViewport(viewport.x, viewport.y, viewport.zoom)
+          }}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
@@ -358,6 +391,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             onClick={handleMinimapClick}
           />
           <SmartGuides enabled={snapToGrid} />
+          <CollaboratorCursors collaborators={collaborators} />
         </ReactFlow>
         <SelectionToolbar />
         <QuickShapeBar />

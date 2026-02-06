@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useEditorStore } from '@/stores/editorStore'
+import { useCollaborationStore } from '@/stores/collaborationStore'
 import { useUpdateDiagram } from '@/hooks'
 import { exportService } from '@/services/exportService'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import type { Diagram, DiagramNode, DiagramEdge } from '@/types'
+import { PresenceIndicators } from './PresenceIndicators'
 import {
   Button,
   Input,
@@ -73,6 +75,9 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
   const isDirty = useEditorStore((state) => state.isDirty)
   const setDirty = useEditorStore((state) => state.setDirty)
   const zoom = useEditorStore((state) => state.zoom)
+
+  // Collaboration presence
+  const collaborators = useCollaborationStore((state) => state.collaborators)
 
   const updateDiagram = useUpdateDiagram()
 
@@ -258,6 +263,9 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           />
 
           <div className="flex-1" />
+
+          {/* Collaboration presence indicators */}
+          <PresenceIndicators collaborators={collaborators} />
 
           {saving ? (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
