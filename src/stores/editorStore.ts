@@ -68,6 +68,8 @@ interface EditorActions {
   setZoom: (zoom: number) => void
   toggleGrid: () => void
   toggleSnapToGrid: () => void
+  setGridEnabled: (enabled: boolean) => void
+  setSnapToGrid: (snap: boolean) => void
   setGridSize: (size: number) => void
   undo: () => void
   redo: () => void
@@ -87,6 +89,7 @@ interface EditorActions {
   setPropertiesPanelOpen: (open: boolean) => void
   setInteractionMode: (mode: 'select' | 'pan') => void
   toggleShapePanel: () => void
+  setShapePanelCollapsed: (collapsed: boolean) => void
   toggleCommandPalette: () => void
   setCommandPaletteOpen: (open: boolean) => void
   importDiagram: (nodes: DiagramNode[], edges: DiagramEdge[]) => void
@@ -108,6 +111,7 @@ interface EditorActions {
   moveLayerDown: (id: string) => void
   assignNodesToLayer: (nodeIds: string[], layerId: string | null) => void
   toggleLayersPanel: () => void
+  setLayersPanelOpen: (open: boolean) => void
   setLayers: (layers: Layer[]) => void
   // Version history
   toggleVersionHistoryPanel: () => void
@@ -487,6 +491,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   setZoom: (zoom) => set({ zoom }),
   toggleGrid: () => set({ gridEnabled: !get().gridEnabled }),
   toggleSnapToGrid: () => set({ snapToGrid: !get().snapToGrid }),
+  setGridEnabled: (gridEnabled) => set({ gridEnabled }),
+  setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
   setGridSize: (gridSize) => set({ gridSize }),
 
   undo: () => {
@@ -805,6 +811,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     set((state) => ({ shapePanelCollapsed: !state.shapePanelCollapsed }))
   },
 
+  setShapePanelCollapsed: (collapsed: boolean) => {
+    set({ shapePanelCollapsed: collapsed })
+  },
+
   toggleCommandPalette: () => {
     set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen }))
   },
@@ -1036,6 +1046,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   toggleLayersPanel: () => {
     set((state) => ({ layersPanelOpen: !state.layersPanelOpen }))
+  },
+
+  setLayersPanelOpen: (open: boolean) => {
+    set({ layersPanelOpen: open })
   },
 
   setLayers: (layers) => {

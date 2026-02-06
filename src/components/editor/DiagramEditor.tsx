@@ -16,6 +16,8 @@ import '@xyflow/react/dist/style.css'
 import { nanoid } from 'nanoid'
 import { PanelRightOpen, Layers, History, MessageSquare, Wand2 } from 'lucide-react'
 import { useEditorStore } from '@/stores/editorStore'
+import { usePreferencesStore } from '@/stores/preferencesStore'
+import { usePreferencesSync, usePreferencesPersist } from '@/hooks'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import type { Diagram, DiagramNode, DiagramEdge, ShapeType } from '@/types'
 import { nodeTypes } from './nodes'
@@ -66,6 +68,11 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const { screenToFlowPosition, setCenter } = useReactFlow()
   const [annotationMode, setAnnotationMode] = useState(false)
 
+  // Sync user preferences from localStorage on mount
+  usePreferencesSync()
+  // Persist preference changes to localStorage
+  usePreferencesPersist()
+
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
   const onNodesChange = useEditorStore((state) => state.onNodesChange)
@@ -97,10 +104,15 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const conditionalFormattingPanelOpen = useEditorStore((state) => state.conditionalFormattingPanelOpen)
   const toggleConditionalFormattingPanel = useEditorStore((state) => state.toggleConditionalFormattingPanel)
 
+  // Track diagram in recent items
+  const addRecentDiagram = usePreferencesStore((state) => state.addRecentDiagram)
+
   // Load diagram on mount
   useEffect(() => {
     loadDiagram(diagram.nodes, diagram.edges, diagram.layers)
-  }, [diagram.id, diagram.nodes, diagram.edges, diagram.layers, loadDiagram])
+    // Track as recently opened
+    addRecentDiagram(diagram.id)
+  }, [diagram.id, diagram.nodes, diagram.edges, diagram.layers, loadDiagram, addRecentDiagram])
 
   const onSelectionChange = useCallback(
     ({ nodes, edges }: OnSelectionChangeParams) => {
@@ -316,6 +328,9 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           selectionOnDrag={interactionMode === 'select'}
           panOnDrag={interactionMode === 'select' ? [1, 2] : true}
           selectionMode={SelectionMode.Partial}
+          // Performance optimizations for large diagrams
+          onlyRenderVisibleElements={true}
+          elevateEdgesOnSelect={true}
           className="bg-muted/30"
         >
           {gridEnabled && (

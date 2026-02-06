@@ -20,6 +20,8 @@ export {
 
 export { useExport } from './useExport'
 
+export { usePreferencesSync, usePreferencesPersist } from './usePreferencesSync'
+
 export {
   useShapeLibraries,
   usePublicShapeLibraries,

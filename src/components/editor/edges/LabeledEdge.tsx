@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect, type CSSProperties } from 'react'
+import { memo, useState, useCallback, useMemo, useRef, useEffect, type CSSProperties } from 'react'
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -154,7 +154,7 @@ function findClosestPointOnPath(
   return { t: bestT, distance: minDistance, segmentIndex: bestSegmentIndex }
 }
 
-export function LabeledEdge({
+export const LabeledEdge = memo(function LabeledEdge({
   id,
   sourceX,
   sourceY,
@@ -648,4 +648,4 @@ export function LabeledEdge({
       </EdgeLabelRenderer>
     </g>
   )
-}
+})
