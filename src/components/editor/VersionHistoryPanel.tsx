@@ -22,8 +22,10 @@ import {
   PanelRightClose,
   Clock,
   AlertCircle,
+  GitCompare,
 } from 'lucide-react'
 import type { DiagramVersion } from '@/types'
+import { VersionDiffDialog } from './VersionDiffDialog'
 
 interface VersionHistoryPanelProps {
   diagramId: string
@@ -35,6 +37,7 @@ export function VersionHistoryPanel({ diagramId }: VersionHistoryPanelProps) {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [restoring, setRestoring] = useState(false)
+  const [showDiff, setShowDiff] = useState(false)
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -124,6 +127,16 @@ export function VersionHistoryPanel({ diagramId }: VersionHistoryPanelProps) {
               title="Save Current Version"
             >
               <Plus className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => setShowDiff(true)}
+              disabled={versions.length < 2}
+              title="Compare Versions"
+            >
+              <GitCompare className="w-3.5 h-3.5" />
             </Button>
             <Button
               variant="ghost"
@@ -261,6 +274,13 @@ export function VersionHistoryPanel({ diagramId }: VersionHistoryPanelProps) {
           {saving ? 'Saving...' : 'Save Current Version'}
         </Button>
       </div>
+
+      {/* Version Diff Dialog */}
+      <VersionDiffDialog
+        open={showDiff}
+        onOpenChange={setShowDiff}
+        diagramId={diagramId}
+      />
     </div>
   )
 }

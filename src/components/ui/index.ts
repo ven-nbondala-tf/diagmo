@@ -1,4 +1,5 @@
 export { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './accordion'
+export { Badge, badgeVariants } from './badge'
 export { Button, buttonVariants } from './button'
 export { Input } from './input'
 export { Textarea } from './textarea'
