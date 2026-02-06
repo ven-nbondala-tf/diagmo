@@ -18,17 +18,20 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
+  Badge,
 } from '@/components/ui'
-import { FileImage, MoreVertical, Copy, FolderInput, Trash2, Loader2, Home } from 'lucide-react'
+import { Layers, MoreVertical, Copy, FolderInput, Trash2, Loader2, Home, Users } from 'lucide-react'
 import { useDeleteDiagram, useDuplicateDiagram, useMoveDiagramToFolder, useFolders } from '@/hooks'
 import { toast } from 'sonner'
 
 interface DiagramListItemProps {
   diagram: Diagram
   onClick: () => void
+  isShared?: boolean
+  isTemplate?: boolean
 }
 
-export function DiagramListItem({ diagram, onClick }: DiagramListItemProps) {
+export function DiagramListItem({ diagram, onClick, isShared, isTemplate }: DiagramListItemProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const deleteDiagram = useDeleteDiagram()
   const duplicateDiagram = useDuplicateDiagram()
@@ -72,10 +75,11 @@ export function DiagramListItem({ diagram, onClick }: DiagramListItemProps) {
   return (
     <>
       <div
-        className="flex items-center gap-4 px-4 py-3 rounded-lg border bg-card cursor-pointer hover:bg-accent/50 transition-colors group"
+        className="flex items-center gap-4 px-4 py-3 rounded-xl border bg-card cursor-pointer hover:bg-accent/50 hover:border-primary/20 transition-all group"
         onClick={onClick}
       >
-        <div className="w-16 h-10 rounded border bg-muted flex-shrink-0 flex items-center justify-center overflow-hidden">
+        {/* Thumbnail */}
+        <div className="w-20 h-12 rounded-lg border bg-muted flex-shrink-0 flex items-center justify-center overflow-hidden">
           {diagram.thumbnail ? (
             <img
               src={diagram.thumbnail}
@@ -83,21 +87,41 @@ export function DiagramListItem({ diagram, onClick }: DiagramListItemProps) {
               className="w-full h-full object-cover"
             />
           ) : (
-            <FileImage className="h-5 w-5 text-muted-foreground" />
+            <div className="w-full h-full relative bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center">
+              <Layers className="h-5 w-5 text-muted-foreground/40" />
+            </div>
           )}
         </div>
 
+        {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{diagram.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+              {diagram.name}
+            </p>
+            {isShared && (
+              <Badge variant="secondary" className="text-[10px] gap-0.5 px-1.5 py-0">
+                <Users className="h-2.5 w-2.5" />
+                Shared
+              </Badge>
+            )}
+            {isTemplate && (
+              <Badge variant="default" className="text-[10px] px-1.5 py-0">
+                Template
+              </Badge>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground truncate">
             {diagram.description || 'No description'}
           </p>
         </div>
 
-        <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:block">
+        {/* Timestamp */}
+        <span className="text-xs text-muted-foreground/70 whitespace-nowrap hidden sm:block">
           {formatDistanceToNow(new Date(diagram.updatedAt), { addSuffix: true })}
         </span>
 
+        {/* Menu */}
         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
           <DropdownMenu>
             <DropdownMenuTrigger
