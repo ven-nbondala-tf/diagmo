@@ -66,7 +66,7 @@ export const exportService = {
 
   /**
    * Export the full diagram (all nodes) regardless of current viewport
-   * Uses offscreen clone to avoid visual glitches
+   * Uses offscreen container to avoid visual glitches
    */
   async exportFullDiagramToPng(
     viewportElement: HTMLElement,
@@ -94,16 +94,30 @@ export const exportService = {
       padding
     )
 
-    // Clone the viewport element for offscreen rendering
+    // Create a container for the export
+    const container = document.createElement('div')
+    container.style.position = 'fixed'
+    container.style.left = '-99999px'
+    container.style.top = '0'
+    container.style.width = `${exportWidth}px`
+    container.style.height = `${exportHeight}px`
+    container.style.overflow = 'hidden'
+    container.style.backgroundColor = options?.backgroundColor || '#ffffff'
+
+    // Clone the viewport element
     const clone = viewportElement.cloneNode(true) as HTMLElement
+    // Reset any existing transform and apply our calculated one
     clone.style.position = 'absolute'
-    clone.style.left = '-99999px'
-    clone.style.top = '-99999px'
+    clone.style.left = '0'
+    clone.style.top = '0'
     clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
-    document.body.appendChild(clone)
+    clone.style.transformOrigin = 'top left'
+
+    container.appendChild(clone)
+    document.body.appendChild(container)
 
     try {
-      const dataUrl = await toPng(clone, {
+      const dataUrl = await toPng(container, {
         quality: options?.quality || 0.95,
         backgroundColor: options?.backgroundColor || '#ffffff',
         width: exportWidth,
@@ -112,7 +126,7 @@ export const exportService = {
       })
       return dataUrl
     } finally {
-      document.body.removeChild(clone)
+      document.body.removeChild(container)
     }
   },
 
@@ -143,22 +157,36 @@ export const exportService = {
       padding
     )
 
+    // Create a container for the export
+    const container = document.createElement('div')
+    container.style.position = 'fixed'
+    container.style.left = '-99999px'
+    container.style.top = '0'
+    container.style.width = `${exportWidth}px`
+    container.style.height = `${exportHeight}px`
+    container.style.overflow = 'hidden'
+    container.style.backgroundColor = options?.backgroundColor || '#ffffff'
+
+    // Clone the viewport element
     const clone = viewportElement.cloneNode(true) as HTMLElement
     clone.style.position = 'absolute'
-    clone.style.left = '-99999px'
-    clone.style.top = '-99999px'
+    clone.style.left = '0'
+    clone.style.top = '0'
     clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
-    document.body.appendChild(clone)
+    clone.style.transformOrigin = 'top left'
+
+    container.appendChild(clone)
+    document.body.appendChild(container)
 
     try {
-      const dataUrl = await toSvg(clone, {
+      const dataUrl = await toSvg(container, {
         backgroundColor: options?.backgroundColor || '#ffffff',
         width: exportWidth,
         height: exportHeight,
       })
       return dataUrl
     } finally {
-      document.body.removeChild(clone)
+      document.body.removeChild(container)
     }
   },
 
@@ -204,16 +232,29 @@ export const exportService = {
     const bounds = getNodesBounds(nodes)
     const viewport = getViewportForBounds(bounds, width, height, 0.5, 2, padding)
 
-    // Clone the element to avoid modifying the visible DOM
+    // Create a container for the thumbnail
+    const container = document.createElement('div')
+    container.style.position = 'fixed'
+    container.style.left = '-99999px'
+    container.style.top = '0'
+    container.style.width = `${width}px`
+    container.style.height = `${height}px`
+    container.style.overflow = 'hidden'
+    container.style.backgroundColor = '#ffffff'
+
+    // Clone the element
     const clone = element.cloneNode(true) as HTMLElement
     clone.style.position = 'absolute'
-    clone.style.left = '-9999px'
-    clone.style.top = '-9999px'
+    clone.style.left = '0'
+    clone.style.top = '0'
     clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
-    document.body.appendChild(clone)
+    clone.style.transformOrigin = 'top left'
+
+    container.appendChild(clone)
+    document.body.appendChild(container)
 
     try {
-      const dataUrl = await toPng(clone, {
+      const dataUrl = await toPng(container, {
         quality: 0.8,
         backgroundColor: '#ffffff',
         width,
@@ -222,7 +263,7 @@ export const exportService = {
       })
       return dataUrl
     } finally {
-      document.body.removeChild(clone)
+      document.body.removeChild(container)
     }
   },
 
