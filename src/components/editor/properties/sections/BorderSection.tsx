@@ -23,36 +23,33 @@ export function BorderSection({ style, updateAllSelectedStyles }: Props) {
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
-            <SliderWithInput
-              label="Width"
-              value={style.borderWidth || 1}
-              onChange={(val) => updateAllSelectedStyles({ borderWidth: val })}
-              min={0}
-              max={8}
-              step={1}
-              unit="px"
-            />
-          </div>
-          <div className="w-24">
-            <Label className="text-xs text-muted-foreground mb-1.5 block">Style</Label>
-            <select
-              value={style.borderStyle || 'solid'}
-              onChange={(e) =>
-                updateAllSelectedStyles({
-                  borderStyle: e.target.value as 'solid' | 'dashed' | 'dotted' | 'none',
-                  ...(e.target.value === 'none' ? { borderWidth: 0 } : {}),
-                })
-              }
-              className="w-full h-7 text-xs border rounded px-1.5 bg-background"
-            >
-              <option value="solid">Solid</option>
-              <option value="dashed">Dashed</option>
-              <option value="dotted">Dotted</option>
-              <option value="none">None</option>
-            </select>
-          </div>
+        <SliderWithInput
+          label="Width"
+          value={style.borderWidth || 1}
+          onChange={(val) => updateAllSelectedStyles({ borderWidth: val })}
+          min={0}
+          max={8}
+          step={1}
+          unit="px"
+        />
+
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Style</Label>
+          <select
+            value={style.borderStyle || 'solid'}
+            onChange={(e) =>
+              updateAllSelectedStyles({
+                borderStyle: e.target.value as 'solid' | 'dashed' | 'dotted' | 'none',
+                ...(e.target.value === 'none' ? { borderWidth: 0 } : {}),
+              })
+            }
+            className="w-full h-7 text-xs border rounded px-1.5 bg-background"
+          >
+            <option value="solid">Solid</option>
+            <option value="dashed">Dashed</option>
+            <option value="dotted">Dotted</option>
+            <option value="none">None</option>
+          </select>
         </div>
 
         <SliderWithInput

@@ -35,35 +35,35 @@ export function ShadowSection({ style, updateAllSelectedStyles }: Props) {
         </div>
 
         {style.shadowEnabled && (
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <SliderWithInput
-                label="Blur"
-                value={style.shadowBlur || 10}
-                onChange={(val) => updateAllSelectedStyles({ shadowBlur: val })}
-                min={0}
-                max={50}
-                step={1}
-                unit="px"
-              />
-            </div>
-            <div className="w-14">
-              <Label className="text-xs text-muted-foreground mb-1 block">X</Label>
-              <Input
-                type="number"
-                value={style.shadowOffsetX || 4}
-                onChange={(e) => updateAllSelectedStyles({ shadowOffsetX: parseInt(e.target.value) })}
-                className="h-7 text-xs text-center"
-              />
-            </div>
-            <div className="w-14">
-              <Label className="text-xs text-muted-foreground mb-1 block">Y</Label>
-              <Input
-                type="number"
-                value={style.shadowOffsetY || 4}
-                onChange={(e) => updateAllSelectedStyles({ shadowOffsetY: parseInt(e.target.value) })}
-                className="h-7 text-xs text-center"
-              />
+          <div className="space-y-3">
+            <SliderWithInput
+              label="Blur"
+              value={style.shadowBlur || 10}
+              onChange={(val) => updateAllSelectedStyles({ shadowBlur: val })}
+              min={0}
+              max={50}
+              step={1}
+              unit="px"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Offset X</Label>
+                <Input
+                  type="number"
+                  value={style.shadowOffsetX || 4}
+                  onChange={(e) => updateAllSelectedStyles({ shadowOffsetX: parseInt(e.target.value) })}
+                  className="h-7 text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Offset Y</Label>
+                <Input
+                  type="number"
+                  value={style.shadowOffsetY || 4}
+                  onChange={(e) => updateAllSelectedStyles({ shadowOffsetY: parseInt(e.target.value) })}
+                  className="h-7 text-xs"
+                />
+              </div>
             </div>
           </div>
         )}

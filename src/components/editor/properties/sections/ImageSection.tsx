@@ -1,12 +1,14 @@
-import { Label, Input, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui'
+import { Label, Input, AccordionItem, AccordionTrigger, AccordionContent, Switch } from '@/components/ui'
 import { Image, ExternalLink } from 'lucide-react'
-import { SliderWithInput } from '../shared'
+import { SliderWithInput, ColorPicker } from '../shared'
 import type { ShapeSectionProps } from '../types'
 
 type Props = Pick<ShapeSectionProps, 'style' | 'data' | 'updateAllSelectedStyles' | 'updateAllSelectedData'>
 
 export function ImageSection({ style, data, updateAllSelectedStyles, updateAllSelectedData }: Props) {
   if (data.type !== 'web-image') return null
+
+  const hasBg = style.backgroundColor !== 'transparent' && style.backgroundColor !== undefined
 
   return (
     <AccordionItem value="image" className="border-b">
@@ -28,6 +30,57 @@ export function ImageSection({ style, data, updateAllSelectedStyles, updateAllSe
             <option value="contain">Contain (fit entire image)</option>
             <option value="fill">Fill (stretch)</option>
           </select>
+        </div>
+
+        {/* Background Color - useful for icons */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Background</Label>
+            <Switch
+              checked={hasBg}
+              onCheckedChange={(checked) => updateAllSelectedStyles({
+                backgroundColor: checked ? '#ffffff' : 'transparent',
+              })}
+            />
+          </div>
+          {hasBg && (
+            <ColorPicker
+              value={style.backgroundColor || '#ffffff'}
+              onChange={(color) => updateAllSelectedStyles({ backgroundColor: color })}
+            />
+          )}
+        </div>
+
+        {/* Border */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Border</Label>
+            <Switch
+              checked={(style.borderWidth || 0) > 0}
+              onCheckedChange={(checked) => updateAllSelectedStyles({
+                borderWidth: checked ? 1 : 0,
+                borderColor: style.borderColor || '#e5e7eb',
+              })}
+            />
+          </div>
+          {(style.borderWidth || 0) > 0 && (
+            <div className="flex gap-2">
+              <ColorPicker
+                value={style.borderColor || '#e5e7eb'}
+                onChange={(color) => updateAllSelectedStyles({ borderColor: color })}
+              />
+              <select
+                value={style.borderWidth || 1}
+                onChange={(e) => updateAllSelectedStyles({ borderWidth: parseInt(e.target.value) })}
+                className="h-8 text-xs border rounded px-2 bg-background"
+              >
+                <option value="1">1px</option>
+                <option value="2">2px</option>
+                <option value="3">3px</option>
+                <option value="4">4px</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <SliderWithInput

@@ -201,7 +201,6 @@ export function LabeledEdge({
     return []
   }, [edgeData?.waypoints, edgeData?.waypointOffset, sourceX, sourceY, targetX, targetY])
 
-  const labelPosition = edgeData?.labelPosition || 'on-line'
   const labelPlacement = edgeStyle?.labelPlacement || 'middle'
 
   // Sync label text
@@ -595,14 +594,13 @@ export function LabeledEdge({
         </text>
       )}
 
-      {/* Label */}
+      {/* Label - positioned above the line */}
       <EdgeLabelRenderer>
         <div
           style={{
             position: 'absolute',
-            transform: labelPosition === 'outside'
-              ? `translate(-50%, -100%) translate(${finalLabelX}px, ${finalLabelY - 12}px)`
-              : `translate(-50%, -50%) translate(${finalLabelX}px, ${finalLabelY}px)`,
+            // Always position label above the line with offset
+            transform: `translate(-50%, -100%) translate(${finalLabelX}px, ${finalLabelY - 8}px)`,
             pointerEvents: 'none',
             zIndex: 0,
           }}
@@ -626,7 +624,7 @@ export function LabeledEdge({
             />
           ) : hasLabel ? (
             <div
-              className="cursor-text px-1.5 py-0.5 rounded transition-colors"
+              className="cursor-text px-2 py-1 rounded transition-colors text-center"
               style={{
                 color: edgeStyle?.labelColor || '#374151',
                 fontSize: edgeStyle?.labelFontSize ? `${edgeStyle.labelFontSize}px` : '11px',
@@ -634,10 +632,12 @@ export function LabeledEdge({
                 fontWeight: edgeStyle?.labelFontWeight || 'normal',
                 fontStyle: edgeStyle?.labelFontStyle || 'normal',
                 textDecoration: edgeStyle?.labelTextDecoration || 'none',
-                backgroundColor: labelPosition === 'outside'
-                  ? 'transparent'
-                  : edgeStyle?.labelBgColor || 'rgba(255,255,255,0.9)',
+                backgroundColor: edgeStyle?.labelBgColor || 'rgba(255,255,255,0.95)',
                 pointerEvents: 'all',
+                maxWidth: '150px',
+                wordWrap: 'break-word',
+                whiteSpace: 'pre-wrap',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
               }}
               onDoubleClick={handleDoubleClick}
             >

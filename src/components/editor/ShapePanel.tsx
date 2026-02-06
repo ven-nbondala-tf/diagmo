@@ -926,7 +926,7 @@ export function ShapePanel() {
   }
 
   return (
-    <div className="w-64 border-r bg-background flex flex-col h-full">
+    <div className="w-64 border-r bg-background flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b flex items-center justify-between">
         <div>

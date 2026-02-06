@@ -14,9 +14,8 @@ import {
   Trash2,
   Copy,
   Square,
-  PanelRightClose,
+  ChevronLeft,
   ChevronsUpDown,
-  ChevronsDownUp,
 } from 'lucide-react'
 import { SHAPE_SECTIONS } from './shared'
 import { EdgeProperties } from './EdgeProperties'
@@ -42,19 +41,24 @@ export function PropertiesPanel() {
   const sendBackward = useEditorStore((state) => state.sendBackward)
   const sendToBack = useEditorStore((state) => state.sendToBack)
 
+  // Start with all sections collapsed
   const [expandedSections, setExpandedSections] = useState<string[]>([])
+  const [allExpanded, setAllExpanded] = useState(false)
 
-  // Auto-expand relevant sections when selection changes
-  useEffect(() => {
-    if (selectedNodes.length > 0) {
-      const node = nodes.find((n) => selectedNodes.includes(n.id))
-      if (node) {
-        const defaults = ['fill', 'text', 'size']
-        if (node.data.type === 'web-image') defaults.unshift('image')
-        setExpandedSections((prev) => [...new Set([...prev, ...defaults])])
-      }
+  // Toggle all sections
+  const toggleAllSections = () => {
+    if (allExpanded) {
+      setExpandedSections([])
+    } else {
+      setExpandedSections(SHAPE_SECTIONS)
     }
-  }, [selectedNodes.join(',')])
+    setAllExpanded(!allExpanded)
+  }
+
+  // Track if all are expanded
+  useEffect(() => {
+    setAllExpanded(expandedSections.length >= SHAPE_SECTIONS.length)
+  }, [expandedSections])
 
   const updateAllSelectedStyles = useCallback((styleUpdate: Partial<NodeStyle>) => {
     selectedNodes.forEach((nodeId) => {
@@ -92,7 +96,7 @@ export function PropertiesPanel() {
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-sm">Properties</h2>
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={togglePropertiesPanel} title="Close Panel">
-              <PanelRightClose className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
             </Button>
           </div>
         </div>
@@ -146,14 +150,11 @@ export function PropertiesPanel() {
         <div className="flex items-center justify-between mb-1">
           <h2 className="font-semibold text-sm">Shape Properties</h2>
           <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setExpandedSections(SHAPE_SECTIONS)} title="Expand All">
-              <ChevronsDownUp className="w-3.5 h-3.5" />
-            </Button>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setExpandedSections([])} title="Collapse All">
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={toggleAllSections} title={allExpanded ? "Collapse All" : "Expand All"}>
               <ChevronsUpDown className="w-3.5 h-3.5" />
             </Button>
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={togglePropertiesPanel} title="Close Panel">
-              <PanelRightClose className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
             </Button>
           </div>
         </div>

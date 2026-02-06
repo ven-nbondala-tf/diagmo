@@ -149,8 +149,8 @@ const initialState: EditorState = {
   clipboard: [],
   zoom: 1,
   gridEnabled: true,
-  snapToGrid: true,
-  gridSize: 20,
+  snapToGrid: false,  // Disabled by default for 1px movement like Lucidchart
+  gridSize: 10,  // Smaller grid when snapping is enabled
   propertiesPanelOpen: true,
   interactionMode: 'select',
   shapePanelCollapsed: false,

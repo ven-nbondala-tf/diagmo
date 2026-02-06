@@ -325,6 +325,13 @@ CREATE TABLE IF NOT EXISTS diagram_comments (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Add foreign key to profiles for PostgREST joins
+ALTER TABLE diagram_comments
+DROP CONSTRAINT IF EXISTS fk_diagram_comments_profiles;
+ALTER TABLE diagram_comments
+ADD CONSTRAINT fk_diagram_comments_profiles
+FOREIGN KEY (user_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+
 -- Comment replies table
 CREATE TABLE IF NOT EXISTS comment_replies (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -333,6 +340,13 @@ CREATE TABLE IF NOT EXISTS comment_replies (
   content TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Add foreign key to profiles for PostgREST joins
+ALTER TABLE comment_replies
+DROP CONSTRAINT IF EXISTS fk_comment_replies_profiles;
+ALTER TABLE comment_replies
+ADD CONSTRAINT fk_comment_replies_profiles
+FOREIGN KEY (user_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
 
 -- Indexes for comments
 CREATE INDEX IF NOT EXISTS idx_diagram_comments_diagram_id ON diagram_comments(diagram_id);

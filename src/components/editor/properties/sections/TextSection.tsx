@@ -40,11 +40,11 @@ export function TextSection({ style, data, selectedNode, multipleSelected, updat
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="space-y-2">
           <select
             value={style.fontFamily || 'Inter'}
             onChange={(e) => updateAllSelectedStyles({ fontFamily: e.target.value })}
-            className="h-7 text-xs border rounded px-1.5 bg-background flex-1 min-w-0"
+            className="w-full h-7 text-xs border rounded px-1.5 bg-background"
           >
             {FONT_FAMILIES.map((font) => (
               <option key={font.value} value={font.value}>
@@ -52,118 +52,136 @@ export function TextSection({ style, data, selectedNode, multipleSelected, updat
               </option>
             ))}
           </select>
-          <Input
-            type="number"
-            value={style.fontSize || 14}
-            onChange={(e) => updateAllSelectedStyles({ fontSize: parseInt(e.target.value) || 14 })}
-            min={6}
-            max={72}
-            className="h-7 w-14 text-xs text-center"
-          />
-          <input
-            type="color"
-            value={style.textColor || '#1f2937'}
-            onChange={(e) => updateAllSelectedStyles({ textColor: e.target.value })}
-            className="w-7 h-7 rounded border cursor-pointer"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex gap-0.5 border rounded p-0.5">
-            <IconButton
-              icon={Bold}
-              label="Bold"
-              size="xs"
-              active={style.fontWeight === 'bold'}
-              onClick={() => updateAllSelectedStyles({
-                fontWeight: style.fontWeight === 'bold' ? 'normal' : 'bold'
-              })}
-            />
-            <IconButton
-              icon={Italic}
-              label="Italic"
-              size="xs"
-              active={style.fontStyle === 'italic'}
-              onClick={() => updateAllSelectedStyles({
-                fontStyle: style.fontStyle === 'italic' ? 'normal' : 'italic'
-              })}
-            />
-            <IconButton
-              icon={Underline}
-              label="Underline"
-              size="xs"
-              active={style.textDecoration === 'underline'}
-              onClick={() => updateAllSelectedStyles({
-                textDecoration: style.textDecoration === 'underline' ? 'none' : 'underline'
-              })}
-            />
-            <IconButton
-              icon={Strikethrough}
-              label="Strikethrough"
-              size="xs"
-              active={style.textDecoration === 'line-through'}
-              onClick={() => updateAllSelectedStyles({
-                textDecoration: style.textDecoration === 'line-through' ? 'none' : 'line-through'
-              })}
-            />
-          </div>
-
-          <div className="flex gap-0.5 border rounded p-0.5">
-            <IconButton
-              icon={AlignLeft}
-              label="Align Left"
-              size="xs"
-              active={style.textAlign === 'left'}
-              onClick={() => updateAllSelectedStyles({ textAlign: 'left' })}
-            />
-            <IconButton
-              icon={AlignCenter}
-              label="Align Center"
-              size="xs"
-              active={(style.textAlign || 'center') === 'center'}
-              onClick={() => updateAllSelectedStyles({ textAlign: 'center' })}
-            />
-            <IconButton
-              icon={AlignRight}
-              label="Align Right"
-              size="xs"
-              active={style.textAlign === 'right'}
-              onClick={() => updateAllSelectedStyles({ textAlign: 'right' })}
-            />
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <Label className="text-xs text-muted-foreground mb-1 block">Size</Label>
+              <Input
+                type="number"
+                value={style.fontSize || 14}
+                onChange={(e) => updateAllSelectedStyles({ fontSize: parseInt(e.target.value) || 14 })}
+                min={6}
+                max={72}
+                className="h-7 text-xs"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Color</Label>
+              <input
+                type="color"
+                value={style.textColor || '#1f2937'}
+                onChange={(e) => updateAllSelectedStyles({ textColor: e.target.value })}
+                className="w-7 h-7 rounded border cursor-pointer"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Label className="text-xs text-muted-foreground w-16">Vertical</Label>
-          <div className="flex gap-0.5 border rounded p-0.5">
-            <IconButton
-              icon={AlignVerticalJustifyStart}
-              label="Align Top"
-              size="xs"
-              active={style.verticalAlign === 'top'}
-              onClick={() => updateAllSelectedStyles({ verticalAlign: 'top' })}
-            />
-            <IconButton
-              icon={AlignVerticalJustifyCenter}
-              label="Align Middle"
-              size="xs"
-              active={(style.verticalAlign || 'middle') === 'middle'}
-              onClick={() => updateAllSelectedStyles({ verticalAlign: 'middle' })}
-            />
-            <IconButton
-              icon={AlignVerticalJustifyEnd}
-              label="Align Bottom"
-              size="xs"
-              active={style.verticalAlign === 'bottom'}
-              onClick={() => updateAllSelectedStyles({ verticalAlign: 'bottom' })}
-            />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Style</Label>
+            <div className="flex gap-0.5 border rounded p-0.5">
+              <IconButton
+                icon={Bold}
+                label="Bold"
+                size="xs"
+                active={style.fontWeight === 'bold'}
+                onClick={() => updateAllSelectedStyles({
+                  fontWeight: style.fontWeight === 'bold' ? 'normal' : 'bold'
+                })}
+              />
+              <IconButton
+                icon={Italic}
+                label="Italic"
+                size="xs"
+                active={style.fontStyle === 'italic'}
+                onClick={() => updateAllSelectedStyles({
+                  fontStyle: style.fontStyle === 'italic' ? 'normal' : 'italic'
+                })}
+              />
+              <IconButton
+                icon={Underline}
+                label="Underline"
+                size="xs"
+                active={style.textDecoration === 'underline'}
+                onClick={() => updateAllSelectedStyles({
+                  textDecoration: style.textDecoration === 'underline' ? 'none' : 'underline'
+                })}
+              />
+              <IconButton
+                icon={Strikethrough}
+                label="Strikethrough"
+                size="xs"
+                active={style.textDecoration === 'line-through'}
+                onClick={() => updateAllSelectedStyles({
+                  textDecoration: style.textDecoration === 'line-through' ? 'none' : 'line-through'
+                })}
+              />
+            </div>
           </div>
+
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Horizontal</Label>
+            <div className="flex gap-0.5 border rounded p-0.5">
+              <IconButton
+                icon={AlignLeft}
+                label="Align Left"
+                size="xs"
+                active={style.textAlign === 'left'}
+                onClick={() => updateAllSelectedStyles({ textAlign: 'left' })}
+              />
+              <IconButton
+                icon={AlignCenter}
+                label="Align Center"
+                size="xs"
+                active={(style.textAlign || 'center') === 'center'}
+                onClick={() => updateAllSelectedStyles({ textAlign: 'center' })}
+              />
+              <IconButton
+                icon={AlignRight}
+                label="Align Right"
+                size="xs"
+                active={style.textAlign === 'right'}
+                onClick={() => updateAllSelectedStyles({ textAlign: 'right' })}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Vertical</Label>
+            <div className="flex gap-0.5 border rounded p-0.5">
+              <IconButton
+                icon={AlignVerticalJustifyStart}
+                label="Align Top"
+                size="xs"
+                active={style.verticalAlign === 'top'}
+                onClick={() => updateAllSelectedStyles({ verticalAlign: 'top' })}
+              />
+              <IconButton
+                icon={AlignVerticalJustifyCenter}
+                label="Align Middle"
+                size="xs"
+                active={(style.verticalAlign || 'middle') === 'middle'}
+                onClick={() => updateAllSelectedStyles({ verticalAlign: 'middle' })}
+              />
+              <IconButton
+                icon={AlignVerticalJustifyEnd}
+                label="Align Bottom"
+                size="xs"
+                active={style.verticalAlign === 'bottom'}
+                onClick={() => updateAllSelectedStyles({ verticalAlign: 'bottom' })}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Text Wrap</Label>
           <select
             value={style.textWrap || 'wrap'}
             onChange={(e) => updateAllSelectedStyles({
               textWrap: e.target.value as 'wrap' | 'nowrap' | 'truncate'
             })}
-            className="h-7 text-xs border rounded px-1.5 bg-background flex-1"
+            className="w-full h-7 text-xs border rounded px-1.5 bg-background"
           >
             <option value="wrap">Wrap</option>
             <option value="nowrap">No Wrap</option>
