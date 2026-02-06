@@ -142,6 +142,12 @@ export function useKeyboardShortcuts(callbacks?: KeyboardShortcutCallbacks) {
         event.preventDefault()
         useEditorStore.getState().togglePresentationMode()
       }
+
+      // Find & Replace: Ctrl+F
+      if (isMod && event.key === 'f') {
+        event.preventDefault()
+        useEditorStore.getState().toggleFindReplace()
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)

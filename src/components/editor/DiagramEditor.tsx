@@ -25,6 +25,7 @@ import { PropertiesPanel } from './properties'
 import { LayersPanel } from './LayersPanel'
 import { VersionHistoryPanel } from './VersionHistoryPanel'
 import { CommentsPanel } from './CommentsPanel'
+import { FindReplaceBar } from './FindReplaceBar'
 import { ZoomControls } from './ZoomControls'
 import { SelectionToolbar } from './SelectionToolbar'
 import { QuickShapeBar } from './QuickShapeBar'
@@ -84,6 +85,8 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const toggleVersionHistoryPanel = useEditorStore((state) => state.toggleVersionHistoryPanel)
   const commentsPanelOpen = useEditorStore((state) => state.commentsPanelOpen)
   const toggleCommentsPanel = useEditorStore((state) => state.toggleCommentsPanel)
+  const findReplaceOpen = useEditorStore((state) => state.findReplaceOpen)
+  const setFindReplaceOpen = useEditorStore((state) => state.setFindReplaceOpen)
   const interactionMode = useEditorStore((state) => state.interactionMode)
   const layers = useEditorStore((state) => state.layers)
 
@@ -317,6 +320,10 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         <SelectionToolbar />
         <QuickShapeBar />
         <ZoomControls />
+        <FindReplaceBar
+          open={findReplaceOpen}
+          onClose={() => setFindReplaceOpen(false)}
+        />
         {/* Toggle buttons when panels are closed */}
         <div className="absolute right-4 top-4 z-10 flex gap-2">
           {!commentsPanelOpen && (

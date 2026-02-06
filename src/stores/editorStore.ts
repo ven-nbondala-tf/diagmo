@@ -42,6 +42,8 @@ interface EditorState {
   presentationModeOpen: boolean
   // Comments
   commentsPanelOpen: boolean
+  // Find & Replace
+  findReplaceOpen: boolean
 }
 
 interface EditorActions {
@@ -111,6 +113,9 @@ interface EditorActions {
   setPresentationModeOpen: (open: boolean) => void
   // Comments
   toggleCommentsPanel: () => void
+  // Find & Replace
+  toggleFindReplace: () => void
+  setFindReplaceOpen: (open: boolean) => void
 }
 
 type EditorStore = EditorState & EditorActions
@@ -151,6 +156,8 @@ const initialState: EditorState = {
   presentationModeOpen: false,
   // Comments
   commentsPanelOpen: false,
+  // Find & Replace
+  findReplaceOpen: false,
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -1032,6 +1039,14 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   toggleCommentsPanel: () => {
     set((state) => ({ commentsPanelOpen: !state.commentsPanelOpen }))
+  },
+
+  toggleFindReplace: () => {
+    set((state) => ({ findReplaceOpen: !state.findReplaceOpen }))
+  },
+
+  setFindReplaceOpen: (open) => {
+    set({ findReplaceOpen: open })
   },
 }))
 
