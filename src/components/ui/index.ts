@@ -1,6 +1,7 @@
 export { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './accordion'
 export { Button, buttonVariants } from './button'
 export { Input } from './input'
+export { Textarea } from './textarea'
 export { Label } from './label'
 export {
   Card,

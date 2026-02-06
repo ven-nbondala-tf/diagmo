@@ -26,6 +26,7 @@ import { AUTO_SAVE_INTERVAL } from '@/constants'
 import { toast } from 'sonner'
 import { MenuBar } from './MenuBar'
 import { CommandPalette } from './CommandPalette'
+import { ImportMermaidDialog } from './ImportMermaidDialog'
 
 interface EditorHeaderProps {
   diagram: Diagram
@@ -55,6 +56,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [showMermaidImport, setShowMermaidImport] = useState(false)
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -215,6 +217,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           onSave={handleSave}
           onExport={handleExport}
           onImport={handleImport}
+          onImportMermaid={() => setShowMermaidImport(true)}
           saving={saving}
         />
 
@@ -302,6 +305,12 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Mermaid Import Dialog */}
+      <ImportMermaidDialog
+        open={showMermaidImport}
+        onOpenChange={setShowMermaidImport}
+      />
     </>
   )
 }

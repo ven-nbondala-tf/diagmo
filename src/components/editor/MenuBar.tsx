@@ -26,10 +26,11 @@ interface MenuBarProps {
   onSave: () => void
   onExport: (format: 'png' | 'svg' | 'pdf' | 'json') => void
   onImport: () => void
+  onImportMermaid: () => void
   saving: boolean
 }
 
-export function MenuBar({ onSave, onExport, onImport, saving }: MenuBarProps) {
+export function MenuBar({ onSave, onExport, onImport, onImportMermaid, saving }: MenuBarProps) {
   const navigate = useNavigate()
   const [showShortcuts, setShowShortcuts] = useState(false)
   const { fitView, zoomIn, zoomOut } = useReactFlow()
@@ -107,9 +108,17 @@ export function MenuBar({ onSave, onExport, onImport, saving }: MenuBarProps) {
                 </MenubarItem>
               </MenubarSubContent>
             </MenubarSub>
-            <MenubarItem onClick={onImport}>
-              Import from JSON...
-            </MenubarItem>
+            <MenubarSub>
+              <MenubarSubTrigger>Import</MenubarSubTrigger>
+              <MenubarSubContent>
+                <MenubarItem onClick={onImport}>
+                  Import from JSON...
+                </MenubarItem>
+                <MenubarItem onClick={onImportMermaid}>
+                  Import from Mermaid...
+                </MenubarItem>
+              </MenubarSubContent>
+            </MenubarSub>
           </MenubarContent>
         </MenubarMenu>
 
