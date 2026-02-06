@@ -101,12 +101,20 @@ export interface DiagramNode extends Node {
   }
 }
 
+// Waypoint for edge routing - absolute position on canvas
+export interface EdgeWaypoint {
+  id: string
+  x: number
+  y: number
+}
+
 export interface DiagramEdge extends Edge {
   data?: {
     label?: string
     style?: EdgeStyle
     labelPosition?: 'on-line' | 'outside'
-    waypointOffset?: { x: number; y: number }
+    waypointOffset?: { x: number; y: number }  // Legacy single waypoint (deprecated)
+    waypoints?: EdgeWaypoint[]  // Multiple waypoints for custom routing
   }
 }
 

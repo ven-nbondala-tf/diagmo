@@ -23,6 +23,7 @@ import {
   ChevronsUpDown,
   ChevronsDownUp,
   Route,
+  Waypoints,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import type { DiagramEdge } from '@/types'
@@ -186,6 +187,50 @@ export function EdgeProperties({ selectedEdge, updateEdge, deleteSelected, toggl
               <p className="text-[10px] text-muted-foreground">
                 {ROUTE_TYPES.find(r => r.value === edgeType)?.description || 'Select a routing style'}
               </p>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* WAYPOINTS */}
+          <AccordionItem value="waypoints" className="border-b">
+            <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline hover:bg-accent/50">
+              <span className="flex items-center gap-2"><Waypoints className="w-4 h-4" />Waypoints</span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 space-y-3">
+              {(() => {
+                const waypoints = (selectedEdge.data as { waypoints?: Array<{ id: string; x: number; y: number }> })?.waypoints || []
+                return (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        {waypoints.length === 0 ? 'No waypoints' : `${waypoints.length} waypoint${waypoints.length !== 1 ? 's' : ''}`}
+                      </span>
+                      {waypoints.length > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-xs"
+                          onClick={() => updateEdge(selectedEdge.id, {
+                            data: {
+                              ...selectedEdge.data,
+                              waypoints: [],
+                              waypointOffset: undefined
+                            }
+                          })}
+                        >
+                          Clear All
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      <strong>Double-click</strong> on the connector to add a waypoint.
+                      <br />
+                      <strong>Drag</strong> waypoint handles to reposition.
+                      <br />
+                      <strong>Right-click</strong> or <strong>Delete</strong> to remove a waypoint.
+                    </p>
+                  </>
+                )
+              })()}
             </AccordionContent>
           </AccordionItem>
 
