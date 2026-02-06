@@ -37,8 +37,5 @@ export function LazyCloudIcon({ iconType, size = 32, className }: LazyCloudIconP
   )
 }
 
-/**
- * Get cloud icon component directly (for use in shapes that need the component)
- * Note: This still loads synchronously for shape rendering
- */
-export { cloudIconComponents, type CloudIconType } from './CloudIcons'
+// Type-only re-export (does not affect bundle)
+export type { CloudIconType } from './CloudIcons'
