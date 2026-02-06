@@ -604,6 +604,27 @@ export type ShapeType =
   | 'office-publisher'
   | 'office-visio'
   | 'office-project'
+  // Microsoft 365
+  | 'm365'
+  | 'm365-copilot'
+  | 'm365-planner'
+  | 'm365-todo'
+  | 'm365-forms'
+  | 'm365-stream'
+  | 'm365-whiteboard'
+  | 'm365-lists'
+  | 'm365-loop'
+  | 'm365-bookings'
+  | 'm365-viva-engage'
+  | 'm365-defender'
+  | 'm365-intune'
+  | 'm365-exchange'
+  // Power Platform
+  | 'power-bi'
+  | 'power-apps'
+  | 'power-automate'
+  | 'power-virtual-agents'
+  | 'dynamics-365'
 
 // Folder types
 export interface Folder {

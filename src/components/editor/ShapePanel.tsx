@@ -685,7 +685,28 @@ const ShapePreview = ({ type }: { type: ShapeType }) => {
     case 'office-access':
     case 'office-publisher':
     case 'office-visio':
-    case 'office-project': {
+    case 'office-project':
+    // Microsoft 365
+    case 'm365':
+    case 'm365-copilot':
+    case 'm365-planner':
+    case 'm365-todo':
+    case 'm365-forms':
+    case 'm365-stream':
+    case 'm365-whiteboard':
+    case 'm365-lists':
+    case 'm365-loop':
+    case 'm365-bookings':
+    case 'm365-viva-engage':
+    case 'm365-defender':
+    case 'm365-intune':
+    case 'm365-exchange':
+    // Power Platform
+    case 'power-bi':
+    case 'power-apps':
+    case 'power-automate':
+    case 'power-virtual-agents':
+    case 'dynamics-365': {
       const IconComponent = cloudIconComponents[type as CloudIconType]
       if (IconComponent) {
         return <IconComponent size={size} />
@@ -939,8 +960,8 @@ export function ShapePanel() {
       </div>
 
       {/* Main tabs: Shapes | Web Images | Libraries */}
-      <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'shapes' | 'images' | 'libraries')} className="flex-1 flex flex-col">
-        <div className="px-3 pt-2 border-b pb-2">
+      <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'shapes' | 'images' | 'libraries')} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="px-3 pt-2 border-b pb-2 shrink-0">
           <TabsList className="w-full grid grid-cols-3 h-9">
             <TabsTrigger value="shapes" className="text-xs">
               <Shapes className="w-3.5 h-3.5 mr-1.5" />
@@ -958,9 +979,9 @@ export function ShapePanel() {
         </div>
 
         {/* Shapes Tab Content */}
-        <TabsContent value="shapes" className="flex-1 flex flex-col mt-0 data-[state=inactive]:hidden">
+        <TabsContent value="shapes" className="flex-1 flex flex-col mt-0 overflow-hidden data-[state=inactive]:hidden">
           {/* Search */}
-          <div className="p-3 border-b">
+          <div className="p-3 border-b shrink-0">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -974,7 +995,7 @@ export function ShapePanel() {
           </div>
 
           {/* Shape categories with accordion */}
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 min-h-0">
             {/* Basic shape categories */}
             <Accordion
               type="multiple"

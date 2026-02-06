@@ -93,6 +93,30 @@ export const cloudIconComponents = {
   'office-publisher': GenericIcons.OfficePublisherIcon,
   'office-visio': GenericIcons.OfficeVisioIcon,
   'office-project': GenericIcons.OfficeProjectIcon,
+  // Microsoft 365 - Additional
+  'm365': GenericIcons.M365Icon,
+  'm365-copilot': GenericIcons.CopilotIcon,
+  // Power Platform
+  'power-bi': GenericIcons.PowerBIIcon,
+  'power-apps': GenericIcons.PowerAppsIcon,
+  'power-automate': GenericIcons.PowerAutomateIcon,
+  'power-virtual-agents': GenericIcons.PowerVirtualAgentsIcon,
+  // Microsoft 365 - Collaboration
+  'm365-planner': GenericIcons.PlannerIcon,
+  'm365-todo': GenericIcons.ToDoIcon,
+  'm365-forms': GenericIcons.FormsIcon,
+  'm365-stream': GenericIcons.StreamIcon,
+  'm365-whiteboard': GenericIcons.WhiteboardIcon,
+  'm365-lists': GenericIcons.ListsIcon,
+  'm365-loop': GenericIcons.LoopIcon,
+  'm365-bookings': GenericIcons.BookingsIcon,
+  'm365-viva-engage': GenericIcons.VivaEngageIcon,
+  // Microsoft 365 - Security & Management
+  'm365-defender': GenericIcons.DefenderIcon,
+  'm365-intune': GenericIcons.IntuneIcon,
+  'm365-exchange': GenericIcons.ExchangeIcon,
+  // Dynamics
+  'dynamics-365': GenericIcons.Dynamics365Icon,
 } as const
 
 export type CloudIconType = keyof typeof cloudIconComponents
