@@ -1,13 +1,17 @@
 import { useParams } from 'react-router-dom'
 import { ReactFlowProvider } from '@xyflow/react'
 import { useDiagram } from '@/hooks/useDiagrams'
+import { useEditorStore } from '@/stores/editorStore'
 import { DiagramEditor } from '@/components/editor/DiagramEditor'
 import { EditorHeader } from '@/components/editor/EditorHeader'
+import { PresentationMode } from '@/components/editor/PresentationMode'
 import { Loader2 } from 'lucide-react'
 
 export function EditorPage() {
   const { id } = useParams<{ id: string }>()
   const { data: diagram, isLoading, error } = useDiagram(id)
+  const presentationModeOpen = useEditorStore((state) => state.presentationModeOpen)
+  const setPresentationModeOpen = useEditorStore((state) => state.setPresentationModeOpen)
 
   if (isLoading) {
     return (
@@ -36,6 +40,9 @@ export function EditorPage() {
         <EditorHeader diagram={diagram} />
         <DiagramEditor diagram={diagram} />
       </div>
+      {presentationModeOpen && (
+        <PresentationMode onClose={() => setPresentationModeOpen(false)} />
+      )}
     </ReactFlowProvider>
   )
 }

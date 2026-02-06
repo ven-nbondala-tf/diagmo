@@ -58,6 +58,7 @@ export function MenuBar({ onSave, onExport, onImport, saving }: MenuBarProps) {
   const ungroupNodes = useEditorStore((state) => state.ungroupNodes)
   const lockNodes = useEditorStore((state) => state.lockNodes)
   const unlockNodes = useEditorStore((state) => state.unlockNodes)
+  const togglePresentationMode = useEditorStore((state) => state.togglePresentationMode)
 
   const hasSelection = selectedNodes.length > 0
   const hasMultipleSelection = selectedNodes.length >= 2
@@ -172,6 +173,11 @@ export function MenuBar({ onSave, onExport, onImport, saving }: MenuBarProps) {
             <MenubarItem onClick={() => zoomOut()}>
               Zoom Out
               <MenubarShortcut>Ctrl+-</MenubarShortcut>
+            </MenubarItem>
+            <MenubarSeparator />
+            <MenubarItem onClick={togglePresentationMode}>
+              Present
+              <MenubarShortcut>F5</MenubarShortcut>
             </MenubarItem>
           </MenubarContent>
         </MenubarMenu>

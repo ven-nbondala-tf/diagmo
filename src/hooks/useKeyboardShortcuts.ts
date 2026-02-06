@@ -136,6 +136,12 @@ export function useKeyboardShortcuts(callbacks?: KeyboardShortcutCallbacks) {
         event.preventDefault()
         useEditorStore.getState().toggleCommandPalette()
       }
+
+      // Presentation Mode: F5
+      if (event.key === 'F5') {
+        event.preventDefault()
+        useEditorStore.getState().togglePresentationMode()
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)

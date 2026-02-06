@@ -38,6 +38,8 @@ interface EditorState {
   layersPanelOpen: boolean
   // Version history
   versionHistoryPanelOpen: boolean
+  // Presentation mode
+  presentationModeOpen: boolean
 }
 
 interface EditorActions {
@@ -102,6 +104,9 @@ interface EditorActions {
   setLayers: (layers: Layer[]) => void
   // Version history
   toggleVersionHistoryPanel: () => void
+  // Presentation mode
+  togglePresentationMode: () => void
+  setPresentationModeOpen: (open: boolean) => void
 }
 
 type EditorStore = EditorState & EditorActions
@@ -138,6 +143,8 @@ const initialState: EditorState = {
   layersPanelOpen: false,
   // Version history
   versionHistoryPanelOpen: false,
+  // Presentation mode
+  presentationModeOpen: false,
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -1007,6 +1014,14 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   toggleVersionHistoryPanel: () => {
     set((state) => ({ versionHistoryPanelOpen: !state.versionHistoryPanelOpen }))
+  },
+
+  togglePresentationMode: () => {
+    set((state) => ({ presentationModeOpen: !state.presentationModeOpen }))
+  },
+
+  setPresentationModeOpen: (open) => {
+    set({ presentationModeOpen: open })
   },
 }))
 
