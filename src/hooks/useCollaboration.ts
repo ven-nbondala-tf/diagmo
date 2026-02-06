@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react'
-import { collaborationService } from '@/services/collaborationService'
+import { collaborationService, type OperationType, type NodeLock } from '@/services/collaborationService'
 import { useCollaborationStore, type ConnectionStatus } from '@/stores/collaborationStore'
 import { useEditorStore } from '@/stores/editorStore'
 import { throttle } from '@/utils'
@@ -11,6 +11,23 @@ interface UseCollaborationOptions {
   enabled?: boolean
 }
 
+interface UseCollaborationReturn extends CollaborationState {
+  connectionStatus: ConnectionStatus
+  nodeLocks: Map<string, NodeLock>
+  updateCursor: (x: number | null, y: number | null) => void
+  updateViewport: (x: number, y: number, zoom: number) => void
+  broadcastNodeDrag: (nodeId: string, position: { x: number; y: number }) => void
+  broadcastNodesDrag: (nodes: Array<{ id: string; position: { x: number; y: number } }>) => void
+  broadcastFullSync: (nodes: DiagramNode[], edges: DiagramEdge[]) => void
+  // Operation-based sync
+  broadcastOperation: (type: OperationType, targetId: string, data?: Record<string, unknown>) => void
+  // Node locking
+  acquireLock: (nodeId: string) => Promise<boolean>
+  releaseLock: (nodeId: string) => Promise<void>
+  renewLock: (nodeId: string) => Promise<boolean>
+  isNodeLocked: (nodeId: string) => boolean
+}
+
 /**
  * Hook for real-time collaboration features
  * Manages presence, cursor tracking, collaborator display, and live content sync
@@ -19,18 +36,13 @@ interface UseCollaborationOptions {
 export function useCollaboration({
   diagramId,
   enabled = true,
-}: UseCollaborationOptions): CollaborationState & {
-  connectionStatus: ConnectionStatus
-  updateCursor: (x: number | null, y: number | null) => void
-  updateViewport: (x: number, y: number, zoom: number) => void
-  broadcastNodeDrag: (nodeId: string, position: { x: number; y: number }) => void
-  broadcastNodesDrag: (nodes: Array<{ id: string; position: { x: number; y: number } }>) => void
-  broadcastFullSync: (nodes: DiagramNode[], edges: DiagramEdge[]) => void
-} {
-  const { isConnected, connectionStatus, collaborators, myPresenceId } = useCollaborationStore()
+}: UseCollaborationOptions): UseCollaborationReturn {
+  const { isConnected, connectionStatus, collaborators, myPresenceId, nodeLocks } = useCollaborationStore()
   const setConnectionStatus = useCollaborationStore((s) => s.setConnectionStatus)
   const setCollaborators = useCollaborationStore((s) => s.setCollaborators)
   const setMyPresenceId = useCollaborationStore((s) => s.setMyPresenceId)
+  const setNodeLock = useCollaborationStore((s) => s.setNodeLock)
+  const removeNodeLock = useCollaborationStore((s) => s.removeNodeLock)
   const reset = useCollaborationStore((s) => s.reset)
 
   // Track if we're mounted
@@ -113,6 +125,73 @@ export function useCollaboration({
               }
             }
           },
+          // Operation-based sync handler
+          onOperation: (operation) => {
+            if (!isMountedRef.current) return
+            if (isApplyingRemoteRef.current) return
+
+            console.log('[useCollaboration] Applying operation:', operation.type, operation.targetId)
+            isApplyingRemoteRef.current = true
+            try {
+              const { nodes, edges, setNodes, setEdges } = useEditorStore.getState()
+
+              switch (operation.type) {
+                case 'node-create': {
+                  const newNode = operation.data as unknown as DiagramNode
+                  if (newNode && !nodes.find(n => n.id === newNode.id)) {
+                    setNodes([...nodes, newNode])
+                  }
+                  break
+                }
+                case 'node-update': {
+                  const updates = operation.data as unknown as Partial<DiagramNode>
+                  setNodes(nodes.map(n =>
+                    n.id === operation.targetId ? { ...n, ...updates } : n
+                  ))
+                  break
+                }
+                case 'node-delete': {
+                  setNodes(nodes.filter(n => n.id !== operation.targetId))
+                  // Also remove connected edges
+                  setEdges(edges.filter(e =>
+                    e.source !== operation.targetId && e.target !== operation.targetId
+                  ))
+                  break
+                }
+                case 'edge-create': {
+                  const newEdge = operation.data as unknown as DiagramEdge
+                  if (newEdge && !edges.find(e => e.id === newEdge.id)) {
+                    setEdges([...edges, newEdge])
+                  }
+                  break
+                }
+                case 'edge-update': {
+                  const edgeUpdates = operation.data as unknown as Partial<DiagramEdge>
+                  setEdges(edges.map(e =>
+                    e.id === operation.targetId ? { ...e, ...edgeUpdates } : e
+                  ))
+                  break
+                }
+                case 'edge-delete': {
+                  setEdges(edges.filter(e => e.id !== operation.targetId))
+                  break
+                }
+              }
+            } finally {
+              isApplyingRemoteRef.current = false
+            }
+          },
+          // Node lock handlers
+          onNodeLock: (lock) => {
+            if (!isMountedRef.current) return
+            console.log('[useCollaboration] Node locked:', lock.nodeId, 'by', lock.userName)
+            setNodeLock(lock)
+          },
+          onNodeUnlock: (nodeId) => {
+            if (!isMountedRef.current) return
+            console.log('[useCollaboration] Node unlocked:', nodeId)
+            removeNodeLock(nodeId)
+          },
         })
 
         if (isMountedRef.current) {
@@ -142,7 +221,7 @@ export function useCollaboration({
         }
       }, 200)
     }
-  }, [diagramId, enabled, setConnectionStatus, setCollaborators, setMyPresenceId, reset])
+  }, [diagramId, enabled, setConnectionStatus, setCollaborators, setMyPresenceId, setNodeLock, removeNodeLock, reset])
 
   // Throttled cursor update (max 30fps)
   const updateCursor = useCallback(
@@ -194,15 +273,71 @@ export function useCollaboration({
     [isConnected]
   )
 
+  // Broadcast incremental operation
+  const broadcastOperation = useCallback(
+    (type: OperationType, targetId: string, data?: Record<string, unknown>) => {
+      if (isConnected) {
+        collaborationService.broadcastOperation(type, targetId, data)
+      }
+    },
+    [isConnected]
+  )
+
+  // Node locking functions
+  const acquireLock = useCallback(
+    async (nodeId: string): Promise<boolean> => {
+      if (!isConnected) return false
+      const success = await collaborationService.acquireLock(nodeId)
+      if (!success) {
+        const lock = collaborationService.getNodeLock(nodeId)
+        if (lock) {
+          toast.warning(`Node is being edited by ${lock.userName}`, { duration: 2000 })
+        }
+      }
+      return success
+    },
+    [isConnected]
+  )
+
+  const releaseLock = useCallback(
+    async (nodeId: string): Promise<void> => {
+      if (isConnected) {
+        await collaborationService.releaseLock(nodeId)
+      }
+    },
+    [isConnected]
+  )
+
+  const renewLock = useCallback(
+    async (nodeId: string): Promise<boolean> => {
+      if (!isConnected) return false
+      return collaborationService.renewLock(nodeId)
+    },
+    [isConnected]
+  )
+
+  const isNodeLocked = useCallback(
+    (nodeId: string): boolean => {
+      return collaborationService.isNodeLocked(nodeId)
+    },
+    []
+  )
+
   return {
     isConnected,
     connectionStatus,
     collaborators,
     myPresenceId,
+    nodeLocks,
     updateCursor,
     updateViewport,
     broadcastNodeDrag,
     broadcastNodesDrag,
     broadcastFullSync,
+    broadcastOperation,
+    acquireLock,
+    releaseLock,
+    renewLock,
+    isNodeLocked,
   }
 }

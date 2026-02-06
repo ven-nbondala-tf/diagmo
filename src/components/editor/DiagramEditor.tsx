@@ -36,6 +36,7 @@ import { ConditionalFormattingPanel } from './ConditionalFormattingPanel'
 import { SmartGuides } from './SmartGuides'
 import { AnnotationLayer } from './AnnotationLayer'
 import { CollaboratorCursors } from './CollaboratorCursors'
+import { NodeLockIndicators } from './NodeLockIndicators'
 import { Button } from '@/components/ui'
 
 const defaultEdgeOptions = {
@@ -81,6 +82,10 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
     updateViewport,
     broadcastNodeDrag,
     broadcastNodesDrag,
+    nodeLocks,
+    acquireLock,
+    releaseLock,
+    isNodeLocked,
   } = useCollaboration({
     diagramId: diagram.id,
     enabled: true,
@@ -121,6 +126,38 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
       }
     },
     [broadcastNodesDrag]
+  )
+
+  // Track which nodes we have locked during this drag session
+  const lockedNodesRef = useRef<Set<string>>(new Set())
+
+  // Acquire lock when drag starts
+  const handleNodeDragStart = useCallback(
+    async (_event: React.MouseEvent, node: DiagramNode) => {
+      // Check if node is locked by someone else
+      if (isNodeLocked(node.id)) {
+        // Node is locked by another user - prevent drag by showing warning
+        // The visual indicator will already be showing
+        return
+      }
+      // Try to acquire lock
+      const acquired = await acquireLock(node.id)
+      if (acquired) {
+        lockedNodesRef.current.add(node.id)
+      }
+    },
+    [acquireLock, isNodeLocked]
+  )
+
+  // Release locks when drag ends
+  const handleNodeDragStop = useCallback(
+    async (_event: React.MouseEvent, node: DiagramNode) => {
+      if (lockedNodesRef.current.has(node.id)) {
+        await releaseLock(node.id)
+        lockedNodesRef.current.delete(node.id)
+      }
+    },
+    [releaseLock]
   )
 
   const nodes = useEditorStore((state) => state.nodes)
@@ -370,7 +407,9 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           onDragOver={onDragOver}
           onDrop={onDrop}
           onEdgeDoubleClick={handleEdgeDoubleClick}
+          onNodeDragStart={handleNodeDragStart}
           onNodeDrag={handleNodeDrag}
+          onNodeDragStop={handleNodeDragStop}
           onSelectionDrag={handleNodesDrag}
           onMoveEnd={(_, viewport) => {
             setZoom(viewport.zoom)
@@ -420,6 +459,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           />
           <SmartGuides enabled={snapToGrid} />
           <CollaboratorCursors collaborators={collaborators} />
+          <NodeLockIndicators locks={nodeLocks} />
         </ReactFlow>
         <SelectionToolbar />
         <QuickShapeBar />

@@ -41,6 +41,48 @@ interface NodesDragPayload {
   nodes: Array<{ id: string; position: { x: number; y: number } }>
 }
 
+// Operation-based sync types
+export type OperationType =
+  | 'node-create'
+  | 'node-update'
+  | 'node-delete'
+  | 'edge-create'
+  | 'edge-update'
+  | 'edge-delete'
+
+export interface SyncOperation {
+  id: string
+  type: OperationType
+  targetId: string
+  data?: Record<string, unknown>
+  timestamp: number
+  userId: string
+  userName?: string
+}
+
+interface OperationPayload {
+  operation: SyncOperation
+}
+
+// Node locking types
+export interface NodeLock {
+  nodeId: string
+  userId: string
+  userName: string
+  color: string
+  acquiredAt: number
+  expiresAt: number
+}
+
+interface LockPayload {
+  lock: NodeLock
+}
+
+interface UnlockPayload {
+  nodeId: string
+  userId: string
+}
+
 interface PresenceState {
   visitorId: string
   cursorX: number | null
@@ -56,6 +98,9 @@ interface CollaborationCallbacks {
   onDiagramChange?: (payload: DiagramChangePayload) => void
   onNodeDrag?: (payload: NodeDragPayload) => void
   onNodesDrag?: (payload: NodesDragPayload) => void
+  onOperation?: (operation: SyncOperation) => void
+  onNodeLock?: (lock: NodeLock) => void
+  onNodeUnlock?: (nodeId: string, userId: string) => void
   onError?: (error: Error) => void
   onConnectionStatusChange?: (status: 'connected' | 'disconnected' | 'reconnecting') => void
 }
@@ -84,8 +129,10 @@ class CollaborationService {
   private lastViewportY: number | null = null
   private lastViewportZoom: number = 1
 
-  // Connection status callback
-  private onConnectionStatusChange?: (status: 'connected' | 'disconnected' | 'reconnecting') => void
+  // Node locking state
+  private locks: Map<string, NodeLock> = new Map()
+  private lockCleanupInterval: ReturnType<typeof setInterval> | null = null
+  private readonly LOCK_DURATION = 30000 // 30 seconds
 
   /**
    * Join a diagram's collaboration session
@@ -198,6 +245,28 @@ class CollaborationService {
           })
         }
       })
+      // Operation-based sync listener
+      .on('broadcast', { event: 'operation' }, (payload) => {
+        const op = (payload.payload as OperationPayload)?.operation
+        if (!op || op.userId === this.userId) return
+        console.log('[Collaboration] Received operation:', op.type, op.targetId)
+        this.callbacks.onOperation?.(op)
+      })
+      // Node lock listeners
+      .on('broadcast', { event: 'node-lock' }, (payload) => {
+        const lock = (payload.payload as LockPayload)?.lock
+        if (!lock || lock.userId === this.userId) return
+        console.log('[Collaboration] Received node-lock:', lock.nodeId, 'by', lock.userName)
+        this.locks.set(lock.nodeId, lock)
+        this.callbacks.onNodeLock?.(lock)
+      })
+      .on('broadcast', { event: 'node-unlock' }, (payload) => {
+        const { nodeId, userId } = (payload.payload as UnlockPayload) || {}
+        if (!nodeId || userId === this.userId) return
+        console.log('[Collaboration] Received node-unlock:', nodeId)
+        this.locks.delete(nodeId)
+        this.callbacks.onNodeUnlock?.(nodeId, userId)
+      })
 
     // Subscribe and track own presence
     await this.channel.subscribe(async (status, err) => {
@@ -235,6 +304,9 @@ class CollaborationService {
 
     // Start heartbeat to keep DB presence alive
     this.startHeartbeat()
+
+    // Start lock cleanup interval (clean up expired locks every 5 seconds)
+    this.startLockCleanup()
   }
 
   /**
@@ -279,6 +351,20 @@ class CollaborationService {
       clearInterval(this.heartbeatInterval)
       this.heartbeatInterval = null
     }
+
+    // Stop lock cleanup
+    if (this.lockCleanupInterval) {
+      clearInterval(this.lockCleanupInterval)
+      this.lockCleanupInterval = null
+    }
+
+    // Release any locks held by this user
+    for (const [nodeId, lock] of this.locks.entries()) {
+      if (lock.userId === this.userId) {
+        await this.releaseLock(nodeId)
+      }
+    }
+    this.locks.clear()
 
     // Untrack presence and unsubscribe
     if (this.channel) {
@@ -508,6 +594,185 @@ class CollaborationService {
     if (this.isReconnecting) return 'reconnecting'
     if (this.channel && this.isSubscribed) return 'connected'
     return 'disconnected'
+  }
+
+  // ============================================================================
+  // OPERATION-BASED SYNC
+  // ============================================================================
+
+  /**
+   * Broadcast an incremental operation to other collaborators
+   * This is more efficient than broadcasting the full diagram
+   */
+  async broadcastOperation(
+    type: OperationType,
+    targetId: string,
+    data?: Record<string, unknown>
+  ): Promise<void> {
+    if (!this.channel || !this.userId || !this.isSubscribed) return
+
+    const operation: SyncOperation = {
+      id: `${this.userId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      type,
+      targetId,
+      data,
+      timestamp: Date.now(),
+      userId: this.userId,
+      userName: this.userName || undefined,
+    }
+
+    await this.channel.send({
+      type: 'broadcast',
+      event: 'operation',
+      payload: { operation },
+    })
+  }
+
+  // ============================================================================
+  // NODE LOCKING
+  // ============================================================================
+
+  /**
+   * Start the lock cleanup interval to remove expired locks
+   */
+  private startLockCleanup(): void {
+    this.lockCleanupInterval = setInterval(() => {
+      const now = Date.now()
+      for (const [nodeId, lock] of this.locks.entries()) {
+        if (lock.expiresAt < now) {
+          console.log('[Collaboration] Lock expired for node:', nodeId)
+          this.locks.delete(nodeId)
+          this.callbacks.onNodeUnlock?.(nodeId, lock.userId)
+        }
+      }
+    }, 5000) // Check every 5 seconds
+  }
+
+  /**
+   * Try to acquire a lock on a node
+   * Returns true if lock was acquired, false if node is already locked by another user
+   */
+  async acquireLock(nodeId: string): Promise<boolean> {
+    if (!this.channel || !this.userId || !this.isSubscribed) return false
+
+    // Check if already locked by another user
+    const existingLock = this.locks.get(nodeId)
+    if (existingLock && existingLock.userId !== this.userId) {
+      // Check if lock is expired
+      if (existingLock.expiresAt > Date.now()) {
+        console.log('[Collaboration] Node already locked by:', existingLock.userName)
+        return false
+      }
+      // Lock is expired, remove it
+      this.locks.delete(nodeId)
+    }
+
+    // Create new lock
+    const now = Date.now()
+    const lock: NodeLock = {
+      nodeId,
+      userId: this.userId,
+      userName: this.userName || 'Unknown',
+      color: this.userColor || '#3b82f6',
+      acquiredAt: now,
+      expiresAt: now + this.LOCK_DURATION,
+    }
+
+    // Store locally
+    this.locks.set(nodeId, lock)
+
+    // Broadcast to others
+    await this.channel.send({
+      type: 'broadcast',
+      event: 'node-lock',
+      payload: { lock },
+    })
+
+    return true
+  }
+
+  /**
+   * Release a lock on a node
+   */
+  async releaseLock(nodeId: string): Promise<void> {
+    if (!this.channel || !this.userId || !this.isSubscribed) return
+
+    const lock = this.locks.get(nodeId)
+    if (!lock || lock.userId !== this.userId) return // Can only release own locks
+
+    // Remove locally
+    this.locks.delete(nodeId)
+
+    // Broadcast to others
+    await this.channel.send({
+      type: 'broadcast',
+      event: 'node-unlock',
+      payload: { nodeId, userId: this.userId },
+    })
+  }
+
+  /**
+   * Renew a lock (extend its expiration)
+   * Call this periodically while editing a node
+   */
+  async renewLock(nodeId: string): Promise<boolean> {
+    const lock = this.locks.get(nodeId)
+    if (!lock || lock.userId !== this.userId) return false
+
+    // Update expiration
+    lock.expiresAt = Date.now() + this.LOCK_DURATION
+    this.locks.set(nodeId, lock)
+
+    // Broadcast updated lock
+    await this.channel?.send({
+      type: 'broadcast',
+      event: 'node-lock',
+      payload: { lock },
+    })
+
+    return true
+  }
+
+  /**
+   * Check if a node is locked by another user
+   */
+  isNodeLocked(nodeId: string): boolean {
+    const lock = this.locks.get(nodeId)
+    if (!lock) return false
+    if (lock.userId === this.userId) return false // Own lock doesn't count
+    return lock.expiresAt > Date.now()
+  }
+
+  /**
+   * Get lock info for a node (if locked by another user)
+   */
+  getNodeLock(nodeId: string): NodeLock | null {
+    const lock = this.locks.get(nodeId)
+    if (!lock) return null
+    if (lock.userId === this.userId) return null // Don't return own locks
+    if (lock.expiresAt <= Date.now()) return null // Expired
+    return lock
+  }
+
+  /**
+   * Get all current locks (excluding own locks)
+   */
+  getLocks(): NodeLock[] {
+    const now = Date.now()
+    return Array.from(this.locks.values()).filter(
+      lock => lock.userId !== this.userId && lock.expiresAt > now
+    )
+  }
+
+  /**
+   * Get user info
+   */
+  getUserId(): string | null {
+    return this.userId
+  }
+
+  getUserColor(): string | null {
+    return this.userColor
   }
 }
 

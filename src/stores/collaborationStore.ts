@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { CollaboratorPresence } from '@/types'
+import type { NodeLock } from '@/services/collaborationService'
 
 export type ConnectionStatus = 'connected' | 'disconnected' | 'reconnecting'
 
@@ -8,6 +9,8 @@ interface CollaborationState {
   connectionStatus: ConnectionStatus
   collaborators: CollaboratorPresence[]
   myPresenceId: string | null
+  // Node locks - map of nodeId to lock info
+  nodeLocks: Map<string, NodeLock>
 }
 
 interface CollaborationActions {
@@ -15,6 +18,8 @@ interface CollaborationActions {
   setConnectionStatus: (status: ConnectionStatus) => void
   setCollaborators: (collaborators: CollaboratorPresence[]) => void
   setMyPresenceId: (id: string | null) => void
+  setNodeLock: (lock: NodeLock) => void
+  removeNodeLock: (nodeId: string) => void
   reset: () => void
 }
 
@@ -25,6 +30,7 @@ const initialState: CollaborationState = {
   connectionStatus: 'disconnected',
   collaborators: [],
   myPresenceId: null,
+  nodeLocks: new Map(),
 }
 
 /**
@@ -45,5 +51,17 @@ export const useCollaborationStore = create<CollaborationStore>((set) => ({
 
   setMyPresenceId: (myPresenceId) => set({ myPresenceId }),
 
-  reset: () => set(initialState),
+  setNodeLock: (lock) => set((state) => {
+    const newLocks = new Map(state.nodeLocks)
+    newLocks.set(lock.nodeId, lock)
+    return { nodeLocks: newLocks }
+  }),
+
+  removeNodeLock: (nodeId) => set((state) => {
+    const newLocks = new Map(state.nodeLocks)
+    newLocks.delete(nodeId)
+    return { nodeLocks: newLocks }
+  }),
+
+  reset: () => set({ ...initialState, nodeLocks: new Map() }),
 }))

@@ -5,7 +5,7 @@
  * The actual icons (218KB) are only loaded when this component mounts,
  * i.e., when a user expands a cloud provider category in the ShapePanel.
  */
-import React, { lazy, Suspense } from 'react'
+import { lazy, Suspense } from 'react'
 import { Skeleton } from '@/components/ui'
 import type { CloudIconType } from './CloudIcons'
 

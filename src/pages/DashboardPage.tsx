@@ -66,9 +66,9 @@ export function DashboardPage() {
       description: item.diagram.description || '',
       nodes: item.diagram.nodes as Diagram['nodes'],
       edges: item.diagram.edges as Diagram['edges'],
-      thumbnail: item.diagram.thumbnail,
+      thumbnail: item.diagram.thumbnail ?? undefined,
       userId: '', // Not the current user's diagram
-      folderId: null,
+      folderId: undefined,
       createdAt: item.diagram.createdAt,
       updatedAt: item.diagram.updatedAt,
     }))
