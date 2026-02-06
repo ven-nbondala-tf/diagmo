@@ -111,6 +111,10 @@ export interface DiagramNode extends Node {
     layerId?: string  // ID of layer this node belongs to
     // Custom metadata (key-value pairs)
     metadata?: Record<string, string | number | boolean>
+    // Custom shape properties (for user-uploaded SVG shapes)
+    customShapeId?: string
+    customShapeName?: string
+    customShapeSvg?: string
   }
 }
 

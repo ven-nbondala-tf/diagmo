@@ -205,6 +205,24 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         y: event.clientY,
       })
 
+      // Handle custom-shape type with embedded SVG
+      if (type === 'custom-shape') {
+        try {
+          const customShapeStr = event.dataTransfer.getData('application/custom-shape')
+          if (customShapeStr) {
+            const customShape = JSON.parse(customShapeStr)
+            addNode('custom-shape', position, {
+              customShapeId: customShape.id,
+              customShapeName: customShape.name,
+              customShapeSvg: customShape.svgContent,
+            }, { width: 64, height: 64 })
+            return
+          }
+        } catch (e) {
+          console.error('Error parsing custom shape data:', e)
+        }
+      }
+
       // Handle web-image type with additional data
       if (type === 'web-image') {
         try {
