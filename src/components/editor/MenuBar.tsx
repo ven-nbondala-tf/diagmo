@@ -27,10 +27,11 @@ interface MenuBarProps {
   onExport: (format: 'png' | 'svg' | 'pdf' | 'json') => void
   onImport: () => void
   onImportMermaid: () => void
+  onImportDrawio: () => void
   saving: boolean
 }
 
-export function MenuBar({ onSave, onExport, onImport, onImportMermaid, saving }: MenuBarProps) {
+export function MenuBar({ onSave, onExport, onImport, onImportMermaid, onImportDrawio, saving }: MenuBarProps) {
   const navigate = useNavigate()
   const [showShortcuts, setShowShortcuts] = useState(false)
   const { fitView, zoomIn, zoomOut } = useReactFlow()
@@ -116,6 +117,9 @@ export function MenuBar({ onSave, onExport, onImport, onImportMermaid, saving }:
                 </MenubarItem>
                 <MenubarItem onClick={onImportMermaid}>
                   Import from Mermaid...
+                </MenubarItem>
+                <MenubarItem onClick={onImportDrawio}>
+                  Import from Draw.io...
                 </MenubarItem>
               </MenubarSubContent>
             </MenubarSub>

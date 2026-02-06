@@ -27,6 +27,7 @@ import { toast } from 'sonner'
 import { MenuBar } from './MenuBar'
 import { CommandPalette } from './CommandPalette'
 import { ImportMermaidDialog } from './ImportMermaidDialog'
+import { ImportDrawioDialog } from './ImportDrawioDialog'
 
 interface EditorHeaderProps {
   diagram: Diagram
@@ -57,6 +58,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showMermaidImport, setShowMermaidImport] = useState(false)
+  const [showDrawioImport, setShowDrawioImport] = useState(false)
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -218,6 +220,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           onExport={handleExport}
           onImport={handleImport}
           onImportMermaid={() => setShowMermaidImport(true)}
+          onImportDrawio={() => setShowDrawioImport(true)}
           saving={saving}
         />
 
@@ -310,6 +313,12 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
       <ImportMermaidDialog
         open={showMermaidImport}
         onOpenChange={setShowMermaidImport}
+      />
+
+      {/* Draw.io Import Dialog */}
+      <ImportDrawioDialog
+        open={showDrawioImport}
+        onOpenChange={setShowDrawioImport}
       />
     </>
   )
