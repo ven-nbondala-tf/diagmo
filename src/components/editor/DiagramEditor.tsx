@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -32,6 +32,7 @@ import { QuickShapeBar } from './QuickShapeBar'
 import { PageTabs } from './PageTabs'
 import { ConditionalFormattingPanel } from './ConditionalFormattingPanel'
 import { SmartGuides } from './SmartGuides'
+import { AnnotationLayer } from './AnnotationLayer'
 import { Button } from '@/components/ui'
 
 const defaultEdgeOptions = {
@@ -63,6 +64,7 @@ interface DiagramEditorProps {
 export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition, setCenter } = useReactFlow()
+  const [annotationMode, setAnnotationMode] = useState(false)
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -345,6 +347,10 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         <SelectionToolbar />
         <QuickShapeBar />
         <ZoomControls />
+        <AnnotationLayer
+          enabled={annotationMode}
+          onToggle={() => setAnnotationMode(!annotationMode)}
+        />
         <FindReplaceBar
           open={findReplaceOpen}
           onClose={() => setFindReplaceOpen(false)}
