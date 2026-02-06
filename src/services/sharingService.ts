@@ -20,20 +20,7 @@ class SharingService {
   async getShares(diagramId: string): Promise<DiagramShare[]> {
     const { data, error } = await supabase
       .from('diagram_shares')
-      .select(`
-        id,
-        diagram_id,
-        shared_with_user_id,
-        shared_with_email,
-        permission,
-        invited_by,
-        created_at,
-        accepted_at,
-        profiles:shared_with_user_id (
-          full_name,
-          avatar_url
-        )
-      `)
+      .select('*')
       .eq('diagram_id', diagramId)
       .order('created_at', { ascending: false })
 
@@ -42,25 +29,50 @@ class SharingService {
       return []
     }
 
-    return (data || []).map((share) => ({
-      id: share.id,
-      diagramId: share.diagram_id,
-      sharedWithUserId: share.shared_with_user_id,
-      sharedWithEmail: share.shared_with_email,
-      permission: share.permission as SharePermission,
-      invitedBy: share.invited_by,
-      createdAt: share.created_at,
-      acceptedAt: share.accepted_at,
-      user: share.profiles ? {
-        fullName: (share.profiles as { full_name: string | null }).full_name,
-        avatarUrl: (share.profiles as { avatar_url: string | null }).avatar_url,
-        email: share.shared_with_email || undefined,
-      } : share.shared_with_email ? {
-        fullName: null,
-        avatarUrl: null,
-        email: share.shared_with_email,
-      } : undefined,
-    }))
+    // Fetch profile data for users who have accepted
+    const shares = data || []
+    const userIds = shares
+      .filter(s => s.shared_with_user_id)
+      .map(s => s.shared_with_user_id)
+
+    let profilesMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {}
+
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url')
+        .in('user_id', userIds)
+
+      if (profiles) {
+        profilesMap = profiles.reduce((acc, p) => {
+          acc[p.user_id] = { full_name: p.full_name, avatar_url: p.avatar_url }
+          return acc
+        }, {} as Record<string, { full_name: string | null; avatar_url: string | null }>)
+      }
+    }
+
+    return shares.map((share) => {
+      const profile = share.shared_with_user_id ? profilesMap[share.shared_with_user_id] : null
+      return {
+        id: share.id,
+        diagramId: share.diagram_id,
+        sharedWithUserId: share.shared_with_user_id,
+        sharedWithEmail: share.shared_with_email,
+        permission: share.permission as SharePermission,
+        invitedBy: share.invited_by,
+        createdAt: share.created_at,
+        acceptedAt: share.accepted_at,
+        user: profile ? {
+          fullName: profile.full_name,
+          avatarUrl: profile.avatar_url,
+          email: share.shared_with_email || undefined,
+        } : share.shared_with_email ? {
+          fullName: null,
+          avatarUrl: null,
+          email: share.shared_with_email,
+        } : undefined,
+      }
+    })
   }
 
   /**
@@ -77,32 +89,14 @@ class SharingService {
       return { success: false, error: 'Not authenticated' }
     }
 
-    // Check if user exists with this email
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('user_id')
-      .eq('user_id', (
-        await supabase
-          .from('auth.users')
-          .select('id')
-          .eq('email', email.toLowerCase())
-          .single()
-      ).data?.id)
-      .single()
-
-    // Try to find user by email in auth.users via a workaround
-    // Since we can't directly query auth.users, we'll create a pending invite
-    // and the user will be linked when they sign up or accept
-
+    // Create the share with email - user will be linked when they access
     const { data: share, error } = await supabase
       .from('diagram_shares')
       .insert({
         diagram_id: diagramId,
         shared_with_email: email.toLowerCase(),
-        shared_with_user_id: profiles?.user_id || null,
         permission,
         invited_by: user.id,
-        accepted_at: profiles?.user_id ? new Date().toISOString() : null,
       })
       .select()
       .single()
