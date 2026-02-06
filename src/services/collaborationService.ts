@@ -32,8 +32,15 @@ interface PresencePayload {
   viewport_zoom: number
 }
 
+interface DiagramChangePayload {
+  nodes: unknown[]
+  edges: unknown[]
+  updatedAt: string
+}
+
 interface CollaborationCallbacks {
   onPresenceChange?: (collaborators: CollaboratorPresence[]) => void
+  onDiagramChange?: (payload: DiagramChangePayload) => void
   onError?: (error: Error) => void
 }
 
@@ -102,6 +109,26 @@ class CollaborationService {
         () => {
           // Refetch all collaborators on any change
           this.fetchCollaborators()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'diagrams',
+          filter: `id=eq.${diagramId}`,
+        },
+        (payload) => {
+          // Only notify if change came from another user
+          const newData = payload.new as Record<string, unknown>
+          if (newData && this.callbacks.onDiagramChange) {
+            this.callbacks.onDiagramChange({
+              nodes: (newData.nodes as unknown[]) || [],
+              edges: (newData.edges as unknown[]) || [],
+              updatedAt: newData.updated_at as string,
+            })
+          }
         }
       )
       .subscribe((status) => {
