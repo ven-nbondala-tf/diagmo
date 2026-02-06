@@ -30,6 +30,7 @@ import { ImportMermaidDialog } from './ImportMermaidDialog'
 import { ImportDrawioDialog } from './ImportDrawioDialog'
 import { ImportTerraformDialog } from './ImportTerraformDialog'
 import { ExportCodeDialog } from './ExportCodeDialog'
+import { EmbedDialog } from './EmbedDialog'
 
 interface EditorHeaderProps {
   diagram: Diagram
@@ -63,6 +64,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
   const [showDrawioImport, setShowDrawioImport] = useState(false)
   const [showTerraformImport, setShowTerraformImport] = useState(false)
   const [showCodeExport, setShowCodeExport] = useState(false)
+  const [showEmbed, setShowEmbed] = useState(false)
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -223,6 +225,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           onSave={handleSave}
           onExport={handleExport}
           onExportCode={() => setShowCodeExport(true)}
+          onEmbed={() => setShowEmbed(true)}
           onImport={handleImport}
           onImportMermaid={() => setShowMermaidImport(true)}
           onImportDrawio={() => setShowDrawioImport(true)}
@@ -337,6 +340,14 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
       <ExportCodeDialog
         open={showCodeExport}
         onOpenChange={setShowCodeExport}
+      />
+
+      {/* Embed Dialog */}
+      <EmbedDialog
+        open={showEmbed}
+        onOpenChange={setShowEmbed}
+        diagramId={diagram.id}
+        diagramName={name}
       />
     </>
   )

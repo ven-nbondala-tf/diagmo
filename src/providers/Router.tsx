@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/auth'
-import { LoginPage, SignupPage, DashboardPage, EditorPage } from '@/pages'
+import { LoginPage, SignupPage, DashboardPage, EditorPage, EmbedPage } from '@/pages'
 
 export function Router() {
   return (
@@ -24,6 +24,7 @@ export function Router() {
             </ProtectedRoute>
           }
         />
+        <Route path="/embed/:id" element={<EmbedPage />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

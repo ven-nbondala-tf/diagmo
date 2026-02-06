@@ -26,6 +26,7 @@ interface MenuBarProps {
   onSave: () => void
   onExport: (format: 'png' | 'svg' | 'pdf' | 'json') => void
   onExportCode: () => void
+  onEmbed: () => void
   onImport: () => void
   onImportMermaid: () => void
   onImportDrawio: () => void
@@ -33,7 +34,7 @@ interface MenuBarProps {
   saving: boolean
 }
 
-export function MenuBar({ onSave, onExport, onExportCode, onImport, onImportMermaid, onImportDrawio, onImportTerraform, saving }: MenuBarProps) {
+export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onImport, onImportMermaid, onImportDrawio, onImportTerraform, saving }: MenuBarProps) {
   const navigate = useNavigate()
   const [showShortcuts, setShowShortcuts] = useState(false)
   const { fitView, zoomIn, zoomOut } = useReactFlow()
@@ -133,6 +134,10 @@ export function MenuBar({ onSave, onExport, onExportCode, onImport, onImportMerm
                 </MenubarItem>
               </MenubarSubContent>
             </MenubarSub>
+            <MenubarSeparator />
+            <MenubarItem onClick={onEmbed}>
+              Get Embed Code...
+            </MenubarItem>
           </MenubarContent>
         </MenubarMenu>
 
