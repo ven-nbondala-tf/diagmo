@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import { SHAPE_SECTIONS } from './shared'
 import { EdgeProperties } from './EdgeProperties'
-import { ImageSection, FillSection, BorderSection, ShadowSection, TextSection, SizeSection, ArrangeSection, UMLClassDataSection, DatabaseDataSection, MetadataSection } from './sections'
+import { ImageSection, FillSection, BorderSection, ShadowSection, TextSection, SizeSection, ArrangeSection, UMLClassDataSection, DatabaseDataSection, MetadataSection, TableSection } from './sections'
 import { PresetPicker } from './sections/PresetPicker'
 
 export function PropertiesPanel() {
@@ -110,11 +110,12 @@ export function PropertiesPanel() {
   const data = selectedNode.data
   const style = data.style || {}
 
-  // Check if shape has extended data (UML class, database)
+  // Check if shape has extended data (UML class, database, table)
   const isUMLClass = data.type === 'uml-class'
   const isUMLInterface = data.type === 'uml-interface'
   const isDatabase = data.type === 'database'
-  const hasDataTab = isUMLClass || isUMLInterface || isDatabase
+  const isTable = data.type === 'table'
+  const hasDataTab = isUMLClass || isUMLInterface || isDatabase || isTable
 
   const handleDuplicate = () => {
     copyNodes()
@@ -180,6 +181,7 @@ export function PropertiesPanel() {
               <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full">
                 {(isUMLClass || isUMLInterface) && <UMLClassDataSection {...sectionProps} />}
                 {isDatabase && <DatabaseDataSection {...sectionProps} />}
+                {isTable && <TableSection {...sectionProps} />}
               </Accordion>
             </TabsContent>
           )}

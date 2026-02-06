@@ -7,6 +7,7 @@ import './NetworkShapes'
 import './ContainerShapes'
 import './WebImageShape'
 import './TextShape'
+import './TableShape'
 import './JunctionShape'
 import './CustomShape'
 

@@ -56,6 +56,17 @@ export interface DBColumn {
   isNullable?: boolean
 }
 
+// Table shape data
+export interface TableData {
+  rows: number
+  cols: number
+  cells: string[][]  // 2D array [row][col] of cell contents
+  headerRow: boolean // First row is header (bold, different bg)
+  headerCol: boolean // First column is header
+  columnWidths?: number[]  // Width of each column in pixels
+  rowHeights?: number[]    // Height of each row in pixels
+}
+
 // Layer type for organizing shapes
 export interface Layer {
   id: string
@@ -90,6 +101,8 @@ export interface DiagramNode extends Node {
     umlStereotype?: string
     // Database specific properties
     dbColumns?: DBColumn[]
+    // Table data (for table shape)
+    tableData?: TableData
     // Container/Swimlane properties
     parentId?: string  // ID of parent container
     isCollapsed?: boolean
@@ -230,6 +243,7 @@ export type ShapeType =
   | 'callout'
   | 'note'
   | 'text'
+  | 'table'
   | 'junction'
   // Flowchart shapes
   | 'process'

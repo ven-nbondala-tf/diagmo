@@ -17,7 +17,7 @@ import {
 } from '@/components/ui'
 import { SHAPE_CATEGORIES, SHAPE_LABELS, CLOUD_PROVIDER_CATEGORIES } from '@/constants'
 import type { ShapeType, WebImageResult, CustomShape } from '@/types'
-import { Search, ChevronRight, ChevronLeft, Shapes, ImageIcon, Square, Diamond, Circle, Type, ArrowRight, StickyNote, FolderOpen, Settings } from 'lucide-react'
+import { Search, ChevronRight, ChevronLeft, Shapes, ImageIcon, Square, Diamond, Circle, Type, ArrowRight, StickyNote, FolderOpen, Settings, Table2 } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { cloudIconComponents, type CloudIconType } from './icons'
 import { WebImageSearch } from './WebImageSearch'
@@ -715,6 +715,7 @@ const collapsedShapes: { type: ShapeType; icon: React.ElementType; label: string
   { type: 'text', icon: Type, label: 'Text' },
   { type: 'arrow', icon: ArrowRight, label: 'Arrow' },
   { type: 'note', icon: StickyNote, label: 'Note' },
+  { type: 'table', icon: Table2, label: 'Table' },
 ]
 
 export function ShapePanel() {

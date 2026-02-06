@@ -51,6 +51,7 @@ export const SHAPE_CATEGORIES = {
       'callout',
       'note',
       'text',
+      'table',
     ] as ShapeType[],
   },
   flowchart: {
@@ -580,6 +581,7 @@ export const SHAPE_LABELS: Record<ShapeType, string> = {
   callout: 'Callout',
   note: 'Note',
   text: 'Text',
+  table: 'Table',
   junction: 'Junction',
   // Flowchart shapes
   process: 'Process',
