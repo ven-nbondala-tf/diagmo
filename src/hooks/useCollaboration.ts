@@ -13,7 +13,7 @@ interface UseCollaborationOptions {
 
 /**
  * Hook for real-time collaboration features
- * Manages presence, cursor tracking, collaborator display, and content sync
+ * Manages presence, cursor tracking, collaborator display, and live content sync
  * Uses collaborationStore for shared state between components
  */
 export function useCollaboration({
@@ -22,6 +22,9 @@ export function useCollaboration({
 }: UseCollaborationOptions): CollaborationState & {
   updateCursor: (x: number | null, y: number | null) => void
   updateViewport: (x: number, y: number, zoom: number) => void
+  broadcastNodeDrag: (nodeId: string, position: { x: number; y: number }) => void
+  broadcastNodesDrag: (nodes: Array<{ id: string; position: { x: number; y: number } }>) => void
+  broadcastFullSync: (nodes: DiagramNode[], edges: DiagramEdge[]) => void
 } {
   const { isConnected, collaborators, myPresenceId } = useCollaborationStore()
   const setConnected = useCollaborationStore((s) => s.setConnected)
@@ -29,10 +32,10 @@ export function useCollaboration({
   const setMyPresenceId = useCollaborationStore((s) => s.setMyPresenceId)
   const reset = useCollaborationStore((s) => s.reset)
 
-  // Track if we're mounted and last save time to avoid applying our own changes
+  // Track if we're mounted
   const isMountedRef = useRef(true)
-  const lastSaveTimeRef = useRef<number>(0)
   const isApplyingRemoteRef = useRef(false)
+  const cleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Join collaboration session
   useEffect(() => {
@@ -49,33 +52,51 @@ export function useCollaboration({
             }
           },
           onDiagramChange: (payload) => {
+            console.log('[useCollaboration] Received full diagram sync:', payload)
             if (!isMountedRef.current) return
-
-            // Check if this is likely our own change (within 2 seconds of last save)
-            const timeSinceLastSave = Date.now() - lastSaveTimeRef.current
-            if (timeSinceLastSave < 2000) {
-              // Skip - this is probably our own change echoing back
-              return
-            }
-
-            // Don't apply if we're already applying remote changes
             if (isApplyingRemoteRef.current) return
 
             // Apply remote changes to the editor
             isApplyingRemoteRef.current = true
             try {
-              const { setNodes, setEdges, setDirty } = useEditorStore.getState()
+              const { setNodes, setEdges } = useEditorStore.getState()
               setNodes(payload.nodes as DiagramNode[])
               setEdges(payload.edges as DiagramEdge[])
-              setDirty(false)
 
-              // Show notification
-              toast.info('Diagram updated by collaborator', {
+              toast.info('Diagram synced from collaborator', {
                 duration: 2000,
               })
             } finally {
               isApplyingRemoteRef.current = false
             }
+          },
+          onNodeDrag: (payload) => {
+            if (!isMountedRef.current) return
+            if (isApplyingRemoteRef.current) return
+
+            // Apply single node position update
+            const { nodes, setNodes } = useEditorStore.getState()
+            const updatedNodes = nodes.map((node) =>
+              node.id === payload.nodeId
+                ? { ...node, position: payload.position }
+                : node
+            )
+            setNodes(updatedNodes)
+          },
+          onNodesDrag: (payload) => {
+            if (!isMountedRef.current) return
+            if (isApplyingRemoteRef.current) return
+
+            // Apply multiple node position updates
+            const { nodes, setNodes } = useEditorStore.getState()
+            const positionMap = new Map(
+              payload.nodes.map((n) => [n.id, n.position])
+            )
+            const updatedNodes = nodes.map((node) => {
+              const newPosition = positionMap.get(node.id)
+              return newPosition ? { ...node, position: newPosition } : node
+            })
+            setNodes(updatedNodes)
           },
           onError: (error) => {
             console.error('Collaboration error:', error)
@@ -91,29 +112,25 @@ export function useCollaboration({
       }
     }
 
+    // Clear any pending cleanup from previous unmount
+    if (cleanupTimeoutRef.current) {
+      clearTimeout(cleanupTimeoutRef.current)
+      cleanupTimeoutRef.current = null
+    }
+
     join()
 
     return () => {
       isMountedRef.current = false
-      collaborationService.leave()
-      reset()
+      // Delay leave to handle React Strict Mode double-mounting
+      cleanupTimeoutRef.current = setTimeout(() => {
+        if (!isMountedRef.current) {
+          collaborationService.leave()
+          reset()
+        }
+      }, 200)
     }
   }, [diagramId, enabled, setConnected, setCollaborators, setMyPresenceId, reset])
-
-  // Track save times to avoid applying our own changes
-  useEffect(() => {
-    // Subscribe to editor store save events
-    const unsubscribe = useEditorStore.subscribe(
-      (state) => state.isDirty,
-      (isDirty, prevIsDirty) => {
-        // When isDirty goes from true to false, we just saved
-        if (prevIsDirty && !isDirty) {
-          lastSaveTimeRef.current = Date.now()
-        }
-      }
-    )
-    return unsubscribe
-  }, [])
 
   // Throttled cursor update (max 30fps)
   const updateCursor = useCallback(
@@ -135,11 +152,44 @@ export function useCollaboration({
     [isConnected]
   )
 
+  // Throttled node drag broadcast (max 20fps for smooth updates)
+  const broadcastNodeDrag = useCallback(
+    throttle((nodeId: string, position: { x: number; y: number }) => {
+      if (isConnected) {
+        collaborationService.broadcastNodeDrag(nodeId, position)
+      }
+    }, 50),
+    [isConnected]
+  )
+
+  // Throttled multi-node drag broadcast
+  const broadcastNodesDrag = useCallback(
+    throttle((nodes: Array<{ id: string; position: { x: number; y: number } }>) => {
+      if (isConnected) {
+        collaborationService.broadcastNodesDrag(nodes)
+      }
+    }, 50),
+    [isConnected]
+  )
+
+  // Broadcast full sync (on save or significant changes)
+  const broadcastFullSync = useCallback(
+    (nodes: DiagramNode[], edges: DiagramEdge[]) => {
+      if (isConnected) {
+        collaborationService.broadcastDiagramChange(nodes, edges)
+      }
+    },
+    [isConnected]
+  )
+
   return {
     isConnected,
     collaborators,
     myPresenceId,
     updateCursor,
     updateViewport,
+    broadcastNodeDrag,
+    broadcastNodesDrag,
+    broadcastFullSync,
   }
 }

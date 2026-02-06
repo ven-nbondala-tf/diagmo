@@ -162,16 +162,17 @@ class SharingService {
   }
 
   /**
-   * Get diagrams shared with the current user
+   * Get diagrams shared with the current user (IDs and permissions only)
    */
   async getSharedWithMe(): Promise<{ diagramId: string; permission: SharePermission }[]> {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
 
+    // Check by user_id or email
     const { data, error } = await supabase
       .from('diagram_shares')
       .select('diagram_id, permission')
-      .eq('shared_with_user_id', user.id)
+      .or(`shared_with_user_id.eq.${user.id},shared_with_email.eq.${user.email}`)
 
     if (error) {
       console.error('Error fetching shared diagrams:', error)
@@ -182,6 +183,68 @@ class SharingService {
       diagramId: share.diagram_id,
       permission: share.permission as SharePermission,
     }))
+  }
+
+  /**
+   * Get full diagram details for diagrams shared with the current user
+   */
+  async getSharedDiagramsFull(): Promise<{
+    diagram: {
+      id: string
+      name: string
+      description: string | null
+      nodes: unknown[]
+      edges: unknown[]
+      thumbnail: string | null
+      createdAt: string
+      updatedAt: string
+    }
+    permission: SharePermission
+    sharedBy: string | null
+  }[]> {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    // Get shares for current user (by ID or email)
+    const { data: shares, error: sharesError } = await supabase
+      .from('diagram_shares')
+      .select('diagram_id, permission, invited_by')
+      .or(`shared_with_user_id.eq.${user.id},shared_with_email.eq.${user.email}`)
+
+    if (sharesError || !shares || shares.length === 0) {
+      return []
+    }
+
+    // Get full diagram details
+    const diagramIds = shares.map(s => s.diagram_id)
+    const { data: diagrams, error: diagramsError } = await supabase
+      .from('diagrams')
+      .select('id, name, description, nodes, edges, thumbnail, created_at, updated_at')
+      .in('id', diagramIds)
+
+    if (diagramsError || !diagrams) {
+      console.error('Error fetching shared diagrams:', diagramsError)
+      return []
+    }
+
+    // Combine share info with diagram data
+    return diagrams.map(diagram => {
+      const share = shares.find(s => s.diagram_id === diagram.id)
+      return {
+        diagram: {
+          id: diagram.id,
+          name: diagram.name,
+          description: diagram.description,
+          nodes: diagram.nodes || [],
+          edges: diagram.edges || [],
+          thumbnail: diagram.thumbnail,
+          createdAt: diagram.created_at,
+          updatedAt: diagram.updated_at,
+        },
+        permission: share?.permission as SharePermission || 'view',
+        sharedBy: share?.invited_by || null,
+      }
+    })
   }
 
   /**

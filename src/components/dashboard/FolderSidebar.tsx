@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useFolders, useCreateFolder, useDeleteFolder } from '@/hooks'
+import { useFolders, useCreateFolder, useDeleteFolder, useSharedDiagrams } from '@/hooks'
 import { Button, Input, ScrollArea, Separator } from '@/components/ui'
 import {
   AlertDialog,
@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Folder, FolderPlus, Trash2, Home, Loader2 } from 'lucide-react'
+import { Folder, FolderPlus, Trash2, Home, Loader2, Users } from 'lucide-react'
 import { cn } from '@/utils'
 import { toast } from 'sonner'
 import type { Folder as FolderType } from '@/types'
@@ -19,16 +19,26 @@ import type { Folder as FolderType } from '@/types'
 interface FolderSidebarProps {
   selectedFolderId: string | null
   onSelectFolder: (folderId: string | null) => void
+  showShared?: boolean
+  onToggleShared?: (show: boolean) => void
 }
 
-export function FolderSidebar({ selectedFolderId, onSelectFolder }: FolderSidebarProps) {
+export function FolderSidebar({
+  selectedFolderId,
+  onSelectFolder,
+  showShared = false,
+  onToggleShared,
+}: FolderSidebarProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [folderToDelete, setFolderToDelete] = useState<FolderType | null>(null)
 
   const { data: folders, isLoading } = useFolders()
+  const { data: sharedDiagrams } = useSharedDiagrams()
   const createFolder = useCreateFolder()
   const deleteFolder = useDeleteFolder()
+
+  const sharedCount = sharedDiagrams?.length || 0
 
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return
@@ -114,14 +124,37 @@ export function FolderSidebar({ selectedFolderId, onSelectFolder }: FolderSideba
       <ScrollArea className="flex-1">
         <div className="p-2">
           <button
-            onClick={() => onSelectFolder(null)}
+            onClick={() => {
+              onSelectFolder(null)
+              onToggleShared?.(false)
+            }}
             className={cn(
               'w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors',
-              selectedFolderId === null && 'bg-accent'
+              selectedFolderId === null && !showShared && 'bg-accent'
             )}
           >
             <Home className="h-4 w-4" />
             All Diagrams
+          </button>
+
+          {/* Shared with me section */}
+          <button
+            onClick={() => {
+              onSelectFolder(null)
+              onToggleShared?.(true)
+            }}
+            className={cn(
+              'w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors',
+              showShared && 'bg-accent'
+            )}
+          >
+            <Users className="h-4 w-4" />
+            <span className="flex-1 text-left">Shared with me</span>
+            {sharedCount > 0 && (
+              <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">
+                {sharedCount}
+              </span>
+            )}
           </button>
 
           {isLoading ? (

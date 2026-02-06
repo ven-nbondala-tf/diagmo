@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
-import { useDiagramsByFolder, useCreateDiagram } from '@/hooks'
+import { useDiagramsByFolder, useCreateDiagram, useSharedDiagrams } from '@/hooks'
+import type { Diagram } from '@/types'
 import {
   Button,
   Card,
@@ -34,6 +35,7 @@ import {
   ArrowUp,
   ArrowDown,
   Check,
+  Users,
 } from 'lucide-react'
 
 type ViewMode = 'grid' | 'list'
@@ -44,14 +46,37 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+  const [showShared, setShowShared] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showTemplateGallery, setShowTemplateGallery] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [sortBy, setSortBy] = useState<SortBy>('updated')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
 
-  const { data: diagrams, isLoading, error } = useDiagramsByFolder(selectedFolderId)
+  const { data: ownDiagrams, isLoading: isLoadingOwn, error: errorOwn } = useDiagramsByFolder(selectedFolderId)
+  const { data: sharedDiagramsData, isLoading: isLoadingShared, error: errorShared } = useSharedDiagrams()
   const createDiagram = useCreateDiagram()
+
+  // Convert shared diagrams to the same format as own diagrams
+  const sharedDiagrams: Diagram[] = useMemo(() => {
+    if (!sharedDiagramsData) return []
+    return sharedDiagramsData.map((item) => ({
+      id: item.diagram.id,
+      name: item.diagram.name,
+      description: item.diagram.description || '',
+      nodes: item.diagram.nodes as Diagram['nodes'],
+      edges: item.diagram.edges as Diagram['edges'],
+      thumbnail: item.diagram.thumbnail,
+      userId: '', // Not the current user's diagram
+      folderId: null,
+      createdAt: item.diagram.createdAt,
+      updatedAt: item.diagram.updatedAt,
+    }))
+  }, [sharedDiagramsData])
+
+  const diagrams = showShared ? sharedDiagrams : ownDiagrams
+  const isLoading = showShared ? isLoadingShared : isLoadingOwn
+  const error = showShared ? errorShared : errorOwn
 
   const filteredDiagrams = useMemo(() => {
     if (!diagrams) return []
@@ -108,14 +133,20 @@ export function DashboardPage() {
         <FolderSidebar
           selectedFolderId={selectedFolderId}
           onSelectFolder={setSelectedFolderId}
+          showShared={showShared}
+          onToggleShared={setShowShared}
         />
         <main className="flex-1 overflow-auto">
           <div className="container mx-auto px-4 py-8">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h1 className="text-3xl font-bold">My Diagrams</h1>
+                <h1 className="text-3xl font-bold">
+                  {showShared ? 'Shared with me' : 'My Diagrams'}
+                </h1>
                 <p className="text-muted-foreground mt-1">
-                  Welcome back{user?.email ? `, ${user.email}` : ''}
+                  {showShared
+                    ? 'Diagrams that others have shared with you'
+                    : `Welcome back${user?.email ? `, ${user.email}` : ''}`}
                 </p>
               </div>
               <Button onClick={handleOpenTemplateGallery}>
@@ -224,6 +255,7 @@ export function DashboardPage() {
                       key={diagram.id}
                       diagram={diagram}
                       onClick={() => navigate(`/editor/${diagram.id}`)}
+                      isShared={showShared}
                     />
                   ))}
                 </div>
@@ -234,6 +266,7 @@ export function DashboardPage() {
                       key={diagram.id}
                       diagram={diagram}
                       onClick={() => navigate(`/editor/${diagram.id}`)}
+                      isShared={showShared}
                     />
                   ))}
                 </div>
@@ -247,6 +280,14 @@ export function DashboardPage() {
                   </CardDescription>
                 </CardHeader>
               </Card>
+            ) : showShared ? (
+              <div className="flex flex-col items-center py-12">
+                <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                <h2 className="text-xl font-semibold">No shared diagrams</h2>
+                <p className="text-muted-foreground mt-1">
+                  Diagrams that others share with you will appear here
+                </p>
+              </div>
             ) : (
               <div className="flex flex-col items-center py-8">
                 <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />

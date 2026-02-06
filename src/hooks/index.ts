@@ -30,6 +30,7 @@ export {
   useUpdateSharePermission,
   useRemoveShare,
   useSharedWithMe,
+  useSharedDiagrams,
 } from './useSharing'
 
 export {

@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui'
-import { UserPlus, Trash2, Mail, Loader2, Check, Users } from 'lucide-react'
+import { UserPlus, Trash2, Mail, Loader2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ShareDialogProps {

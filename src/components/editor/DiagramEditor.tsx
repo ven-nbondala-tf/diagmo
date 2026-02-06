@@ -75,7 +75,13 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   usePreferencesPersist()
 
   // Real-time collaboration
-  const { collaborators, updateCursor, updateViewport } = useCollaboration({
+  const {
+    collaborators,
+    updateCursor,
+    updateViewport,
+    broadcastNodeDrag,
+    broadcastNodesDrag,
+  } = useCollaboration({
     diagramId: diagram.id,
     enabled: true,
   })
@@ -96,6 +102,26 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const handleMouseLeave = useCallback(() => {
     updateCursor(null, null)
   }, [updateCursor])
+
+  // Broadcast node position changes during drag (for live collaboration)
+  const handleNodeDrag = useCallback(
+    (_event: React.MouseEvent, node: DiagramNode) => {
+      broadcastNodeDrag(node.id, node.position)
+    },
+    [broadcastNodeDrag]
+  )
+
+  // Broadcast multiple node positions during drag
+  const handleNodesDrag = useCallback(
+    (_event: React.MouseEvent, draggedNodes: DiagramNode[]) => {
+      if (draggedNodes.length > 1) {
+        broadcastNodesDrag(
+          draggedNodes.map((n) => ({ id: n.id, position: n.position }))
+        )
+      }
+    },
+    [broadcastNodesDrag]
+  )
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -344,6 +370,8 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           onDragOver={onDragOver}
           onDrop={onDrop}
           onEdgeDoubleClick={handleEdgeDoubleClick}
+          onNodeDrag={handleNodeDrag}
+          onSelectionDrag={handleNodesDrag}
           onMoveEnd={(_, viewport) => {
             setZoom(viewport.zoom)
             updateViewport(viewport.x, viewport.y, viewport.zoom)

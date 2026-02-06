@@ -47,7 +47,6 @@ export function useUpdateSharePermission() {
     mutationFn: ({
       shareId,
       permission,
-      diagramId,
     }: {
       shareId: string
       permission: SharePermission
@@ -70,7 +69,6 @@ export function useRemoveShare() {
   return useMutation({
     mutationFn: ({
       shareId,
-      diagramId,
     }: {
       shareId: string
       diagramId: string
@@ -84,11 +82,21 @@ export function useRemoveShare() {
 }
 
 /**
- * Hook to get diagrams shared with current user
+ * Hook to get diagrams shared with current user (IDs only)
  */
 export function useSharedWithMe() {
   return useQuery({
     queryKey: ['shared-with-me'],
     queryFn: () => sharingService.getSharedWithMe(),
+  })
+}
+
+/**
+ * Hook to get full diagram details for shared diagrams
+ */
+export function useSharedDiagrams() {
+  return useQuery({
+    queryKey: ['shared-diagrams-full'],
+    queryFn: () => sharingService.getSharedDiagramsFull(),
   })
 }

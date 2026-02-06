@@ -4,6 +4,7 @@ import { useEditorStore } from '@/stores/editorStore'
 import { useCollaborationStore } from '@/stores/collaborationStore'
 import { useUpdateDiagram } from '@/hooks'
 import { exportService } from '@/services/exportService'
+import { collaborationService } from '@/services/collaborationService'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import type { Diagram, DiagramNode, DiagramEdge } from '@/types'
 import { PresenceIndicators } from './PresenceIndicators'
@@ -109,6 +110,10 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
       })
       setDirty(false)
       setLastSaved(new Date())
+
+      // Broadcast changes to collaborators
+      await collaborationService.broadcastDiagramChange(nodes, edges)
+
       toast.success('Diagram saved')
     } catch (error) {
       console.error('Failed to save:', error)

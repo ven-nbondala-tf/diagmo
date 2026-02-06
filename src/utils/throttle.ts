@@ -2,11 +2,13 @@
  * Throttle function execution using requestAnimationFrame.
  * Only the latest call within a frame will be executed.
  */
-export function throttleRAF<T extends (...args: Parameters<T>) => void>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function throttleRAF<T extends (...args: any[]) => void>(
   fn: T
 ): (...args: Parameters<T>) => void {
   let rafId: number | null = null
-  let lastArgs: Parameters<T> | null = null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let lastArgs: any[] | null = null
 
   return (...args: Parameters<T>) => {
     lastArgs = args
@@ -48,13 +50,15 @@ export function debounce<T extends (...args: Parameters<T>) => void>(
  * Throttle function execution with a minimum interval.
  * Executes immediately on first call, then limits subsequent calls.
  */
-export function throttle<T extends (...args: Parameters<T>) => void>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function throttle<T extends (...args: any[]) => void>(
   fn: T,
   interval: number
 ): (...args: Parameters<T>) => void {
   let lastTime = 0
   let timeoutId: ReturnType<typeof setTimeout> | null = null
-  let lastArgs: Parameters<T> | null = null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let lastArgs: any[] | null = null
 
   return (...args: Parameters<T>) => {
     const now = Date.now()

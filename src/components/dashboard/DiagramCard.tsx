@@ -293,43 +293,47 @@ export function DiagramCard({ diagram, onClick, isShared, isTemplate }: DiagramC
                   )}
                   Duplicate
                 </DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <FolderInput className="h-4 w-4 mr-2" />
-                    Move to folder
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
+                {!isShared && (
+                  <>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <FolderInput className="h-4 w-4 mr-2" />
+                        Move to folder
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem
+                          onClick={() => handleMoveToFolder(null)}
+                          disabled={!diagram.folderId}
+                        >
+                          <Home className="h-4 w-4 mr-2" />
+                          All Diagrams
+                        </DropdownMenuItem>
+                        {folders && folders.length > 0 && (
+                          <>
+                            <DropdownMenuSeparator />
+                            {folders.map((folder) => (
+                              <DropdownMenuItem
+                                key={folder.id}
+                                onClick={() => handleMoveToFolder(folder.id)}
+                                disabled={diagram.folderId === folder.id}
+                              >
+                                {folder.name}
+                              </DropdownMenuItem>
+                            ))}
+                          </>
+                        )}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => handleMoveToFolder(null)}
-                      disabled={!diagram.folderId}
+                      onClick={handleDelete}
+                      className="text-destructive focus:text-destructive"
                     >
-                      <Home className="h-4 w-4 mr-2" />
-                      All Diagrams
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
                     </DropdownMenuItem>
-                    {folders && folders.length > 0 && (
-                      <>
-                        <DropdownMenuSeparator />
-                        {folders.map((folder) => (
-                          <DropdownMenuItem
-                            key={folder.id}
-                            onClick={() => handleMoveToFolder(folder.id)}
-                            disabled={diagram.folderId === folder.id}
-                          >
-                            {folder.name}
-                          </DropdownMenuItem>
-                        ))}
-                      </>
-                    )}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleDelete}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

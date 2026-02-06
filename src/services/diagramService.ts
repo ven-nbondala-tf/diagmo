@@ -35,9 +35,14 @@ function mapDiagramFromDB(row: Record<string, unknown>): Diagram {
 
 export const diagramService = {
   async getAll(): Promise<Diagram[]> {
+    // Get current user to filter only owned diagrams
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
     const { data, error } = await supabase
       .from('diagrams')
       .select('*')
+      .eq('user_id', user.id) // Only fetch diagrams owned by current user
       .order('updated_at', { ascending: false })
 
     if (error) throw error
@@ -109,9 +114,14 @@ export const diagramService = {
   },
 
   async getByFolder(folderId: string | null): Promise<Diagram[]> {
+    // Get current user to filter only owned diagrams
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
     let query = supabase
       .from('diagrams')
       .select('*')
+      .eq('user_id', user.id) // Only fetch diagrams owned by current user
       .order('updated_at', { ascending: false })
 
     if (folderId) {
