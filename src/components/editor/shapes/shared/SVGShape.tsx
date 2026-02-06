@@ -79,7 +79,7 @@ export function SVGShape({ points, children, renderProps }: SVGShapeProps) {
           padding: `${style?.textPadding ?? 8}px`,
         }}
       >
-        {children}
+        <span className="min-w-0 max-w-full break-words whitespace-normal">{children}</span>
       </div>
     </div>
   )

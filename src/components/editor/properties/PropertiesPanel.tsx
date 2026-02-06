@@ -14,7 +14,7 @@ import {
   Trash2,
   Copy,
   Square,
-  ChevronLeft,
+  ChevronRight,
   ChevronsUpDown,
 } from 'lucide-react'
 import { SHAPE_SECTIONS } from './shared'
@@ -96,7 +96,7 @@ export function PropertiesPanel() {
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-sm">Properties</h2>
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={togglePropertiesPanel} title="Close Panel">
-              <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>
@@ -154,7 +154,7 @@ export function PropertiesPanel() {
               <ChevronsUpDown className="w-3.5 h-3.5" />
             </Button>
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={togglePropertiesPanel} title="Close Panel">
-              <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>

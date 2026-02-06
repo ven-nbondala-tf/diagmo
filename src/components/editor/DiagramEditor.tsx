@@ -312,7 +312,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           connectionRadius={25}
           snapToGrid={snapToGrid}
           snapGrid={[gridSize, gridSize]}
-          fitView
+          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
           selectionOnDrag={interactionMode === 'select'}
           panOnDrag={interactionMode === 'select' ? [1, 2] : true}
           selectionMode={SelectionMode.Partial}

@@ -10,10 +10,15 @@ const DEFAULT_DB_COLUMNS: DBColumn[] = [
   { name: 'created_at', type: 'TIMESTAMP' },
 ]
 
+// Wrapper for proper text wrapping in flexbox
+function LabelText({ label }: { label: string }) {
+  return <span className="min-w-0 max-w-full break-words">{label}</span>
+}
+
 function RectangleShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
   return (
     <div className={shapeClass} style={getShapeStyle()}>
-      {label}
+      <LabelText label={label} />
     </div>
   )
 }
@@ -24,7 +29,7 @@ function EllipseShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
       className={cn(shapeClass, 'rounded-full')}
       style={getShapeStyle({ borderRadius: '50%' })}
     >
-      {label}
+      <LabelText label={label} />
     </div>
   )
 }
@@ -35,7 +40,7 @@ function CircleShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
       className={cn(shapeClass, 'rounded-full aspect-square')}
       style={getShapeStyle({ borderRadius: '50%' })}
     >
-      {label}
+      <LabelText label={label} />
     </div>
   )
 }
@@ -46,7 +51,7 @@ function RoundedRectangleShape({ label, style, shapeClass, getShapeStyle }: Shap
       className={shapeClass}
       style={getShapeStyle({ borderRadius: style?.borderRadius ?? 16 })}
     >
-      {label}
+      <LabelText label={label} />
     </div>
   )
 }
@@ -57,7 +62,7 @@ function CylinderShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
       className={shapeClass}
       style={getShapeStyle({ borderRadius: '10px 10px 50% 50% / 10px 10px 20px 20px' })}
     >
-      {label}
+      <LabelText label={label} />
     </div>
   )
 }
@@ -106,7 +111,7 @@ function CloudShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
       className={shapeClass}
       style={getShapeStyle({ borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%' })}
     >
-      {label}
+      <LabelText label={label} />
     </div>
   )
 }
@@ -117,7 +122,7 @@ function TerminatorShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps)
       className={cn(shapeClass, 'rounded-full')}
       style={getShapeStyle({ borderRadius: 9999 })}
     >
-      {label}
+      <LabelText label={label} />
     </div>
   )
 }
@@ -128,7 +133,7 @@ function DelayShape({ label, shapeClass, getShapeStyle }: ShapeRenderProps) {
       className={shapeClass}
       style={getShapeStyle({ borderRadius: '0 50% 50% 0' })}
     >
-      {label}
+      <LabelText label={label} />
     </div>
   )
 }
