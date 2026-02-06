@@ -28,10 +28,11 @@ interface MenuBarProps {
   onImport: () => void
   onImportMermaid: () => void
   onImportDrawio: () => void
+  onImportTerraform: () => void
   saving: boolean
 }
 
-export function MenuBar({ onSave, onExport, onImport, onImportMermaid, onImportDrawio, saving }: MenuBarProps) {
+export function MenuBar({ onSave, onExport, onImport, onImportMermaid, onImportDrawio, onImportTerraform, saving }: MenuBarProps) {
   const navigate = useNavigate()
   const [showShortcuts, setShowShortcuts] = useState(false)
   const { fitView, zoomIn, zoomOut } = useReactFlow()
@@ -120,6 +121,10 @@ export function MenuBar({ onSave, onExport, onImport, onImportMermaid, onImportD
                 </MenubarItem>
                 <MenubarItem onClick={onImportDrawio}>
                   Import from Draw.io...
+                </MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem onClick={onImportTerraform}>
+                  Import from Terraform...
                 </MenubarItem>
               </MenubarSubContent>
             </MenubarSub>

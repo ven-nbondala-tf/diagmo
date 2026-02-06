@@ -28,6 +28,7 @@ import { MenuBar } from './MenuBar'
 import { CommandPalette } from './CommandPalette'
 import { ImportMermaidDialog } from './ImportMermaidDialog'
 import { ImportDrawioDialog } from './ImportDrawioDialog'
+import { ImportTerraformDialog } from './ImportTerraformDialog'
 
 interface EditorHeaderProps {
   diagram: Diagram
@@ -59,6 +60,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showMermaidImport, setShowMermaidImport] = useState(false)
   const [showDrawioImport, setShowDrawioImport] = useState(false)
+  const [showTerraformImport, setShowTerraformImport] = useState(false)
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
@@ -221,6 +223,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           onImport={handleImport}
           onImportMermaid={() => setShowMermaidImport(true)}
           onImportDrawio={() => setShowDrawioImport(true)}
+          onImportTerraform={() => setShowTerraformImport(true)}
           saving={saving}
         />
 
@@ -319,6 +322,12 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
       <ImportDrawioDialog
         open={showDrawioImport}
         onOpenChange={setShowDrawioImport}
+      />
+
+      {/* Terraform Import Dialog */}
+      <ImportTerraformDialog
+        open={showTerraformImport}
+        onOpenChange={setShowTerraformImport}
       />
     </>
   )
