@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { nanoid } from 'nanoid'
-import { PanelRightOpen, Layers, History, MessageSquare } from 'lucide-react'
+import { PanelRightOpen, Layers, History, MessageSquare, Wand2 } from 'lucide-react'
 import { useEditorStore } from '@/stores/editorStore'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import type { Diagram, DiagramNode, DiagramEdge, ShapeType } from '@/types'
@@ -30,6 +30,7 @@ import { ZoomControls } from './ZoomControls'
 import { SelectionToolbar } from './SelectionToolbar'
 import { QuickShapeBar } from './QuickShapeBar'
 import { PageTabs } from './PageTabs'
+import { ConditionalFormattingPanel } from './ConditionalFormattingPanel'
 import { Button } from '@/components/ui'
 
 const defaultEdgeOptions = {
@@ -90,6 +91,8 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const setFindReplaceOpen = useEditorStore((state) => state.setFindReplaceOpen)
   const interactionMode = useEditorStore((state) => state.interactionMode)
   const layers = useEditorStore((state) => state.layers)
+  const conditionalFormattingPanelOpen = useEditorStore((state) => state.conditionalFormattingPanelOpen)
+  const toggleConditionalFormattingPanel = useEditorStore((state) => state.toggleConditionalFormattingPanel)
 
   // Load diagram on mount
   useEffect(() => {
@@ -346,6 +349,17 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         />
         {/* Toggle buttons when panels are closed */}
         <div className="absolute right-4 top-4 z-10 flex gap-2">
+          {!conditionalFormattingPanelOpen && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 bg-background shadow-md"
+              onClick={toggleConditionalFormattingPanel}
+              title="Conditional Formatting"
+            >
+              <Wand2 className="w-4 h-4" />
+            </Button>
+          )}
           {!commentsPanelOpen && (
             <Button
               variant="outline"
@@ -394,6 +408,11 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         </div>
         <PageTabs diagramId={diagram.id} />
       </div>
+      {conditionalFormattingPanelOpen && (
+        <ErrorBoundary>
+          <ConditionalFormattingPanel />
+        </ErrorBoundary>
+      )}
       {commentsPanelOpen && (
         <ErrorBoundary>
           <CommentsPanel diagramId={diagram.id} />

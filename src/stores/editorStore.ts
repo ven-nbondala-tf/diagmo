@@ -9,7 +9,7 @@ import {
   MarkerType,
 } from '@xyflow/react'
 import { nanoid } from 'nanoid'
-import type { DiagramNode, DiagramEdge, ShapeType, NodeStyle, EdgeStyle, HistoryEntry, Layer } from '@/types'
+import type { DiagramNode, DiagramEdge, ShapeType, NodeStyle, EdgeStyle, HistoryEntry, Layer, ConditionalRule } from '@/types'
 import { DEFAULT_NODE_STYLE, MAX_HISTORY_LENGTH, SHAPE_LABELS } from '@/constants'
 
 type AlignType = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom'
@@ -44,6 +44,9 @@ interface EditorState {
   commentsPanelOpen: boolean
   // Find & Replace
   findReplaceOpen: boolean
+  // Conditional formatting
+  conditionalRules: ConditionalRule[]
+  conditionalFormattingPanelOpen: boolean
 }
 
 interface EditorActions {
@@ -119,6 +122,12 @@ interface EditorActions {
   // Shape morphing
   morphShape: (nodeId: string, newType: ShapeType) => void
   morphSelectedShapes: (newType: ShapeType) => void
+  // Conditional formatting
+  toggleConditionalFormattingPanel: () => void
+  addConditionalRule: (rule: Omit<ConditionalRule, 'id' | 'priority'>) => void
+  updateConditionalRule: (id: string, updates: Partial<ConditionalRule>) => void
+  deleteConditionalRule: (id: string) => void
+  reorderConditionalRules: (ruleIds: string[]) => void
 }
 
 type EditorStore = EditorState & EditorActions
@@ -161,6 +170,9 @@ const initialState: EditorState = {
   commentsPanelOpen: false,
   // Find & Replace
   findReplaceOpen: false,
+  // Conditional formatting
+  conditionalRules: [],
+  conditionalFormattingPanelOpen: false,
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -1139,6 +1151,51 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       }),
       isDirty: true,
     })
+  },
+
+  // Conditional formatting actions
+  toggleConditionalFormattingPanel: () => {
+    set((state) => ({ conditionalFormattingPanelOpen: !state.conditionalFormattingPanelOpen }))
+  },
+
+  addConditionalRule: (rule) => {
+    const { conditionalRules } = get()
+    const maxPriority = conditionalRules.reduce((max, r) => Math.max(max, r.priority), 0)
+    const newRule: ConditionalRule = {
+      ...rule,
+      id: nanoid(),
+      priority: maxPriority + 1,
+    }
+    set({ conditionalRules: [...conditionalRules, newRule], isDirty: true })
+  },
+
+  updateConditionalRule: (id, updates) => {
+    set({
+      conditionalRules: get().conditionalRules.map((rule) =>
+        rule.id === id ? { ...rule, ...updates } : rule
+      ),
+      isDirty: true,
+    })
+  },
+
+  deleteConditionalRule: (id) => {
+    set({
+      conditionalRules: get().conditionalRules.filter((rule) => rule.id !== id),
+      isDirty: true,
+    })
+  },
+
+  reorderConditionalRules: (ruleIds) => {
+    const { conditionalRules } = get()
+    // Reorder rules based on the new order and update priorities
+    const reorderedRules = ruleIds
+      .map((id, index) => {
+        const rule = conditionalRules.find((r) => r.id === id)
+        return rule ? { ...rule, priority: index + 1 } : null
+      })
+      .filter((r): r is ConditionalRule => r !== null)
+
+    set({ conditionalRules: reorderedRules, isDirty: true })
   },
 }))
 

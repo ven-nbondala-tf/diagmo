@@ -77,6 +77,27 @@ export interface Layer {
   order: number   // For layer ordering (higher = on top)
 }
 
+// Conditional formatting rules
+export type ConditionalRuleCondition =
+  | 'label-contains'
+  | 'label-equals'
+  | 'label-starts-with'
+  | 'label-ends-with'
+  | 'type-is'
+  | 'metadata-equals'
+  | 'metadata-contains'
+
+export interface ConditionalRule {
+  id: string
+  name: string
+  enabled: boolean
+  condition: ConditionalRuleCondition
+  value: string
+  metadataKey?: string  // For metadata-based conditions
+  style: Partial<NodeStyle>
+  priority: number  // Higher priority rules override lower ones
+}
+
 export interface DiagramNode extends Node {
   data: {
     label: string
