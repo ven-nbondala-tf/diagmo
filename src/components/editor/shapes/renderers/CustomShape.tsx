@@ -3,7 +3,7 @@ import { registerShape } from '../registry'
 import type { ShapeRenderProps } from '../types'
 
 function CustomShapeRenderer({ data, shapeClass, getShapeStyle, locked, isValidTarget }: ShapeRenderProps) {
-  const svgContent = data.customShapeSvg as string | undefined
+  const svgContent = (data as Record<string, unknown>).customShapeSvg as string | undefined
 
   if (!svgContent) {
     // Fallback if no SVG content

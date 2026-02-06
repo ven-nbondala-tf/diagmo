@@ -183,7 +183,7 @@ export function useDeleteShape() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, libraryId }: { id: string; libraryId: string }) =>
+    mutationFn: ({ id, libraryId: _libraryId }: { id: string; libraryId: string }) =>
       shapeLibraryService.deleteShape(id),
     onMutate: async ({ id, libraryId }) => {
       await queryClient.cancelQueries({ queryKey: shapeLibraryKeys.shapes(libraryId) })

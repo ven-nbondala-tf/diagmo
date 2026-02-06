@@ -503,14 +503,14 @@ describe('editorStore - connections', () => {
     const [node1, node2] = useEditorStore.getState().nodes
 
     useEditorStore.getState().onConnect({
-      source: node1.id,
-      target: node2.id,
+      source: node1!.id,
+      target: node2!.id,
       sourceHandle: null,
       targetHandle: null,
     })
 
     expect(useEditorStore.getState().edges).toHaveLength(1)
-    expect(useEditorStore.getState().edges[0].source).toBe(node1.id)
-    expect(useEditorStore.getState().edges[0].target).toBe(node2.id)
+    expect(useEditorStore.getState().edges[0]!.source).toBe(node1!.id)
+    expect(useEditorStore.getState().edges[0]!.target).toBe(node2!.id)
   })
 })

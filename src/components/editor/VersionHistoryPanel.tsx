@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useEditorStore } from '@/stores/editorStore'
 import { diagramService } from '@/services/diagramService'
-import { cn } from '@/utils'
 import {
   Button,
   ScrollArea,

@@ -32,7 +32,7 @@ export function FindReplaceBar({ open, onClose }: FindReplaceBarProps) {
   const updateNode = useEditorStore((state) => state.updateNode)
   const pushHistory = useEditorStore((state) => state.pushHistory)
 
-  const { fitView, setCenter } = useReactFlow()
+  const { setCenter } = useReactFlow()
 
   // Find all matching nodes
   const matchingNodes = nodes.filter((node) => {

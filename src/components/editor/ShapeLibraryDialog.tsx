@@ -5,7 +5,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
   Button,
   Input,
   Label,
@@ -24,7 +23,6 @@ import {
   Globe,
   Lock,
   Upload,
-  MoreVertical,
   Check,
   X,
 } from 'lucide-react'
@@ -153,9 +151,9 @@ export function ShapeLibraryDialog({ open, onOpenChange }: ShapeLibraryDialogPro
                   <FolderOpen className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                   <span className="font-medium truncate">{library.name}</span>
                   {library.isPublic ? (
-                    <Globe className="w-3 h-3 text-green-500" title="Public" />
+                    <Globe className="w-3 h-3 text-green-500" aria-label="Public" />
                   ) : (
-                    <Lock className="w-3 h-3 text-muted-foreground" title="Private" />
+                    <Lock className="w-3 h-3 text-muted-foreground" aria-label="Private" />
                   )}
                 </div>
                 {library.description && (

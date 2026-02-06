@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Label, AccordionItem, AccordionTrigger, AccordionContent, Button, Input } from '@/components/ui'
 import { Database, Code2, Plus, Trash2, Key } from 'lucide-react'
 import type { ShapeSectionProps } from '../types'
@@ -173,7 +172,8 @@ export function DatabaseDataSection({ data, updateAllSelectedData }: Props) {
   }
 
   const togglePrimaryKey = (index: number) => {
-    updateColumn(index, { isPrimaryKey: !columns[index].isPrimaryKey })
+    const col = columns[index]
+    if (col) updateColumn(index, { isPrimaryKey: !col.isPrimaryKey })
   }
 
   return (

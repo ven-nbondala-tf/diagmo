@@ -10,7 +10,7 @@ const shapes: { type: ShapeType; icon: React.ElementType; label: string }[] = [
   { type: 'diamond', icon: Diamond, label: 'Diamond' },
   { type: 'circle', icon: Circle, label: 'Circle' },
   { type: 'text', icon: Type, label: 'Text' },
-  { type: 'arrow-right', icon: ArrowRight, label: 'Arrow' },
+  { type: 'arrow', icon: ArrowRight, label: 'Arrow' },
   { type: 'note', icon: StickyNote, label: 'Note' },
 ]
 

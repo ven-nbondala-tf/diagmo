@@ -22,7 +22,6 @@ import {
   Play,
   Pause,
 } from 'lucide-react'
-import type { DiagramNode } from '@/types'
 
 interface PresentationModeProps {
   onClose: () => void
@@ -75,6 +74,7 @@ function PresentationContent({ onClose }: PresentationModeProps) {
     } else {
       setCurrentNodeIndex(index)
       const node = visibleNodes[index]
+      if (!node) return
       const width = (node.measured?.width || node.style?.width as number) || 150
       const height = (node.measured?.height || node.style?.height as number) || 50
       setCenter(

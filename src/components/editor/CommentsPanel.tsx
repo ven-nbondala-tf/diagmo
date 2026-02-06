@@ -9,7 +9,6 @@ import {
 } from '@/components/ui'
 import {
   MessageSquare,
-  Plus,
   Trash2,
   Check,
   X,
@@ -20,7 +19,7 @@ import {
   AlertCircle,
   User,
 } from 'lucide-react'
-import type { DiagramComment, CommentReply } from '@/types'
+import type { DiagramComment } from '@/types'
 
 interface CommentsPanelProps {
   diagramId: string
@@ -217,7 +216,7 @@ export function CommentsPanel({ diagramId }: CommentsPanelProps) {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder={
-              selectedNodes.length === 1
+              selectedNodes.length === 1 && selectedNodes[0]
                 ? `Comment on "${getNodeLabel(selectedNodes[0])}"...`
                 : 'Add a comment...'
             }
@@ -239,7 +238,7 @@ export function CommentsPanel({ diagramId }: CommentsPanelProps) {
             <Send className="w-3.5 h-3.5" />
           </Button>
         </div>
-        {selectedNodes.length === 1 && (
+        {selectedNodes.length === 1 && selectedNodes[0] && (
           <p className="text-xs text-muted-foreground mt-1">
             Attaching to: {getNodeLabel(selectedNodes[0])}
           </p>

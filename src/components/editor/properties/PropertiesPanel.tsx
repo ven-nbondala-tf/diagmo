@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import { SHAPE_SECTIONS } from './shared'
 import { EdgeProperties } from './EdgeProperties'
-import { ImageSection, FillSection, BorderSection, ShadowSection, TextSection, SizeSection, ArrangeSection, UMLClassDataSection, DatabaseDataSection } from './sections'
+import { ImageSection, FillSection, BorderSection, ShadowSection, TextSection, SizeSection, ArrangeSection, UMLClassDataSection, DatabaseDataSection, MetadataSection } from './sections'
 import { PresetPicker } from './sections/PresetPicker'
 
 export function PropertiesPanel() {
@@ -208,6 +208,7 @@ export function PropertiesPanel() {
               <SizeSection {...sectionProps} />
               <ArrangeSection {...sectionProps} />
             </Accordion>
+            <MetadataSection selectedNodes={nodes.filter(n => selectedNodes.includes(n.id))} />
           </TabsContent>
         </ScrollArea>
       </Tabs>

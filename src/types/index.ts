@@ -96,6 +96,8 @@ export interface DiagramNode extends Node {
     containerColor?: string  // Header color for containers
     // Layer assignment
     layerId?: string  // ID of layer this node belongs to
+    // Custom metadata (key-value pairs)
+    metadata?: Record<string, string | number | boolean>
   }
 }
 

@@ -14,10 +14,11 @@ interface SliderWithInputProps {
 export function SliderWithInput({ label, value, onChange, min, max, step = 1, unit = '' }: SliderWithInputProps) {
   const [inputValue, setInputValue] = useState(String(value))
 
-  const handleSliderChange = useCallback(([val]: number[]) => {
+  const handleSliderChange = useCallback((values: number[]) => {
+    const val = values[0] ?? value
     setInputValue(String(val))
     onChange(val)
-  }, [onChange])
+  }, [onChange, value])
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value

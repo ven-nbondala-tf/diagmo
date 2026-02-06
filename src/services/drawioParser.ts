@@ -45,15 +45,15 @@ function mapDrawioShape(style: Record<string, string>): ShapeType {
   if (shape.includes('trapezoid')) return 'trapezoid'
   if (shape.includes('triangle')) return 'triangle'
   if (shape.includes('cylinder')) return 'cylinder'
-  if (shape.includes('actor') || shape.includes('person')) return 'person'
+  if (shape.includes('actor') || shape.includes('person')) return 'uml-actor'
   if (shape.includes('document')) return 'document'
   if (shape.includes('cloud')) return 'cloud'
   if (shape.includes('process') || shape.includes('step')) return 'process'
   if (shape.includes('callout')) return 'callout'
   if (shape.includes('note') || shape.includes('sticky')) return 'note'
   if (shape.includes('database') || shape.includes('datastore')) return 'cylinder'
-  if (shape.includes('card')) return 'card'
-  if (shape.includes('arrow')) return 'arrow-right'
+  if (shape.includes('card')) return 'rectangle'
+  if (shape.includes('arrow')) return 'arrow'
 
   // Default to rectangle variants
   if (rounded) return 'rounded-rectangle'
@@ -253,7 +253,7 @@ export function parseDrawio(input: string): ParseResult {
         backgroundColor: fillColor,
         borderColor: strokeColor,
         borderWidth: strokeWidth,
-        color: fontColor,
+        textColor: fontColor,
         fontSize,
         fontWeight,
         textAlign,

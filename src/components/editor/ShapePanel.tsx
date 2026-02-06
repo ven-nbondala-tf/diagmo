@@ -713,7 +713,7 @@ const collapsedShapes: { type: ShapeType; icon: React.ElementType; label: string
   { type: 'diamond', icon: Diamond, label: 'Diamond' },
   { type: 'circle', icon: Circle, label: 'Circle' },
   { type: 'text', icon: Type, label: 'Text' },
-  { type: 'arrow-right', icon: ArrowRight, label: 'Arrow' },
+  { type: 'arrow', icon: ArrowRight, label: 'Arrow' },
   { type: 'note', icon: StickyNote, label: 'Note' },
 ]
 
@@ -1119,7 +1119,7 @@ interface LibraryShapeCategoryProps {
   addNode: (type: ShapeType, position: { x: number; y: number }, data?: Record<string, unknown>, size?: { width: number; height: number }) => void
 }
 
-function LibraryShapeCategory({ libraryId, libraryName, onDragStart, addNode }: LibraryShapeCategoryProps) {
+function LibraryShapeCategory({ libraryId, libraryName, onDragStart: _onDragStart, addNode }: LibraryShapeCategoryProps) {
   const { data: shapes = [] } = useShapesByLibrary(libraryId)
 
   const handleCustomShapeDrag = useCallback((e: React.DragEvent, shape: CustomShape) => {

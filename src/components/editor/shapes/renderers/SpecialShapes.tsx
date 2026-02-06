@@ -3,7 +3,7 @@ import { SVGPathShape } from '../shared'
 import { registerShape, registerShapes } from '../registry'
 import type { ShapeRenderProps } from '../types'
 
-function ParallelogramShape({ label, style, shapeClass, baseStyle, getShapeStyle, getDropShadowFilter }: ShapeRenderProps) {
+function ParallelogramShape({ label, style, shapeClass, baseStyle: _baseStyle, getShapeStyle, getDropShadowFilter }: ShapeRenderProps) {
   return (
     <div
       className="w-full h-full"
@@ -92,7 +92,7 @@ function PredefinedProcessShape({ label, style, baseStyle, shapeClass, getShapeS
   )
 }
 
-function OrShape({ label, locked, baseStyle, shapeClass, getShapeStyle }: ShapeRenderProps) {
+function OrShape({ label, locked: _locked, baseStyle, shapeClass, getShapeStyle }: ShapeRenderProps) {
   return (
     <div className="relative w-full h-full" style={{ transform: baseStyle.transform }}>
       <div
@@ -114,7 +114,7 @@ function OrShape({ label, locked, baseStyle, shapeClass, getShapeStyle }: ShapeR
   )
 }
 
-function SummingJunctionShape({ label, locked, baseStyle, shapeClass, getShapeStyle }: ShapeRenderProps) {
+function SummingJunctionShape({ label, locked: _locked, baseStyle, shapeClass, getShapeStyle }: ShapeRenderProps) {
   return (
     <div className="relative w-full h-full" style={{ transform: baseStyle.transform }}>
       <div

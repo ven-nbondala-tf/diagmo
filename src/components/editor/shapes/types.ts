@@ -2,7 +2,9 @@ import type { CSSProperties, ReactNode } from 'react'
 import type { NodeStyle, DiagramNode } from '@/types'
 
 export interface BaseStyleValues {
-  backgroundColor: string
+  backgroundColor: string | undefined
+  background: string | undefined
+  backgroundSize: string | undefined
   borderColor: string
   borderWidth: number
   borderStyle: string
@@ -17,6 +19,7 @@ export interface BaseStyleValues {
   opacity: number
   boxShadow: string
   transform: string | undefined
+  padding: number
 }
 
 export interface ShapeRenderProps {

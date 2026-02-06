@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Diagram, DiagramNode, DiagramEdge, DiagramVersion, Layer } from '@/types'
+import type { Diagram, DiagramNode, DiagramEdge, DiagramVersion } from '@/types'
 
 interface CreateDiagramInput {
   name: string
@@ -173,7 +173,7 @@ export const diagramService = {
       .order('version', { ascending: false })
       .limit(1)
 
-    const nextVersion = existing && existing.length > 0 ? (existing[0].version as number) + 1 : 1
+    const nextVersion = existing && existing.length > 0 && existing[0] ? (existing[0].version as number) + 1 : 1
 
     const { data, error } = await supabase
       .from('diagram_versions')

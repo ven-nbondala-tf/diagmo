@@ -15,32 +15,6 @@ interface ParseResult {
   errors: string[]
 }
 
-// Mermaid node shape mappings to Diagmo shapes
-const shapeMap: Record<string, ShapeType> = {
-  // Default rectangle: [label]
-  rectangle: 'rectangle',
-  // Rounded rectangle: (label)
-  rounded: 'rounded-rectangle',
-  // Circle: ((label))
-  circle: 'circle',
-  // Diamond: {label}
-  diamond: 'diamond',
-  // Hexagon: {{label}}
-  hexagon: 'hexagon',
-  // Parallelogram: [/label/]
-  parallelogram: 'parallelogram',
-  // Cylinder: [(label)]
-  cylinder: 'cylinder',
-  // Stadium: ([label])
-  stadium: 'rounded-rectangle',
-  // Subroutine: [[label]]
-  subroutine: 'rectangle',
-  // Asymmetric: >label]
-  asymmetric: 'arrow-right',
-  // Trapezoid: [/label\]
-  trapezoid: 'trapezoid',
-}
-
 // Node style presets for different subgraph contexts
 const subgraphColors = [
   '#e0f2fe', // sky-100
@@ -100,11 +74,12 @@ export function parseMermaid(input: string): ParseResult {
   // Process each line (skip the first graph declaration line)
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i]
+    if (!line) continue
 
     // Handle subgraph start
     if (line.toLowerCase().startsWith('subgraph ')) {
       const match = line.match(/^subgraph\s+(\w+)(?:\s*\[([^\]]+)\])?/i)
-      if (match) {
+      if (match && match[1]) {
         currentSubgraph = {
           id: match[1],
           label: match[2] || match[1],
@@ -201,7 +176,7 @@ function parseNodeDefinition(text: string): MermaidNode | null {
     { regex: /^(\w+)\s*\[\(([^)]+)\)\]$/, shape: 'cylinder' },
     { regex: /^(\w+)\s*\(\[([^\]]+)\]\)$/, shape: 'rounded-rectangle' },
     { regex: /^(\w+)\s*\[\[([^\]]+)\]\]$/, shape: 'rectangle' },
-    { regex: /^(\w+)\s*>([^\]]+)\]$/, shape: 'arrow-right' },
+    { regex: /^(\w+)\s*>([^\]]+)\]$/, shape: 'arrow' },
     { regex: /^(\w+)\s*\[\/([^/]+)\/\]$/, shape: 'parallelogram' },
     { regex: /^(\w+)\s*\[\/([^\\]+)\\\]$/, shape: 'trapezoid' },
     { regex: /^(\w+)\s*\{([^}]+)\}$/, shape: 'diamond' },
@@ -212,7 +187,7 @@ function parseNodeDefinition(text: string): MermaidNode | null {
 
   for (const { regex, shape } of patterns) {
     const match = text.match(regex)
-    if (match) {
+    if (match && match[1]) {
       return {
         id: match[1],
         label: match[2] || match[1],
@@ -260,6 +235,7 @@ function parseEdgeLine(line: string): {
 
   if (labeledEdgeMatch) {
     const [, source, , label1, label2, target] = labeledEdgeMatch
+    if (!source || !target) return null
     const sourceNode = parseNodeDefinition(source.trim())
     const targetNode = parseNodeDefinition(target.trim())
     if (sourceNode && targetNode) {
@@ -284,7 +260,7 @@ function parseEdgeLine(line: string): {
     const labelMatch = line.match(
       new RegExp(`^(.+?)${regex.source.replace(/\\s\*/g, '')}\\|([^|]+)\\|\\s*(.+)$`)
     )
-    if (labelMatch) {
+    if (labelMatch && labelMatch[1] && labelMatch[3]) {
       const sourceNode = parseNodeDefinition(labelMatch[1].trim())
       const targetNode = parseNodeDefinition(labelMatch[3].trim())
       if (sourceNode && targetNode) {
@@ -305,7 +281,7 @@ function parseEdgeLine(line: string): {
 
     // Check for standard edge without label
     const parts = line.split(regex)
-    if (parts.length === 2) {
+    if (parts.length === 2 && parts[0] && parts[1]) {
       const sourceNode = parseNodeDefinition(parts[0].trim())
       const targetNode = parseNodeDefinition(parts[1].trim())
       if (sourceNode && targetNode) {
@@ -379,7 +355,7 @@ function layoutAndConvert(
 
   // Start from nodes with no incoming edges
   const roots = nodeIds.filter((id) => (incoming.get(id)?.length || 0) === 0)
-  if (roots.length === 0 && nodeIds.length > 0) {
+  if (roots.length === 0 && nodeIds.length > 0 && nodeIds[0]) {
     // Cyclic graph - just start from first node
     roots.push(nodeIds[0])
   }
@@ -432,7 +408,8 @@ function layoutAndConvert(
   // Create subgraph color mapping
   const subgraphColorMap = new Map<string, string>()
   subgraphs.forEach((sg, i) => {
-    subgraphColorMap.set(sg.id, subgraphColors[i % subgraphColors.length])
+    const color = subgraphColors[i % subgraphColors.length] || '#f1f5f9'
+    subgraphColorMap.set(sg.id, color)
   })
 
   // Convert to Diagmo nodes

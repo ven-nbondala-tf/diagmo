@@ -22,7 +22,6 @@ import {
   Ungroup,
   Lock,
   Unlock,
-  PanelLeftClose,
   PanelLeftOpen,
   Square,
   Circle,

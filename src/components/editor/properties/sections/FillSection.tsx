@@ -138,8 +138,8 @@ export function FillSection({ style, updateAllSelectedStyles }: Props) {
                     <IconButton
                       key={value}
                       icon={Icon}
-                      tooltip={label}
-                      isActive={(style.gradientDirection || 'horizontal') === value}
+                      label={label}
+                      active={(style.gradientDirection || 'horizontal') === value}
                       onClick={() => updateAllSelectedStyles({ gradientDirection: value })}
                     />
                   ))}

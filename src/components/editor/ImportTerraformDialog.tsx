@@ -10,7 +10,7 @@ import {
   Textarea,
   Label,
 } from '@/components/ui'
-import { AlertCircle, FileCode, Check, Upload, Cloud } from 'lucide-react'
+import { AlertCircle, Check, Upload, Cloud } from 'lucide-react'
 import { parseTerraform } from '@/services/terraformParser'
 import { useEditorStore } from '@/stores/editorStore'
 
@@ -77,6 +77,7 @@ export function ImportTerraformDialog({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
+      if (!file) continue
       fileNames.push(file.name)
 
       readers.push(

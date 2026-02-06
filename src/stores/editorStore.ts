@@ -478,7 +478,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const { past, nodes, edges } = get()
     if (past.length === 0) return
 
-    const previous = past[past.length - 1]
+    const previous = past[past.length - 1]!
     const newPast = past.slice(0, -1)
 
     set({
@@ -494,7 +494,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const { future, nodes, edges } = get()
     if (future.length === 0) return
 
-    const next = future[0]
+    const next = future[0]!
     const newFuture = future.slice(1)
 
     set({
@@ -620,8 +620,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
     if (selectedNodeObjects.length < 3) return
 
-    const first = selectedNodeObjects[0]
-    const last = selectedNodeObjects[selectedNodeObjects.length - 1]
+    const first = selectedNodeObjects[0]!
+    const last = selectedNodeObjects[selectedNodeObjects.length - 1]!
 
     if (type === 'horizontal') {
       const firstWidth = first.measured?.width || 150
@@ -863,11 +863,12 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     for (const id of ids) {
       const idx = newNodes.findIndex((n) => n.id === id)
       if (idx === -1) continue
-      const currentZ = newNodes[idx].zIndex || 0
+      const node = newNodes[idx]!
+      const currentZ = node.zIndex || 0
       const higherNodes = newNodes.filter((n) => (n.zIndex || 0) > currentZ)
       if (higherNodes.length > 0) {
         const nextZ = Math.min(...higherNodes.map((n) => n.zIndex || 0))
-        newNodes[idx] = { ...newNodes[idx], zIndex: nextZ + 1 }
+        newNodes[idx] = { ...node, zIndex: nextZ + 1 }
       }
     }
     set({ nodes: newNodes, isDirty: true })
@@ -880,11 +881,12 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     for (const id of ids) {
       const idx = newNodes.findIndex((n) => n.id === id)
       if (idx === -1) continue
-      const currentZ = newNodes[idx].zIndex || 0
+      const node = newNodes[idx]!
+      const currentZ = node.zIndex || 0
       const lowerNodes = newNodes.filter((n) => (n.zIndex || 0) < currentZ)
       if (lowerNodes.length > 0) {
         const prevZ = Math.max(...lowerNodes.map((n) => n.zIndex || 0))
-        newNodes[idx] = { ...newNodes[idx], zIndex: prevZ - 1 }
+        newNodes[idx] = { ...node, zIndex: prevZ - 1 }
       }
     }
     set({ nodes: newNodes, isDirty: true })
@@ -928,7 +930,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
     const newLayers = layers.filter((l) => l.id !== id)
     // Move nodes from deleted layer to first available layer
-    const fallbackLayer = newLayers[0]
+    const fallbackLayer = newLayers[0]!
     const newNodes = nodes.map((n) =>
       n.data.layerId === id
         ? { ...n, data: { ...n.data, layerId: fallbackLayer.id } }
@@ -979,10 +981,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const { layers } = get()
     const sortedLayers = [...layers].sort((a, b) => a.order - b.order)
     const idx = sortedLayers.findIndex((l) => l.id === id)
-    if (idx === sortedLayers.length - 1) return // Already at top
+    if (idx === -1 || idx === sortedLayers.length - 1) return // Not found or already at top
 
-    const currentLayer = sortedLayers[idx]
-    const aboveLayer = sortedLayers[idx + 1]
+    const currentLayer = sortedLayers[idx]!
+    const aboveLayer = sortedLayers[idx + 1]!
     const tempOrder = currentLayer.order
     currentLayer.order = aboveLayer.order
     aboveLayer.order = tempOrder
@@ -994,10 +996,10 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const { layers } = get()
     const sortedLayers = [...layers].sort((a, b) => a.order - b.order)
     const idx = sortedLayers.findIndex((l) => l.id === id)
-    if (idx === 0) return // Already at bottom
+    if (idx <= 0) return // Not found or already at bottom
 
-    const currentLayer = sortedLayers[idx]
-    const belowLayer = sortedLayers[idx - 1]
+    const currentLayer = sortedLayers[idx]!
+    const belowLayer = sortedLayers[idx - 1]!
     const tempOrder = currentLayer.order
     currentLayer.order = belowLayer.order
     belowLayer.order = tempOrder

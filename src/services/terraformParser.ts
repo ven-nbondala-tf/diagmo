@@ -26,9 +26,9 @@ interface TerraformResource {
 
 // Map cloud providers and resource types to icons/shapes
 const providerShapes: Record<string, ShapeType> = {
-  aws: 'aws-generic',
-  azurerm: 'azure-generic',
-  google: 'gcp-generic',
+  aws: 'cloud',
+  azurerm: 'cloud',
+  google: 'cloud',
   kubernetes: 'kubernetes',
   docker: 'docker',
 }
@@ -65,7 +65,7 @@ const awsResourceIcons: Record<string, ShapeType> = {
   'aws_cognito_user_pool': 'aws-cognito',
   'aws_kms_key': 'aws-kms',
   'aws_secretsmanager_secret': 'aws-secrets-manager',
-  'aws_ssm_parameter': 'aws-ssm',
+  'aws_ssm_parameter': 'aws-systems-manager',
 }
 
 // Azure resource type to icon mapping
@@ -76,15 +76,15 @@ const azureResourceIcons: Record<string, ShapeType> = {
   'azurerm_function_app': 'azure-functions',
   'azurerm_linux_function_app': 'azure-functions',
   'azurerm_storage_account': 'azure-storage',
-  'azurerm_storage_blob': 'azure-blob',
+  'azurerm_storage_blob': 'azure-blob-storage',
   'azurerm_sql_database': 'azure-sql',
   'azurerm_mssql_database': 'azure-sql',
-  'azurerm_cosmosdb_account': 'azure-cosmos-db',
+  'azurerm_cosmosdb_account': 'azure-cosmos',
   'azurerm_virtual_network': 'azure-vnet',
   'azurerm_subnet': 'azure-vnet',
   'azurerm_kubernetes_cluster': 'azure-aks',
   'azurerm_container_registry': 'azure-container-registry',
-  'azurerm_key_vault': 'azure-key-vault',
+  'azurerm_key_vault': 'azure-keyvault',
   'azurerm_application_gateway': 'azure-app-gateway',
   'azurerm_app_service': 'azure-app-service',
   'azurerm_linux_web_app': 'azure-app-service',
@@ -96,25 +96,15 @@ const azureResourceIcons: Record<string, ShapeType> = {
 
 // GCP resource type to icon mapping
 const gcpResourceIcons: Record<string, ShapeType> = {
-  'google_compute_instance': 'gcp-compute-engine',
+  'google_compute_instance': 'gcp-compute',
   'google_cloud_run_service': 'gcp-cloud-run',
-  'google_cloudfunctions_function': 'gcp-cloud-functions',
-  'google_storage_bucket': 'gcp-cloud-storage',
+  'google_cloudfunctions_function': 'gcp-functions',
+  'google_storage_bucket': 'gcp-storage',
   'google_sql_database_instance': 'gcp-cloud-sql',
   'google_bigquery_dataset': 'gcp-bigquery',
-  'google_pubsub_topic': 'gcp-pub-sub',
+  'google_pubsub_topic': 'gcp-pubsub',
   'google_container_cluster': 'gcp-gke',
   'google_compute_network': 'gcp-vpc',
-}
-
-// Provider colors for styling
-const providerColors: Record<string, { bg: string; border: string }> = {
-  aws: { bg: '#ff9900', border: '#cc7a00' },
-  azurerm: { bg: '#0078d4', border: '#005a9e' },
-  google: { bg: '#4285f4', border: '#2d5fb0' },
-  kubernetes: { bg: '#326ce5', border: '#1e4c9a' },
-  docker: { bg: '#2496ed', border: '#1a6fb5' },
-  default: { bg: '#64748b', border: '#475569' },
 }
 
 // Block type colors
@@ -134,20 +124,21 @@ function getResourceIcon(resourceType: string): ShapeType {
   if (gcpResourceIcons[resourceType]) return gcpResourceIcons[resourceType]
 
   // Fall back to provider generic icon
-  const provider = resourceType.split('_')[0]
-  if (providerShapes[provider]) return providerShapes[provider]
+  const provider = resourceType.split('_')[0] || ''
+  const providerIcon = providerShapes[provider]
+  if (providerIcon) return providerIcon
 
   // Default to rectangle for unknown resources
   return 'rectangle'
 }
 
 function extractProvider(resourceType: string): string {
-  const parts = resourceType.split('_')
-  if (parts[0] === 'aws') return 'aws'
-  if (parts[0] === 'azurerm') return 'azurerm'
-  if (parts[0] === 'google') return 'google'
-  if (parts[0] === 'kubernetes' || parts[0] === 'k8s') return 'kubernetes'
-  if (parts[0] === 'docker') return 'docker'
+  const firstPart = resourceType.split('_')[0] || ''
+  if (firstPart === 'aws') return 'aws'
+  if (firstPart === 'azurerm') return 'azurerm'
+  if (firstPart === 'google') return 'google'
+  if (firstPart === 'kubernetes' || firstPart === 'k8s') return 'kubernetes'
+  if (firstPart === 'docker') return 'docker'
   return 'default'
 }
 
@@ -164,8 +155,8 @@ function parseHCL(input: string): TerraformResource[] {
     depth: number
   } | null = null
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
+  for (const line of lines) {
+    if (!line) continue
     const trimmed = line.trim()
 
     // Skip comments and empty lines
@@ -180,7 +171,7 @@ function parseHCL(input: string): TerraformResource[] {
     const outputMatch = trimmed.match(/^output\s+"([^"]+)"\s*\{?/)
     const providerMatch = trimmed.match(/^provider\s+"([^"]+)"\s*\{?/)
 
-    if (resourceMatch) {
+    if (resourceMatch && resourceMatch[1] && resourceMatch[2] && resourceMatch[3]) {
       currentBlock = {
         type: resourceMatch[1] as 'resource' | 'data',
         resourceType: resourceMatch[2],
@@ -188,7 +179,7 @@ function parseHCL(input: string): TerraformResource[] {
         content: [],
         depth: 1,
       }
-    } else if (moduleMatch) {
+    } else if (moduleMatch && moduleMatch[1]) {
       currentBlock = {
         type: 'module',
         resourceType: 'module',
@@ -196,7 +187,7 @@ function parseHCL(input: string): TerraformResource[] {
         content: [],
         depth: 1,
       }
-    } else if (variableMatch) {
+    } else if (variableMatch && variableMatch[1]) {
       currentBlock = {
         type: 'variable',
         resourceType: 'variable',
@@ -204,7 +195,7 @@ function parseHCL(input: string): TerraformResource[] {
         content: [],
         depth: 1,
       }
-    } else if (outputMatch) {
+    } else if (outputMatch && outputMatch[1]) {
       currentBlock = {
         type: 'output',
         resourceType: 'output',
@@ -212,7 +203,7 @@ function parseHCL(input: string): TerraformResource[] {
         content: [],
         depth: 1,
       }
-    } else if (providerMatch) {
+    } else if (providerMatch && providerMatch[1]) {
       currentBlock = {
         type: 'provider',
         resourceType: providerMatch[1],
@@ -261,6 +252,7 @@ function extractDependencies(content: string): string[] {
 
   while ((match = refRegex.exec(content)) !== null) {
     const ref = match[1]
+    if (!ref) continue
     // Filter out common non-resource references
     if (
       !ref.startsWith('var.') &&
@@ -277,7 +269,7 @@ function extractDependencies(content: string): string[] {
 
   // Also check for explicit depends_on
   const dependsOnMatch = content.match(/depends_on\s*=\s*\[([\s\S]*?)\]/i)
-  if (dependsOnMatch) {
+  if (dependsOnMatch && dependsOnMatch[1]) {
     const refs = dependsOnMatch[1].match(/([a-z_]+\.[a-z0-9_-]+)/gi)
     if (refs) {
       dependencies.push(...refs)
@@ -364,7 +356,7 @@ export function parseTerraform(input: string): ParseResult {
 
       const position = positions.get(key) || { x: 100, y: 100 }
       const shape = getResourceIcon(res.type)
-      const colors = blockTypeColors[res.blockType] || blockTypeColors.resource
+      const colors = blockTypeColors[res.blockType] ?? blockTypeColors.resource ?? { bg: '#f1f5f9', border: '#64748b' }
 
       // Determine if this is a cloud icon type
       const isCloudIcon = shape.startsWith('aws-') ||

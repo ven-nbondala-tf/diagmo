@@ -16,7 +16,8 @@ interface TemplateQuickCardProps {
 }
 
 export function TemplateQuickCard({ template, onClick }: TemplateQuickCardProps) {
-  const { icon: Icon, color } = categoryIcons[template.category] || categoryIcons.general
+  const catIcon = categoryIcons[template.category] ?? categoryIcons.general ?? { icon: FileText, color: 'text-gray-600' }
+  const { icon: Icon, color } = catIcon
 
   return (
     <Card
