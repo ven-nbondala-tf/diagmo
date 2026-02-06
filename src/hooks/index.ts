@@ -46,3 +46,21 @@ export {
   useDeleteShape,
   useUploadShape,
 } from './useShapeLibraries'
+
+export {
+  useWorkspaces,
+  useWorkspace,
+  useWorkspaceMembers,
+  useWorkspaceDiagrams,
+  usePendingInvites,
+  useCreateWorkspace,
+  useUpdateWorkspace,
+  useDeleteWorkspace,
+  useInviteMember,
+  useUpdateMemberRole,
+  useRemoveMember,
+  useAcceptInvite,
+  useDeclineInvite,
+  useLeaveWorkspace,
+  useMoveToWorkspace,
+} from './useWorkspaces'

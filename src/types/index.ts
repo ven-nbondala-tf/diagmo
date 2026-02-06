@@ -26,6 +26,7 @@ export interface Diagram {
   description?: string
   userId: string
   folderId?: string
+  workspaceId?: string
   nodes: DiagramNode[]
   edges: DiagramEdge[]
   layers?: Layer[]
@@ -632,6 +633,7 @@ export interface Folder {
   name: string
   userId: string
   parentId?: string
+  workspaceId?: string
   createdAt: string
   updatedAt: string
 }
@@ -817,4 +819,36 @@ export interface DiagramShare {
     avatarUrl: string | null
     email?: string
   }
+}
+
+// =============================================
+// Workspace Types (Team Workspaces)
+// =============================================
+
+export type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'viewer'
+
+export interface Workspace {
+  id: string
+  name: string
+  description?: string
+  ownerId: string
+  createdAt: string
+  updatedAt: string
+  // Computed/joined fields
+  memberCount?: number
+  role?: WorkspaceRole
+}
+
+export interface WorkspaceMember {
+  id: string
+  workspaceId: string
+  userId?: string
+  email?: string
+  role: WorkspaceRole
+  invitedBy?: string
+  invitedAt: string
+  acceptedAt?: string
+  // Joined from profiles
+  userName?: string
+  userAvatar?: string
 }

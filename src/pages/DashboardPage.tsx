@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
-import { useDiagramsByFolder, useCreateDiagram, useSharedDiagrams } from '@/hooks'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useDiagramsByFolder, useCreateDiagram, useSharedDiagrams, useWorkspaces } from '@/hooks'
 import type { Diagram } from '@/types'
 import {
   Button,
@@ -24,6 +25,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { FolderSidebar } from '@/components/dashboard/FolderSidebar'
 import { SearchBar } from '@/components/dashboard/SearchBar'
 import { TemplateGallery } from '@/components/dashboard/TemplateGallery'
+import { PendingInvitesBanner } from '@/components/dashboard/PendingInvitesBanner'
 import { DIAGRAM_TEMPLATES, type DiagramTemplate } from '@/constants/templates'
 import { TemplateQuickCard } from '@/components/dashboard/TemplateQuickCard'
 import {
@@ -45,6 +47,7 @@ type SortOrder = 'asc' | 'desc'
 export function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { currentWorkspaceId } = useWorkspaceStore()
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [showShared, setShowShared] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -53,7 +56,11 @@ export function DashboardPage() {
   const [sortBy, setSortBy] = useState<SortBy>('updated')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
 
-  const { data: ownDiagrams, isLoading: isLoadingOwn, error: errorOwn } = useDiagramsByFolder(selectedFolderId)
+  // Get current workspace name for display
+  const { data: workspaces = [] } = useWorkspaces()
+  const currentWorkspace = workspaces.find(w => w.id === currentWorkspaceId)
+
+  const { data: ownDiagrams, isLoading: isLoadingOwn, error: errorOwn } = useDiagramsByFolder(selectedFolderId, currentWorkspaceId)
   const { data: sharedDiagramsData, isLoading: isLoadingShared, error: errorShared } = useSharedDiagrams()
   const createDiagram = useCreateDiagram()
 
@@ -112,6 +119,7 @@ export function DashboardPage() {
         nodes: template?.nodes || [],
         edges: template?.edges || [],
         folderId: selectedFolderId || undefined,
+        workspaceId: currentWorkspaceId || undefined,
       })
       setShowTemplateGallery(false)
       navigate(`/editor/${newDiagram.id}`)
@@ -138,14 +146,23 @@ export function DashboardPage() {
         />
         <main className="flex-1 overflow-auto">
           <div className="container mx-auto px-4 py-8">
+            {/* Pending Invites Banner */}
+            <PendingInvitesBanner />
+
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-3xl font-bold">
-                  {showShared ? 'Shared with me' : 'My Diagrams'}
+                  {showShared
+                    ? 'Shared with me'
+                    : currentWorkspace
+                    ? currentWorkspace.name
+                    : 'My Diagrams'}
                 </h1>
                 <p className="text-muted-foreground mt-1">
                   {showShared
                     ? 'Diagrams that others have shared with you'
+                    : currentWorkspace
+                    ? currentWorkspace.description || 'Team workspace'
                     : `Welcome back${user?.email ? `, ${user.email}` : ''}`}
                 </p>
               </div>

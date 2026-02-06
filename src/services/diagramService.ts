@@ -5,6 +5,7 @@ interface CreateDiagramInput {
   name: string
   description?: string
   folderId?: string
+  workspaceId?: string
   nodes: DiagramNode[]
   edges: DiagramEdge[]
 }
@@ -25,6 +26,7 @@ function mapDiagramFromDB(row: Record<string, unknown>): Diagram {
     description: row.description as string | undefined,
     userId: row.user_id as string,
     folderId: row.folder_id as string | undefined,
+    workspaceId: row.workspace_id as string | undefined,
     nodes: (row.nodes as DiagramNode[]) || [],
     edges: (row.edges as DiagramEdge[]) || [],
     thumbnail: row.thumbnail as string | undefined,
@@ -73,6 +75,7 @@ export const diagramService = {
         name: input.name,
         description: input.description,
         folder_id: input.folderId,
+        workspace_id: input.workspaceId,
         nodes: input.nodes,
         edges: input.edges,
         user_id: user.id,
@@ -113,17 +116,24 @@ export const diagramService = {
     if (error) throw error
   },
 
-  async getByFolder(folderId: string | null): Promise<Diagram[]> {
-    // Get current user to filter only owned diagrams
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return []
+  async getByFolder(folderId: string | null, workspaceId?: string | null): Promise<Diagram[]> {
+    // Note: With RLS policies, user can see diagrams they own OR workspace diagrams
+    // This query relies on RLS to filter appropriately
 
     let query = supabase
       .from('diagrams')
       .select('*')
-      .eq('user_id', user.id) // Only fetch diagrams owned by current user
       .order('updated_at', { ascending: false })
 
+    // Filter by workspace
+    if (workspaceId) {
+      query = query.eq('workspace_id', workspaceId)
+    } else {
+      // Personal diagrams only (no workspace)
+      query = query.is('workspace_id', null)
+    }
+
+    // Filter by folder
     if (folderId) {
       query = query.eq('folder_id', folderId)
     } else {

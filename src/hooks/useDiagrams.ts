@@ -33,6 +33,7 @@ export function useCreateDiagram() {
       name: string
       description?: string
       folderId?: string
+      workspaceId?: string
       nodes: DiagramNode[]
       edges: DiagramEdge[]
     }) => diagramService.create(input),
@@ -115,10 +116,10 @@ export function useDeleteDiagram() {
   })
 }
 
-export function useDiagramsByFolder(folderId: string | null) {
+export function useDiagramsByFolder(folderId: string | null, workspaceId?: string | null) {
   return useQuery({
-    queryKey: diagramKeys.list({ folderId }),
-    queryFn: () => diagramService.getByFolder(folderId),
+    queryKey: diagramKeys.list({ folderId, workspaceId }),
+    queryFn: () => diagramService.getByFolder(folderId, workspaceId),
   })
 }
 

@@ -20,8 +20,9 @@ import {
   DropdownMenuSubTrigger,
   Badge,
 } from '@/components/ui'
-import { MoreVertical, Copy, FolderInput, Trash2, Loader2, Home, Users, Layers } from 'lucide-react'
-import { useDeleteDiagram, useDuplicateDiagram, useMoveDiagramToFolder, useFolders } from '@/hooks'
+import { MoveToWorkspaceDialog } from './MoveToWorkspaceDialog'
+import { MoreVertical, Copy, FolderInput, Trash2, Loader2, Home, Users, Layers, ArrowRightLeft } from 'lucide-react'
+import { useDeleteDiagram, useDuplicateDiagram, useMoveDiagramToFolder, useFolders, useWorkspaces } from '@/hooks'
 import { toast } from 'sonner'
 
 interface DiagramCardProps {
@@ -215,10 +216,12 @@ function EmptyPattern() {
 
 export function DiagramCard({ diagram, onClick, isShared, isTemplate }: DiagramCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showMoveWorkspaceDialog, setShowMoveWorkspaceDialog] = useState(false)
   const deleteDiagram = useDeleteDiagram()
   const duplicateDiagram = useDuplicateDiagram()
   const moveDiagram = useMoveDiagramToFolder()
   const { data: folders } = useFolders()
+  const { data: workspaces = [] } = useWorkspaces()
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -324,6 +327,12 @@ export function DiagramCard({ diagram, onClick, isShared, isTemplate }: DiagramC
                         )}
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
+                    {workspaces.length > 0 && (
+                      <DropdownMenuItem onClick={() => setShowMoveWorkspaceDialog(true)}>
+                        <ArrowRightLeft className="h-4 w-4 mr-2" />
+                        Move to workspace
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={handleDelete}
@@ -389,6 +398,14 @@ export function DiagramCard({ diagram, onClick, isShared, isTemplate }: DiagramC
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <MoveToWorkspaceDialog
+        open={showMoveWorkspaceDialog}
+        onOpenChange={setShowMoveWorkspaceDialog}
+        diagramId={diagram.id}
+        diagramName={diagram.name}
+        currentWorkspaceId={diagram.workspaceId}
+      />
     </>
   )
 }
