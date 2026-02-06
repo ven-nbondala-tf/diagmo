@@ -98,6 +98,23 @@ export interface ConditionalRule {
   priority: number  // Higher priority rules override lower ones
 }
 
+// Diagram template for reusable diagram structures
+export interface DiagramTemplate {
+  id: string
+  name: string
+  description?: string
+  category: string
+  userId: string
+  nodes: DiagramNode[]
+  edges: DiagramEdge[]
+  layers?: Layer[]
+  thumbnail?: string
+  isPublic: boolean
+  useCount: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface DiagramNode extends Node {
   data: {
     label: string

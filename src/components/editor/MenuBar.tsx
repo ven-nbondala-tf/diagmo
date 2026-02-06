@@ -20,6 +20,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui'
+import { SaveAsTemplateDialog } from './SaveAsTemplateDialog'
+import { TemplateGalleryDialog } from './TemplateGalleryDialog'
 
 interface MenuBarProps {
   diagramName: string
@@ -38,6 +40,8 @@ interface MenuBarProps {
 export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout, onImport, onImportMermaid, onImportDrawio, onImportTerraform, saving }: MenuBarProps) {
   const navigate = useNavigate()
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false)
+  const [showTemplateGallery, setShowTemplateGallery] = useState(false)
   const { fitView, zoomIn, zoomOut } = useReactFlow()
 
   // Store actions
@@ -94,6 +98,13 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
             <MenubarItem onClick={onSave} disabled={saving}>
               Save
               <MenubarShortcut>Ctrl+S</MenubarShortcut>
+            </MenubarItem>
+            <MenubarItem onClick={() => setShowSaveAsTemplate(true)}>
+              Save as Template...
+            </MenubarItem>
+            <MenubarSeparator />
+            <MenubarItem onClick={() => setShowTemplateGallery(true)}>
+              From Template...
             </MenubarItem>
             <MenubarSeparator />
             <MenubarSub>
@@ -312,6 +323,16 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Template Dialogs */}
+      <SaveAsTemplateDialog
+        open={showSaveAsTemplate}
+        onOpenChange={setShowSaveAsTemplate}
+      />
+      <TemplateGalleryDialog
+        open={showTemplateGallery}
+        onOpenChange={setShowTemplateGallery}
+      />
     </>
   )
 }

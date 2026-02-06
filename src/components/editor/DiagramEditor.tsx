@@ -31,6 +31,7 @@ import { SelectionToolbar } from './SelectionToolbar'
 import { QuickShapeBar } from './QuickShapeBar'
 import { PageTabs } from './PageTabs'
 import { ConditionalFormattingPanel } from './ConditionalFormattingPanel'
+import { SmartGuides } from './SmartGuides'
 import { Button } from '@/components/ui'
 
 const defaultEdgeOptions = {
@@ -339,6 +340,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             nodeBorderRadius={4}
             onClick={handleMinimapClick}
           />
+          <SmartGuides enabled={snapToGrid} />
         </ReactFlow>
         <SelectionToolbar />
         <QuickShapeBar />

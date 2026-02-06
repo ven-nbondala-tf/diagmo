@@ -476,3 +476,40 @@ CREATE POLICY "Users can delete pages of own diagrams"
       AND diagrams.user_id = auth.uid()
     )
   );
+
+-- Diagram templates table
+CREATE TABLE IF NOT EXISTS diagram_templates (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  description TEXT,
+  category TEXT DEFAULT 'General',
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  nodes JSONB DEFAULT '[]'::jsonb,
+  edges JSONB DEFAULT '[]'::jsonb,
+  layers JSONB DEFAULT '[]'::jsonb,
+  thumbnail TEXT,
+  is_public BOOLEAN DEFAULT false,
+  use_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS on templates
+ALTER TABLE diagram_templates ENABLE ROW LEVEL SECURITY;
+
+-- Template policies
+CREATE POLICY "Users can view own templates"
+  ON diagram_templates FOR SELECT
+  USING (auth.uid() = user_id OR is_public = true);
+
+CREATE POLICY "Users can create templates"
+  ON diagram_templates FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own templates"
+  ON diagram_templates FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own templates"
+  ON diagram_templates FOR DELETE
+  USING (auth.uid() = user_id);
