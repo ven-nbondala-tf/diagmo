@@ -440,14 +440,14 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
                 variant={BackgroundVariant.Lines}
                 gap={gridSize * 5}
                 lineWidth={0.5}
-                color="rgba(255, 255, 255, 0.06)"
+                color="var(--grid-color-major, rgba(0, 0, 0, 0.08))"
               />
               <Background
                 id="minor-grid"
                 variant={BackgroundVariant.Lines}
                 gap={gridSize}
                 lineWidth={0.3}
-                color="rgba(255, 255, 255, 0.03)"
+                color="var(--grid-color-minor, rgba(0, 0, 0, 0.04))"
               />
             </>
           )}

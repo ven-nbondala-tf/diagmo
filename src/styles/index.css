@@ -50,6 +50,10 @@
     --scrollbar-thumb: #333333;
     --scrollbar-thumb-hover: #444444;
 
+    /* Grid (for React Flow canvas) */
+    --grid-color-major: rgba(255, 255, 255, 0.06);
+    --grid-color-minor: rgba(255, 255, 255, 0.03);
+
     /* shadcn/ui compatible variables (HSL) */
     --background: 0 0% 11%;
     --foreground: 0 0% 93%;
@@ -119,6 +123,10 @@
     --scrollbar-track: transparent;
     --scrollbar-thumb: #d1d5db;
     --scrollbar-thumb-hover: #9ca3af;
+
+    /* Grid (for React Flow canvas) */
+    --grid-color-major: rgba(0, 0, 0, 0.08);
+    --grid-color-minor: rgba(0, 0, 0, 0.04);
 
     /* shadcn/ui compatible variables (HSL) */
     --background: 0 0% 100%;
