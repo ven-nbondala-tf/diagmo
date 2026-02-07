@@ -27,13 +27,13 @@ export function QuickShapeBar() {
   }, [screenToFlowPosition, addNode])
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 shadow-lg ring-1 ring-black/5 rounded-xl p-1 z-10">
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 backdrop-blur-md bg-supabase-bg-secondary/95 shadow-lg ring-1 ring-supabase-border rounded-xl p-1 z-10">
       {shapes.map(({ type, icon: Icon, label }) => (
         <Button
           key={type}
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="h-8 w-8 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
           onClick={() => handleAddShape(type)}
           title={label}
         >

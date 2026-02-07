@@ -89,14 +89,14 @@ export function SelectionToolbar() {
 
   return (
     <div
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 shadow-lg ring-1 ring-black/5 rounded-xl p-1 z-50"
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 backdrop-blur-md bg-supabase-bg-secondary/95 shadow-lg ring-1 ring-supabase-border rounded-xl p-1 z-50"
     >
       {/* Color quick-change */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8" title="Fill Color">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary" title="Fill Color">
             <div
-              className="w-4 h-4 rounded border"
+              className="w-4 h-4 rounded border border-supabase-border"
               style={{ backgroundColor: currentFill }}
             />
           </Button>
@@ -113,7 +113,7 @@ export function SelectionToolbar() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 px-2"
+              className="h-8 px-2 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
               title="Change Shape"
             >
               <Shapes className="h-4 w-4 mr-1" />
@@ -133,7 +133,7 @@ export function SelectionToolbar() {
         </DropdownMenu>
       )}
 
-      <Separator orientation="vertical" className="h-6 mx-0.5" />
+      <Separator orientation="vertical" className="h-6 mx-0.5 bg-supabase-border" />
 
       {/* Align dropdown */}
       <DropdownMenu>
@@ -141,7 +141,7 @@ export function SelectionToolbar() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-2"
+            className="h-8 px-2 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary disabled:opacity-50"
             disabled={!hasMultiple}
             title="Align"
           >
@@ -178,7 +178,7 @@ export function SelectionToolbar() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-2"
+            className="h-8 px-2 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary disabled:opacity-50"
             disabled={!hasThreeOrMore}
             title="Distribute"
           >
@@ -196,13 +196,13 @@ export function SelectionToolbar() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Separator orientation="vertical" className="h-6 mx-0.5" />
+      <Separator orientation="vertical" className="h-6 mx-0.5 bg-supabase-border" />
 
       {/* Group/Ungroup */}
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8"
+        className="h-8 w-8 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary disabled:opacity-50"
         disabled={!hasMultiple}
         onClick={groupNodes}
         title="Group (Ctrl+G)"
@@ -214,7 +214,7 @@ export function SelectionToolbar() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="h-8 w-8 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
           onClick={ungroupNodes}
           title="Ungroup (Ctrl+Shift+G)"
         >
@@ -222,13 +222,13 @@ export function SelectionToolbar() {
         </Button>
       )}
 
-      <Separator orientation="vertical" className="h-6 mx-0.5" />
+      <Separator orientation="vertical" className="h-6 mx-0.5 bg-supabase-border" />
 
       {/* Lock/Unlock */}
       <Button
         variant={allLocked ? 'secondary' : 'ghost'}
         size="icon"
-        className="h-8 w-8"
+        className={`h-8 w-8 ${allLocked ? 'bg-supabase-green-muted text-supabase-green' : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'}`}
         onClick={allLocked ? unlockNodes : lockNodes}
         title={allLocked ? 'Unlock (Ctrl+L)' : 'Lock (Ctrl+L)'}
       >
@@ -239,7 +239,7 @@ export function SelectionToolbar() {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8"
+        className="h-8 w-8 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
         onClick={handleDuplicate}
         title="Duplicate (Ctrl+D)"
       >
@@ -250,7 +250,7 @@ export function SelectionToolbar() {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-destructive hover:text-destructive"
+        className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"
         onClick={deleteSelected}
         title="Delete"
       >
