@@ -431,7 +431,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           // Performance optimizations for large diagrams
           onlyRenderVisibleElements={true}
           elevateEdgesOnSelect={true}
-          className="bg-muted/30"
+          className="bg-supabase-bg-tertiary"
         >
           {gridEnabled && (
             <>
@@ -440,22 +440,24 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
                 variant={BackgroundVariant.Lines}
                 gap={gridSize * 5}
                 lineWidth={0.5}
-                color="rgba(0, 0, 0, 0.08)"
+                color="rgba(255, 255, 255, 0.06)"
               />
               <Background
                 id="minor-grid"
                 variant={BackgroundVariant.Lines}
                 gap={gridSize}
                 lineWidth={0.3}
-                color="rgba(0, 0, 0, 0.04)"
+                color="rgba(255, 255, 255, 0.03)"
               />
             </>
           )}
           <MiniMap
-            nodeStrokeColor="#374151"
-            nodeColor="#ffffff"
+            nodeStrokeColor="#3ECF8E"
+            nodeColor="#2a2a2a"
             nodeBorderRadius={4}
             onClick={handleMinimapClick}
+            maskColor="rgba(28, 28, 28, 0.85)"
+            className="bg-supabase-bg-secondary border border-supabase-border rounded-lg"
           />
           <SmartGuides enabled={snapToGrid} />
           <CollaboratorCursors collaborators={collaborators} />
@@ -478,7 +480,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 w-8 p-0 bg-background shadow-md"
+              className="h-8 w-8 p-0 bg-supabase-bg-secondary border-supabase-border text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary shadow-md"
               onClick={toggleConditionalFormattingPanel}
               title="Conditional Formatting"
             >
@@ -489,7 +491,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 w-8 p-0 bg-background shadow-md"
+              className="h-8 w-8 p-0 bg-supabase-bg-secondary border-supabase-border text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary shadow-md"
               onClick={toggleCommentsPanel}
               title="Open Comments Panel"
             >
@@ -500,7 +502,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 w-8 p-0 bg-background shadow-md"
+              className="h-8 w-8 p-0 bg-supabase-bg-secondary border-supabase-border text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary shadow-md"
               onClick={toggleVersionHistoryPanel}
               title="Open Version History"
             >
@@ -511,7 +513,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 w-8 p-0 bg-background shadow-md"
+              className="h-8 w-8 p-0 bg-supabase-bg-secondary border-supabase-border text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary shadow-md"
               onClick={toggleLayersPanel}
               title="Open Layers Panel"
             >
@@ -522,7 +524,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 w-8 p-0 bg-background shadow-md"
+              className="h-8 w-8 p-0 bg-supabase-bg-secondary border-supabase-border text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary shadow-md"
               onClick={togglePropertiesPanel}
               title="Open Properties Panel"
             >

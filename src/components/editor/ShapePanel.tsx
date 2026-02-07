@@ -902,7 +902,7 @@ export function ShapePanel() {
         <Tooltip key={shape}>
           <TooltipTrigger asChild>
             <button
-              className="aspect-square flex items-center justify-center border rounded-md hover:bg-accent hover:border-primary transition-colors cursor-grab active:cursor-grabbing p-1"
+              className="aspect-square flex items-center justify-center border border-supabase-border rounded-md bg-supabase-bg-secondary hover:bg-supabase-bg-tertiary hover:border-supabase-green/50 transition-colors cursor-grab active:cursor-grabbing p-1"
               draggable
               onDragStart={(e) => onDragStart(e, shape)}
               onClick={() => handleClick(shape)}
@@ -923,15 +923,15 @@ export function ShapePanel() {
 
   if (shapePanelCollapsed) {
     return (
-      <div className="w-12 border-r bg-background flex flex-col h-full items-center py-2 gap-1">
-        <Button variant="ghost" size="icon" className="h-8 w-8 mb-2" onClick={toggleShapePanel} title="Expand Library (Ctrl+B)">
+      <div className="w-12 border-r border-supabase-border bg-supabase-bg flex flex-col h-full items-center py-2 gap-1">
+        <Button variant="ghost" size="icon" className="h-8 w-8 mb-2 text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary" onClick={toggleShapePanel} title="Expand Library (Ctrl+B)">
           <ChevronRight className="h-4 w-4" />
         </Button>
         {collapsedShapes.map(({ type, icon: Icon, label }) => (
           <Tooltip key={type}>
             <TooltipTrigger asChild>
               <button
-                className="h-8 w-8 flex items-center justify-center rounded hover:bg-accent transition-colors cursor-grab"
+                className="h-8 w-8 flex items-center justify-center rounded text-supabase-text-secondary hover:bg-supabase-bg-tertiary hover:text-supabase-text-primary transition-colors cursor-grab"
                 draggable
                 onDragStart={(e) => onDragStart(e, type)}
                 onClick={() => handleClick(type)}
@@ -947,31 +947,31 @@ export function ShapePanel() {
   }
 
   return (
-    <div className="w-64 border-r bg-background flex flex-col h-full overflow-hidden">
+    <div className="w-64 border-r border-supabase-border bg-supabase-bg flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b flex items-center justify-between">
+      <div className="p-4 border-b border-supabase-border flex items-center justify-between">
         <div>
-          <h2 className="font-semibold">Library</h2>
-          <p className="text-xs text-muted-foreground">Drag or click to add</p>
+          <h2 className="font-semibold text-supabase-text-primary">Library</h2>
+          <p className="text-xs text-supabase-text-muted">Drag or click to add</p>
         </div>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleShapePanel} title="Collapse Library (Ctrl+B)">
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary" onClick={toggleShapePanel} title="Collapse Library (Ctrl+B)">
           <ChevronLeft className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Main tabs: Shapes | Web Images | Libraries */}
       <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'shapes' | 'images' | 'libraries')} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="px-3 pt-2 border-b pb-2 shrink-0">
-          <TabsList className="w-full grid grid-cols-3 h-9">
-            <TabsTrigger value="shapes" className="text-xs">
+        <div className="px-3 pt-2 border-b border-supabase-border pb-2 shrink-0">
+          <TabsList className="w-full grid grid-cols-3 h-9 bg-supabase-bg-tertiary">
+            <TabsTrigger value="shapes" className="text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">
               <Shapes className="w-3.5 h-3.5 mr-1.5" />
               Shapes
             </TabsTrigger>
-            <TabsTrigger value="images" className="text-xs">
+            <TabsTrigger value="images" className="text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">
               <ImageIcon className="w-3.5 h-3.5 mr-1.5" />
               Images
             </TabsTrigger>
-            <TabsTrigger value="libraries" className="text-xs">
+            <TabsTrigger value="libraries" className="text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">
               <FolderOpen className="w-3.5 h-3.5 mr-1.5" />
               Custom
             </TabsTrigger>
@@ -981,15 +981,15 @@ export function ShapePanel() {
         {/* Shapes Tab Content */}
         <TabsContent value="shapes" className="flex-1 flex flex-col mt-0 overflow-hidden data-[state=inactive]:hidden">
           {/* Search */}
-          <div className="p-3 border-b shrink-0">
+          <div className="p-3 border-b border-supabase-border shrink-0">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-supabase-text-muted" />
               <Input
                 type="text"
                 placeholder="Search shapes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-9 text-sm"
+                className="pl-8 h-9 text-sm bg-supabase-bg-secondary border-supabase-border text-supabase-text-primary placeholder:text-supabase-text-muted focus:border-supabase-green/50 focus:ring-supabase-green/20"
               />
             </div>
           </div>

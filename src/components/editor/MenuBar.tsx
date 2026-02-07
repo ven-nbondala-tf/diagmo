@@ -90,10 +90,10 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
 
   return (
     <>
-      <Menubar className="border-none rounded-none h-9 px-2 bg-background">
+      <Menubar className="border-none rounded-none h-9 px-2 bg-supabase-bg">
         {/* FILE MENU */}
         <MenubarMenu>
-          <MenubarTrigger className="font-normal text-sm px-2">File</MenubarTrigger>
+          <MenubarTrigger className="font-normal text-sm px-2 text-supabase-text-secondary hover:text-supabase-text-primary data-[state=open]:bg-supabase-bg-tertiary data-[state=open]:text-supabase-text-primary">File</MenubarTrigger>
           <MenubarContent>
             <MenubarItem onClick={() => navigate('/dashboard')}>
               Back to Dashboard
@@ -159,7 +159,7 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
 
         {/* EDIT MENU */}
         <MenubarMenu>
-          <MenubarTrigger className="font-normal text-sm px-2">Edit</MenubarTrigger>
+          <MenubarTrigger className="font-normal text-sm px-2 text-supabase-text-secondary hover:text-supabase-text-primary data-[state=open]:bg-supabase-bg-tertiary data-[state=open]:text-supabase-text-primary">Edit</MenubarTrigger>
           <MenubarContent>
             <MenubarItem onClick={undo} disabled={past.length === 0}>
               Undo
@@ -196,7 +196,7 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
 
         {/* VIEW MENU */}
         <MenubarMenu>
-          <MenubarTrigger className="font-normal text-sm px-2">View</MenubarTrigger>
+          <MenubarTrigger className="font-normal text-sm px-2 text-supabase-text-secondary hover:text-supabase-text-primary data-[state=open]:bg-supabase-bg-tertiary data-[state=open]:text-supabase-text-primary">View</MenubarTrigger>
           <MenubarContent>
             <MenubarCheckboxItem checked={gridEnabled} onClick={toggleGrid}>
               Show Grid
@@ -231,7 +231,7 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
 
         {/* ARRANGE MENU */}
         <MenubarMenu>
-          <MenubarTrigger className="font-normal text-sm px-2">Arrange</MenubarTrigger>
+          <MenubarTrigger className="font-normal text-sm px-2 text-supabase-text-secondary hover:text-supabase-text-primary data-[state=open]:bg-supabase-bg-tertiary data-[state=open]:text-supabase-text-primary">Arrange</MenubarTrigger>
           <MenubarContent>
             <MenubarSub>
               <MenubarSubTrigger disabled={!hasMultipleSelection}>Align</MenubarSubTrigger>
@@ -282,7 +282,7 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
 
         {/* HELP MENU */}
         <MenubarMenu>
-          <MenubarTrigger className="font-normal text-sm px-2">Help</MenubarTrigger>
+          <MenubarTrigger className="font-normal text-sm px-2 text-supabase-text-secondary hover:text-supabase-text-primary data-[state=open]:bg-supabase-bg-tertiary data-[state=open]:text-supabase-text-primary">Help</MenubarTrigger>
           <MenubarContent>
             <MenubarItem onClick={() => setShowShortcuts(true)}>
               Keyboard Shortcuts
@@ -301,10 +301,10 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
 
       {/* Shortcuts Dialog */}
       <Dialog open={showShortcuts} onOpenChange={setShowShortcuts}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg bg-supabase-bg-secondary border-supabase-border">
           <DialogHeader>
-            <DialogTitle>Keyboard Shortcuts</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-supabase-text-primary">Keyboard Shortcuts</DialogTitle>
+            <DialogDescription className="text-supabase-text-muted">
               Quick actions for faster diagramming
             </DialogDescription>
           </DialogHeader>
@@ -325,9 +325,9 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
               { keys: "Ctrl + Shift + '", desc: 'Toggle Snap to Grid' },
               { keys: 'Double-click', desc: 'Edit shape text' },
             ].map((s, i) => (
-              <div key={i} className="flex justify-between py-1 border-b last:border-0">
-                <span className="text-muted-foreground">{s.desc}</span>
-                <kbd className="px-2 py-0.5 text-xs bg-muted rounded font-mono">{s.keys}</kbd>
+              <div key={i} className="flex justify-between py-1 border-b border-supabase-border last:border-0">
+                <span className="text-supabase-text-secondary">{s.desc}</span>
+                <kbd className="px-2 py-0.5 text-xs bg-supabase-bg-tertiary text-supabase-text-primary rounded font-mono border border-supabase-border">{s.keys}</kbd>
               </div>
             ))}
           </div>

@@ -168,18 +168,18 @@ export function CommentsPanel({ diagramId }: CommentsPanelProps) {
   const unresolvedCount = comments.filter((c) => !c.resolved).length
 
   return (
-    <div className="w-72 border-l bg-background flex flex-col h-full">
+    <div className="w-72 border-l border-supabase-border bg-supabase-bg flex flex-col h-full">
       {/* Header */}
-      <div className="p-3 border-b bg-muted/30">
+      <div className="p-3 border-b border-supabase-border bg-supabase-bg-secondary">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" />
-            <h2 className="font-semibold text-sm">Comments</h2>
+            <MessageSquare className="w-4 h-4 text-supabase-text-muted" />
+            <h2 className="font-semibold text-sm text-supabase-text-primary">Comments</h2>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0"
+            className="h-6 w-6 p-0 text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
             onClick={toggleCommentsPanel}
             title="Close Panel"
           >
@@ -187,13 +187,13 @@ export function CommentsPanel({ diagramId }: CommentsPanelProps) {
           </Button>
         </div>
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-supabase-text-muted">
             {unresolvedCount} open, {comments.length - unresolvedCount} resolved
           </span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 text-xs px-2"
+            className="h-6 text-xs px-2 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
             onClick={() => setShowResolved(!showResolved)}
           >
             {showResolved ? 'Hide Resolved' : 'Show All'}
@@ -210,17 +210,17 @@ export function CommentsPanel({ diagramId }: CommentsPanelProps) {
       )}
 
       {/* Add comment */}
-      <div className="p-3 border-b">
+      <div className="p-3 border-b border-supabase-border">
         <div className="flex gap-2">
           <Input
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
+            className="h-8 text-xs bg-supabase-bg-secondary border-supabase-border text-supabase-text-primary placeholder:text-supabase-text-muted focus:border-supabase-green/50"
             placeholder={
               selectedNodes.length === 1 && selectedNodes[0]
                 ? `Comment on "${getNodeLabel(selectedNodes[0])}"...`
                 : 'Add a comment...'
             }
-            className="h-8 text-xs"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()

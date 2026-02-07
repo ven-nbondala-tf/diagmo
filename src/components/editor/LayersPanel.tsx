@@ -70,19 +70,19 @@ export function LayersPanel() {
   }
 
   return (
-    <div className="w-64 border-l bg-background flex flex-col h-full">
+    <div className="w-64 border-l border-supabase-border bg-supabase-bg flex flex-col h-full">
       {/* Header */}
-      <div className="p-3 border-b bg-muted/30">
+      <div className="p-3 border-b border-supabase-border bg-supabase-bg-secondary">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4" />
-            <h2 className="font-semibold text-sm">Layers</h2>
+            <Layers className="w-4 h-4 text-supabase-text-muted" />
+            <h2 className="font-semibold text-sm text-supabase-text-primary">Layers</h2>
           </div>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
               onClick={() => addLayer()}
               title="Add Layer"
             >
@@ -91,7 +91,7 @@ export function LayersPanel() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
               onClick={toggleLayersPanel}
               title="Close Panel"
             >

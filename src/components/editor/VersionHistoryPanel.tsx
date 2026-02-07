@@ -117,13 +117,13 @@ export function VersionHistoryPanel({ diagramId }: VersionHistoryPanelProps) {
   }
 
   return (
-    <div className="w-72 border-l bg-background flex flex-col h-full">
+    <div className="w-72 border-l border-supabase-border bg-supabase-bg flex flex-col h-full">
       {/* Header */}
-      <div className="p-3 border-b bg-muted/30">
+      <div className="p-3 border-b border-supabase-border bg-supabase-bg-secondary">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <History className="w-4 h-4" />
-            <h2 className="font-semibold text-sm">Version History</h2>
+            <History className="w-4 h-4 text-supabase-text-muted" />
+            <h2 className="font-semibold text-sm text-supabase-text-primary">Version History</h2>
           </div>
           <div className="flex items-center gap-1">
             <Tooltip>
@@ -131,7 +131,7 @@ export function VersionHistoryPanel({ diagramId }: VersionHistoryPanelProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 w-7 p-0"
+                  className="h-7 w-7 p-0 text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
                   onClick={() => setShowDiff(true)}
                   disabled={versions.length < 2}
                 >
@@ -145,7 +145,7 @@ export function VersionHistoryPanel({ diagramId }: VersionHistoryPanelProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 w-7 p-0"
+                  className="h-7 w-7 p-0 text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
                   onClick={toggleVersionHistoryPanel}
                 >
                   <PanelRightClose className="w-4 h-4" />
@@ -158,11 +158,11 @@ export function VersionHistoryPanel({ diagramId }: VersionHistoryPanelProps) {
       </div>
 
       {/* Current State Indicator */}
-      <div className="px-3 py-2 border-b bg-primary/5">
+      <div className="px-3 py-2 border-b border-supabase-border bg-supabase-green-muted">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
-          <span className="text-xs font-medium">Current State</span>
-          <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+          <div className="w-3 h-3 rounded-full bg-supabase-green animate-pulse" />
+          <span className="text-xs font-medium text-supabase-text-primary">Current State</span>
+          <Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-supabase-bg-tertiary text-supabase-text-secondary">
             {nodes.length} shapes
           </Badge>
         </div>

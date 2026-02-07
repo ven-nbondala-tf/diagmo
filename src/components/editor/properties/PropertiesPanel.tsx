@@ -91,16 +91,16 @@ export function PropertiesPanel() {
   // Nothing selected
   if (!selectedNode) {
     return (
-      <div className="w-72 border-l bg-background flex flex-col h-full">
-        <div className="p-3 border-b bg-muted/30">
+      <div className="w-72 border-l border-supabase-border bg-supabase-bg flex flex-col h-full">
+        <div className="p-3 border-b border-supabase-border bg-supabase-bg-secondary">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-sm">Properties</h2>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={togglePropertiesPanel} title="Close Panel">
+            <h2 className="font-semibold text-sm text-supabase-text-primary">Properties</h2>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary" onClick={togglePropertiesPanel} title="Close Panel">
               <ChevronRight className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>
-        <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm px-4 text-center">
+        <div className="flex-1 flex items-center justify-center text-supabase-text-muted text-sm px-4 text-center">
           <div>
             <Square className="w-12 h-12 mx-auto mb-2 opacity-20" />
             <p>Select a shape or connector to edit its properties</p>
@@ -144,35 +144,35 @@ export function PropertiesPanel() {
   }
 
   return (
-    <div className="w-72 border-l bg-background flex flex-col h-full overflow-hidden">
+    <div className="w-72 border-l border-supabase-border bg-supabase-bg flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="p-3 border-b bg-muted/30">
+      <div className="p-3 border-b border-supabase-border bg-supabase-bg-secondary">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="font-semibold text-sm">Shape Properties</h2>
+          <h2 className="font-semibold text-sm text-supabase-text-primary">Shape Properties</h2>
           <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={toggleAllSections} title={allExpanded ? "Collapse All" : "Expand All"}>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary" onClick={toggleAllSections} title={allExpanded ? "Collapse All" : "Expand All"}>
               <ChevronsUpDown className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={togglePropertiesPanel} title="Close Panel">
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary" onClick={togglePropertiesPanel} title="Close Panel">
               <ChevronRight className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground truncate">
+        <p className="text-xs text-supabase-text-muted truncate">
           {multipleSelected ? `${selectedNodes.length} shapes selected` : data.label || data.type}
         </p>
       </div>
 
       {/* Tabbed content */}
       <Tabs defaultValue={hasDataTab ? 'data' : 'style'} className="flex-1 flex flex-col overflow-hidden">
-        <div className="px-3 pt-2 border-b">
-          <TabsList className="w-full">
+        <div className="px-3 pt-2 border-b border-supabase-border">
+          <TabsList className="w-full bg-supabase-bg-tertiary">
             {hasDataTab && (
-              <TabsTrigger value="data" className="flex-1 text-xs">Data</TabsTrigger>
+              <TabsTrigger value="data" className="flex-1 text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">Data</TabsTrigger>
             )}
-            <TabsTrigger value="style" className="flex-1 text-xs">Style</TabsTrigger>
-            <TabsTrigger value="text" className="flex-1 text-xs">Text</TabsTrigger>
-            <TabsTrigger value="layout" className="flex-1 text-xs">Layout</TabsTrigger>
+            <TabsTrigger value="style" className="flex-1 text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">Style</TabsTrigger>
+            <TabsTrigger value="text" className="flex-1 text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">Text</TabsTrigger>
+            <TabsTrigger value="layout" className="flex-1 text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">Layout</TabsTrigger>
           </TabsList>
         </div>
 
@@ -217,8 +217,8 @@ export function PropertiesPanel() {
       </Tabs>
 
       {/* Actions Footer */}
-      <div className="p-3 border-t space-y-2">
-        <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={handleDuplicate}>
+      <div className="p-3 border-t border-supabase-border space-y-2">
+        <Button variant="outline" size="sm" className="w-full h-8 text-xs border-supabase-border text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary" onClick={handleDuplicate}>
           <Copy className="w-3 h-3 mr-1" />
           Duplicate
         </Button>

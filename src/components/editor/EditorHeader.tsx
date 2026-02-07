@@ -235,7 +235,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
 
   return (
     <>
-      <header className="border-b bg-background flex flex-col">
+      <header className="border-b border-supabase-border bg-supabase-bg flex flex-col">
         {/* Menu Bar */}
         <MenuBar
           diagramName={name}
@@ -252,10 +252,10 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
         />
 
         {/* Status Bar */}
-        <div className="h-10 flex items-center px-4 gap-4 border-t bg-muted/30">
+        <div className="h-10 flex items-center px-4 gap-4 border-t border-supabase-border bg-supabase-bg-secondary">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => navigate('/dashboard')}>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary" onClick={() => navigate('/dashboard')}>
                 <ArrowLeft className="h-3.5 w-3.5 mr-1" />
                 Dashboard
               </Button>
@@ -263,13 +263,13 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
             <TooltipContent>Back to Dashboard</TooltipContent>
           </Tooltip>
 
-          <div className="w-px h-5 bg-border" />
+          <div className="w-px h-5 bg-supabase-border" />
 
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={handleSave}
-            className="max-w-[200px] h-7 text-sm font-medium bg-transparent border-none focus:bg-background"
+            className="max-w-[200px] h-7 text-sm font-medium bg-transparent border-none text-supabase-text-primary focus:bg-supabase-bg-tertiary"
           />
 
           <div className="flex-1" />
@@ -278,7 +278,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           {connectionStatus !== 'connected' && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted text-xs">
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-supabase-bg-tertiary text-xs">
                   <div
                     className={`h-2 w-2 rounded-full ${
                       connectionStatus === 'reconnecting'
@@ -286,7 +286,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
                         : 'bg-red-500'
                     }`}
                   />
-                  <span className="text-muted-foreground">
+                  <span className="text-supabase-text-muted">
                     {connectionStatus === 'reconnecting' ? 'Reconnecting...' : 'Disconnected'}
                   </span>
                 </div>
@@ -309,7 +309,7 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           <Button
             variant="outline"
             size="sm"
-            className="h-7 gap-1.5"
+            className="h-7 gap-1.5 border-supabase-border text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
             onClick={() => setShowShare(true)}
           >
             <Share2 className="h-3.5 w-3.5" />
@@ -317,20 +317,20 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
           </Button>
 
           {saving ? (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="text-xs text-supabase-text-muted flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" />
               Saving...
             </span>
           ) : lastSaved ? (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="text-xs text-supabase-green flex items-center gap-1">
               <Check className="h-3 w-3" />
               Saved
             </span>
           ) : isDirty ? (
-            <span className="text-xs text-muted-foreground">Unsaved changes</span>
+            <span className="text-xs text-supabase-text-muted">Unsaved changes</span>
           ) : null}
 
-          <span className="text-xs text-muted-foreground ml-4">
+          <span className="text-xs text-supabase-text-muted ml-4">
             {Math.round(zoom * 100)}%
           </span>
         </div>
