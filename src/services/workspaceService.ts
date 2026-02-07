@@ -26,6 +26,14 @@ interface MemberResponse {
 
 class WorkspaceService {
   /**
+   * Check if a Supabase error indicates a missing table
+   */
+  private isTableNotFoundError(error: { code?: string } | null): boolean {
+    // PGRST205 = "Could not find the table in the schema cache"
+    return error?.code === 'PGRST205' || error?.code === '42P01'
+  }
+
+  /**
    * Get all workspaces the current user belongs to (as owner or member)
    */
   async getAll(): Promise<Workspace[]> {
@@ -39,6 +47,11 @@ class WorkspaceService {
       .eq('owner_id', user.id)
       .order('created_at', { ascending: false })
 
+    // If tables don't exist yet, return empty gracefully
+    if (this.isTableNotFoundError(ownedError)) {
+      return []
+    }
+
     if (ownedError) {
       console.error('Error fetching owned workspaces:', ownedError)
     }
@@ -49,6 +62,11 @@ class WorkspaceService {
       .select('workspace_id, role')
       .eq('user_id', user.id)
       .not('accepted_at', 'is', null)
+
+    // If tables don't exist yet, just return owned workspaces
+    if (this.isTableNotFoundError(memberError)) {
+      return (ownedWorkspaces || []).map(ws => this.mapWorkspace(ws, 'owner'))
+    }
 
     if (memberError) {
       console.error('Error fetching workspace memberships:', memberError)
@@ -475,6 +493,11 @@ class WorkspaceService {
       .select('*')
       .eq('email', user.email)
       .is('accepted_at', null)
+
+    // If tables don't exist yet, return empty gracefully
+    if (this.isTableNotFoundError(inviteError)) {
+      return []
+    }
 
     if (inviteError || !invites || invites.length === 0) {
       return []

@@ -69,17 +69,25 @@ export const diagramService = {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
 
+    // Build insert object - only include workspace_id if provided
+    // (column may not exist if migration not applied)
+    const insertData: Record<string, unknown> = {
+      name: input.name,
+      description: input.description,
+      folder_id: input.folderId,
+      nodes: input.nodes,
+      edges: input.edges,
+      user_id: user.id,
+    }
+
+    // Only add workspace_id if explicitly provided
+    if (input.workspaceId) {
+      insertData.workspace_id = input.workspaceId
+    }
+
     const { data, error } = await supabase
       .from('diagrams')
-      .insert({
-        name: input.name,
-        description: input.description,
-        folder_id: input.folderId,
-        workspace_id: input.workspaceId,
-        nodes: input.nodes,
-        edges: input.edges,
-        user_id: user.id,
-      })
+      .insert(insertData)
       .select()
       .single()
 
@@ -120,18 +128,15 @@ export const diagramService = {
     // Note: With RLS policies, user can see diagrams they own OR workspace diagrams
     // This query relies on RLS to filter appropriately
 
+    // Get current user to filter owned diagrams
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
     let query = supabase
       .from('diagrams')
       .select('*')
+      .eq('user_id', user.id) // Only user's own diagrams for now
       .order('updated_at', { ascending: false })
-
-    // Filter by workspace
-    if (workspaceId) {
-      query = query.eq('workspace_id', workspaceId)
-    } else {
-      // Personal diagrams only (no workspace)
-      query = query.is('workspace_id', null)
-    }
 
     // Filter by folder
     if (folderId) {
@@ -142,8 +147,44 @@ export const diagramService = {
 
     const { data, error } = await query
 
-    if (error) throw error
-    return (data || []).map(mapDiagramFromDB)
+    // If error due to missing workspace_id column, that's fine - it means
+    // the workspace migration hasn't been applied yet
+    if (error) {
+      // Check if it's a column-not-found error (workspace_id doesn't exist)
+      if (error.message?.includes('workspace_id')) {
+        console.warn('workspace_id column not found - workspace migration may not be applied')
+        // Retry without workspace filter
+        let retryQuery = supabase
+          .from('diagrams')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('updated_at', { ascending: false })
+
+        if (folderId) {
+          retryQuery = retryQuery.eq('folder_id', folderId)
+        } else {
+          retryQuery = retryQuery.is('folder_id', null)
+        }
+
+        const { data: retryData, error: retryError } = await retryQuery
+        if (retryError) throw retryError
+        return (retryData || []).map(mapDiagramFromDB)
+      }
+      throw error
+    }
+
+    // If workspaceId filter was requested but we're in "no workspace" mode,
+    // filter client-side (workspace_id column exists but user wants personal only)
+    if (!workspaceId) {
+      return (data || [])
+        .filter(d => !d.workspace_id)
+        .map(mapDiagramFromDB)
+    }
+
+    // Return workspace diagrams
+    return (data || [])
+      .filter(d => d.workspace_id === workspaceId)
+      .map(mapDiagramFromDB)
   },
 
   async duplicate(id: string): Promise<Diagram> {
