@@ -1,15 +1,40 @@
 @import "tailwindcss";
 
 @layer base {
+  /* Supabase-inspired dark theme as default */
   :root {
+    --background: 0 0% 11%;
+    --foreground: 0 0% 93%;
+    --card: 0 0% 14%;
+    --card-foreground: 0 0% 93%;
+    --popover: 0 0% 14%;
+    --popover-foreground: 0 0% 93%;
+    --primary: 153 70% 53%;
+    --primary-foreground: 0 0% 11%;
+    --secondary: 0 0% 17%;
+    --secondary-foreground: 0 0% 93%;
+    --muted: 0 0% 17%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 0 0% 17%;
+    --accent-foreground: 0 0% 93%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 93%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 153 70% 53%;
+    --radius: 0.5rem;
+  }
+
+  /* Light theme (optional) */
+  .light {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 238.7 83.5% 66.7%;
-    --primary-foreground: 226 100% 97%;
+    --primary: 153 70% 53%;
+    --primary-foreground: 0 0% 11%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
@@ -20,30 +45,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 238.7 83.5% 66.7%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 238.7 83.5% 66.7%;
-    --primary-foreground: 226 100% 97%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 238.7 83.5% 66.7%;
+    --ring: 153 70% 53%;
   }
 }
 
@@ -77,8 +79,131 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Supabase-style scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #444;
+  }
+
+  /* Focus styles with green ring */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(62, 207, 142, 0.5);
+  }
+
+  /* Text selection */
+  ::selection {
+    background: rgba(62, 207, 142, 0.3);
+  }
+}
+
+/* Supabase-style utility components */
+@layer components {
+  /* Dark input style */
+  .input-dark {
+    @apply w-full px-3 py-2 rounded-md text-sm transition-colors;
+    background: #232323;
+    border: 1px solid #333;
+    color: #ededed;
+  }
+  .input-dark::placeholder {
+    color: #666;
+  }
+  .input-dark:focus {
+    outline: none;
+    border-color: rgba(62, 207, 142, 0.5);
+    box-shadow: 0 0 0 1px rgba(62, 207, 142, 0.2);
+  }
+
+  /* Primary button (green) */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors;
+    background: #3ECF8E;
+    color: #1c1c1c;
+  }
+  .btn-primary:hover {
+    background: #2eb77a;
+  }
+  .btn-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(62, 207, 142, 0.5);
+  }
+
+  /* Secondary button (dark) */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors;
+    background: #232323;
+    border: 1px solid #333;
+    color: #ededed;
+  }
+  .btn-secondary:hover {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors;
+    color: #a1a1a1;
+    background: transparent;
+  }
+  .btn-ghost:hover {
+    color: #ededed;
+    background: #2a2a2a;
+  }
+
+  /* Dark card style */
+  .card-dark {
+    @apply rounded-lg overflow-hidden transition-colors;
+    background: #232323;
+    border: 1px solid #333;
+  }
+  .card-dark:hover {
+    border-color: #444;
+  }
+
+  /* Tab bar container */
+  .tab-bar {
+    @apply flex;
+    border-bottom: 1px solid #333;
+  }
+
+  /* Tab item */
+  .tab-item {
+    @apply px-4 py-2.5 text-sm font-medium relative transition-colors;
+    color: #666;
+  }
+  .tab-item:hover {
+    color: #a1a1a1;
+  }
+  .tab-item.active {
+    color: #ededed;
+  }
+  .tab-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #3ECF8E;
   }
 }
 

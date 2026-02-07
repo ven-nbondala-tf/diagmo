@@ -16,6 +16,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Menlo', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -50,6 +51,30 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        // Supabase-inspired dark theme colors
+        supabase: {
+          bg: {
+            DEFAULT: '#1c1c1c',
+            secondary: '#232323',
+            tertiary: '#2a2a2a',
+            elevated: '#303030',
+          },
+          border: {
+            DEFAULT: '#333333',
+            subtle: '#2a2a2a',
+            strong: '#444444',
+          },
+          text: {
+            primary: '#ededed',
+            secondary: '#a1a1a1',
+            muted: '#666666',
+          },
+          green: {
+            DEFAULT: '#3ECF8E',
+            hover: '#2eb77a',
+            muted: 'rgba(62, 207, 142, 0.15)',
+          },
         },
       },
       borderRadius: {

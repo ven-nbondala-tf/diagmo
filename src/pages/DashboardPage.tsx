@@ -21,13 +21,12 @@ import { DiagramCard } from '@/components/dashboard/DiagramCard'
 import { DiagramCardSkeleton } from '@/components/dashboard/DiagramCardSkeleton'
 import { DiagramListItem } from '@/components/dashboard/DiagramListItem'
 import { DiagramListItemSkeleton } from '@/components/dashboard/DiagramListItemSkeleton'
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
-import { FolderSidebar } from '@/components/dashboard/FolderSidebar'
 import { SearchBar } from '@/components/dashboard/SearchBar'
 import { TemplateGallery } from '@/components/dashboard/TemplateGallery'
 import { PendingInvitesBanner } from '@/components/dashboard/PendingInvitesBanner'
 import { DIAGRAM_TEMPLATES, type DiagramTemplate } from '@/constants/templates'
 import { TemplateQuickCard } from '@/components/dashboard/TemplateQuickCard'
+import { Sidebar, TopBar } from '@/components/layout'
 import {
   Plus,
   FolderOpen,
@@ -38,23 +37,47 @@ import {
   ArrowDown,
   Check,
   Users,
+  FileText,
+  Share2,
+  UsersIcon,
+  Sparkles,
 } from 'lucide-react'
 
 type ViewMode = 'grid' | 'list'
 type SortBy = 'updated' | 'created' | 'name'
 type SortOrder = 'asc' | 'desc'
 
+// Stat Card component for dashboard
+function StatCard({ title, value, change, icon: Icon }: {
+  title: string
+  value: string | number
+  change?: string
+  icon?: React.ComponentType<{ className?: string }>
+}) {
+  return (
+    <div className="p-4 rounded-lg bg-supabase-bg-secondary border border-supabase-border">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm text-supabase-text-muted">{title}</p>
+        {Icon && <Icon className="w-4 h-4 text-supabase-text-muted" />}
+      </div>
+      <p className="text-2xl font-semibold text-supabase-text-primary">{value}</p>
+      {change && <p className="text-xs text-supabase-green mt-1">{change}</p>}
+    </div>
+  )
+}
+
 export function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const { currentWorkspaceId } = useWorkspaceStore()
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
-  const [showShared, setShowShared] = useState(false)
+  const [selectedFolderId] = useState<string | null>(null)
+  const [showShared] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showTemplateGallery, setShowTemplateGallery] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [sortBy, setSortBy] = useState<SortBy>('updated')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   // Get current workspace name for display
   const { data: workspaces = [] } = useWorkspaces()
@@ -134,39 +157,84 @@ export function DashboardPage() {
 
   const sortLabel = sortBy === 'updated' ? 'Updated' : sortBy === 'created' ? 'Created' : 'Name'
 
+  // Calculate stats
+  const totalDiagrams = ownDiagrams?.length || 0
+  const sharedWithMeCount = sharedDiagrams?.length || 0
+  const teamMembersCount = workspaces.reduce((acc, w) => acc + (w.memberCount || 0), 0)
+
   return (
-    <div className="min-h-screen bg-muted/50 flex flex-col">
-      <DashboardHeader />
-      <div className="flex-1 flex overflow-hidden">
-        <FolderSidebar
-          selectedFolderId={selectedFolderId}
-          onSelectFolder={setSelectedFolderId}
-          showShared={showShared}
-          onToggleShared={setShowShared}
+    <div className="flex h-screen bg-supabase-bg">
+      {/* New Sidebar */}
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onCollapse={setSidebarCollapsed}
+        onNewDiagram={handleOpenTemplateGallery}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* TopBar */}
+        <TopBar
+          breadcrumbs={[
+            { label: 'Home', href: '/dashboard' },
+            { label: showShared ? 'Shared with Me' : currentWorkspace?.name || 'My Diagrams' },
+          ]}
+          showSearch={false}
         />
+
+        {/* Content Area */}
         <main className="flex-1 overflow-auto">
-          <div className="container mx-auto px-4 py-8">
+          <div className="p-6">
             {/* Pending Invites Banner */}
             <PendingInvitesBanner />
 
-            <div className="flex items-center justify-between mb-8">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <StatCard
+                title="Total Diagrams"
+                value={totalDiagrams}
+                icon={FileText}
+              />
+              <StatCard
+                title="Shared with Me"
+                value={sharedWithMeCount}
+                change={sharedWithMeCount > 0 ? `${sharedWithMeCount} available` : undefined}
+                icon={Share2}
+              />
+              <StatCard
+                title="Team Members"
+                value={teamMembersCount || '-'}
+                icon={UsersIcon}
+              />
+              <StatCard
+                title="Templates Used"
+                value={DIAGRAM_TEMPLATES.length}
+                icon={Sparkles}
+              />
+            </div>
+
+            {/* Page Header */}
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-3xl font-bold">
+                <h1 className="text-2xl font-semibold text-supabase-text-primary">
                   {showShared
                     ? 'Shared with me'
                     : currentWorkspace
                     ? currentWorkspace.name
                     : 'My Diagrams'}
                 </h1>
-                <p className="text-muted-foreground mt-1">
+                <p className="text-sm text-supabase-text-muted mt-1">
                   {showShared
                     ? 'Diagrams that others have shared with you'
                     : currentWorkspace
                     ? currentWorkspace.description || 'Team workspace'
-                    : `Welcome back${user?.email ? `, ${user.email}` : ''}`}
+                    : `Welcome back${user?.email ? `, ${user.email.split('@')[0]}` : ''}`}
                 </p>
               </div>
-              <Button onClick={handleOpenTemplateGallery}>
+              <Button
+                onClick={handleOpenTemplateGallery}
+                className="bg-supabase-green hover:bg-supabase-green-hover text-supabase-bg"
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 New Diagram
               </Button>
@@ -184,7 +252,7 @@ export function DashboardPage() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9 gap-1.5">
+                  <Button variant="outline" size="sm" className="h-9 gap-1.5 border-supabase-border bg-supabase-bg-secondary text-supabase-text-secondary hover:bg-supabase-bg-tertiary hover:text-supabase-text-primary">
                     <ArrowUpDown className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">{sortLabel}</span>
                     {sortOrder === 'asc' ? (
@@ -194,21 +262,21 @@ export function DashboardPage() {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setSortBy('updated')}>
+                <DropdownMenuContent align="end" className="bg-supabase-bg-secondary border-supabase-border">
+                  <DropdownMenuItem onClick={() => setSortBy('updated')} className="text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary">
                     {sortBy === 'updated' && <Check className="h-3.5 w-3.5 mr-2" />}
                     <span className={sortBy !== 'updated' ? 'ml-[22px]' : ''}>Last updated</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy('created')}>
+                  <DropdownMenuItem onClick={() => setSortBy('created')} className="text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary">
                     {sortBy === 'created' && <Check className="h-3.5 w-3.5 mr-2" />}
                     <span className={sortBy !== 'created' ? 'ml-[22px]' : ''}>Date created</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy('name')}>
+                  <DropdownMenuItem onClick={() => setSortBy('name')} className="text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary">
                     {sortBy === 'name' && <Check className="h-3.5 w-3.5 mr-2" />}
                     <span className={sortBy !== 'name' ? 'ml-[22px]' : ''}>Name</span>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                  <DropdownMenuSeparator className="bg-supabase-border" />
+                  <DropdownMenuItem onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary">
                     {sortOrder === 'asc' ? (
                       <ArrowUp className="h-3.5 w-3.5 mr-2" />
                     ) : (
@@ -219,11 +287,11 @@ export function DashboardPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <div className="flex border rounded-md">
+              <div className="flex border border-supabase-border rounded-md">
                 <Button
                   variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                   size="sm"
-                  className="h-9 px-2.5 rounded-r-none"
+                  className="h-9 px-2.5 rounded-r-none border-0"
                   onClick={() => setViewMode('grid')}
                   title="Grid view"
                 >
@@ -232,7 +300,7 @@ export function DashboardPage() {
                 <Button
                   variant={viewMode === 'list' ? 'secondary' : 'ghost'}
                   size="sm"
-                  className="h-9 px-2.5 rounded-l-none"
+                  className="h-9 px-2.5 rounded-l-none border-0"
                   onClick={() => setViewMode('list')}
                   title="List view"
                 >
@@ -342,3 +410,4 @@ export function DashboardPage() {
     </div>
   )
 }
+

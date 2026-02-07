@@ -101,7 +101,7 @@ function DiagramMiniPreview({ nodes, edges }: { nodes: DiagramNode[]; edges: Dia
   }
 
   return (
-    <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-muted/30 to-muted/60">
+    <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-supabase-bg-tertiary to-supabase-bg-secondary">
       {/* Grid pattern background */}
       <svg
         className="absolute inset-0 w-full h-full opacity-[0.08]"
@@ -177,7 +177,7 @@ function DiagramMiniPreview({ nodes, edges }: { nodes: DiagramNode[]; edges: Dia
       </svg>
 
       {/* Gradient overlay for faded effect */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-background/20" />
+      <div className="absolute inset-0 bg-gradient-to-t from-supabase-bg/40 via-transparent to-supabase-bg/20" />
     </div>
   )
 }
@@ -185,7 +185,7 @@ function DiagramMiniPreview({ nodes, edges }: { nodes: DiagramNode[]; edges: Dia
 // Empty pattern for diagrams with no nodes
 function EmptyPattern() {
   return (
-    <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
+    <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-supabase-bg-secondary to-supabase-bg-tertiary">
       {/* Grid pattern */}
       <svg
         className="absolute inset-0 w-full h-full opacity-[0.15]"
@@ -202,14 +202,14 @@ function EmptyPattern() {
       {/* Decorative shapes */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="relative">
-          <div className="absolute -top-4 -left-8 w-16 h-16 rounded-lg bg-primary/5 rotate-12" />
-          <div className="absolute -bottom-2 -right-6 w-12 h-12 rounded-full bg-primary/5" />
-          <div className="absolute top-6 right-2 w-8 h-8 rounded bg-primary/5 -rotate-6" />
-          <Layers className="h-10 w-10 text-muted-foreground/40 relative z-10" />
+          <div className="absolute -top-4 -left-8 w-16 h-16 rounded-lg bg-supabase-green/5 rotate-12" />
+          <div className="absolute -bottom-2 -right-6 w-12 h-12 rounded-full bg-supabase-green/5" />
+          <div className="absolute top-6 right-2 w-8 h-8 rounded bg-supabase-green/5 -rotate-6" />
+          <Layers className="h-10 w-10 text-supabase-text-muted relative z-10" />
         </div>
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-supabase-bg/20 to-transparent" />
     </div>
   )
 }
@@ -260,11 +260,11 @@ export function DiagramCard({ diagram, onClick, isShared, isTemplate }: DiagramC
   return (
     <>
       <div
-        className="group cursor-pointer rounded-xl border bg-card overflow-hidden transition-all duration-200 ease-out hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-1"
+        className="group cursor-pointer rounded-lg border border-supabase-border bg-supabase-bg-secondary overflow-hidden transition-all duration-200 ease-out hover:shadow-lg hover:shadow-supabase-green/5 hover:border-supabase-border-strong hover:-translate-y-0.5"
         onClick={onClick}
       >
         {/* Thumbnail Area */}
-        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+        <div className="relative aspect-[16/10] overflow-hidden bg-supabase-bg-tertiary">
           {diagram.thumbnail ? (
             <img
               src={diagram.thumbnail}
@@ -283,7 +283,7 @@ export function DiagramCard({ diagram, onClick, isShared, isTemplate }: DiagramC
             <DropdownMenu>
               <DropdownMenuTrigger
                 onClick={(e) => e.stopPropagation()}
-                className="p-1.5 rounded-md bg-background/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 hover:bg-background transition-all shadow-sm"
+                className="p-1.5 rounded-md bg-supabase-bg-secondary/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 hover:bg-supabase-bg-tertiary transition-all shadow-sm text-supabase-text-primary"
               >
                 <MoreVertical className="h-4 w-4" />
               </DropdownMenuTrigger>
@@ -365,13 +365,13 @@ export function DiagramCard({ diagram, onClick, isShared, isTemplate }: DiagramC
 
         {/* Content Area */}
         <div className="p-4">
-          <h3 className="font-semibold text-base truncate mb-1 group-hover:text-primary transition-colors">
+          <h3 className="font-medium text-sm truncate mb-1 text-supabase-text-primary group-hover:text-supabase-green transition-colors">
             {diagram.name}
           </h3>
-          <p className="text-sm text-muted-foreground truncate mb-3">
+          <p className="text-xs text-supabase-text-muted truncate mb-2">
             {diagram.description || 'No description'}
           </p>
-          <p className="text-xs text-muted-foreground/70">
+          <p className="text-xs text-supabase-text-muted">
             Updated {formatDistanceToNow(new Date(diagram.updatedAt), { addSuffix: true })}
           </p>
         </div>
