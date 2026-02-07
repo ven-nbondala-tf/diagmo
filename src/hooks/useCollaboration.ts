@@ -58,6 +58,9 @@ export function useCollaboration({
 
     const join = async () => {
       try {
+        // Set status to connecting while establishing connection
+        setConnectionStatus('connecting')
+
         await collaborationService.join(diagramId, {
           onPresenceChange: (newCollaborators) => {
             if (isMountedRef.current) {
@@ -194,8 +197,9 @@ export function useCollaboration({
           },
         })
 
+        // Set presence ID after join completes
+        // Connection status will be updated via onConnectionStatusChange callback
         if (isMountedRef.current) {
-          setConnectionStatus('connected')
           setMyPresenceId(collaborationService.getPresenceId())
         }
       } catch (error) {

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { CollaboratorPresence } from '@/types'
 import type { NodeLock } from '@/services/collaborationService'
 
-export type ConnectionStatus = 'connected' | 'disconnected' | 'reconnecting'
+export type ConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'reconnecting'
 
 interface CollaborationState {
   isConnected: boolean
@@ -27,7 +27,7 @@ type CollaborationStore = CollaborationState & CollaborationActions
 
 const initialState: CollaborationState = {
   isConnected: false,
-  connectionStatus: 'disconnected',
+  connectionStatus: 'connecting',
   collaborators: [],
   myPresenceId: null,
   nodeLocks: new Map(),
