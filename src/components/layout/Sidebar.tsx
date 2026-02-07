@@ -313,7 +313,7 @@ function SidebarItem({ icon: Icon, label, href, collapsed, active, badge }: Side
           <NavLink
             to={href}
             className={cn(
-              'flex items-center justify-center p-2 rounded-md text-sm transition-colors',
+              'flex items-center justify-center p-2 rounded-md text-sm transition-colors cursor-pointer',
               active
                 ? 'bg-supabase-green-muted text-supabase-green'
                 : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'
@@ -331,7 +331,7 @@ function SidebarItem({ icon: Icon, label, href, collapsed, active, badge }: Side
     <NavLink
       to={href}
       className={cn(
-        'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+        'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors cursor-pointer',
         active
           ? 'bg-supabase-green-muted text-supabase-green'
           : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'
@@ -366,7 +366,7 @@ function SidebarButton({ icon: Icon, label, onClick, disabled, tooltip }: Sideba
         'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors w-full text-left',
         disabled
           ? 'text-supabase-text-muted cursor-not-allowed'
-          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'
+          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary cursor-pointer'
       )}
     >
       <Icon className="w-4 h-4 flex-shrink-0" />
