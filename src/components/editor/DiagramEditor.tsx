@@ -171,6 +171,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const gridEnabled = useEditorStore((state) => state.gridEnabled)
   const snapToGrid = useEditorStore((state) => state.snapToGrid)
   const gridSize = useEditorStore((state) => state.gridSize)
+  const gridLineWidth = useEditorStore((state) => state.gridLineWidth)
   const loadDiagram = useEditorStore((state) => state.loadDiagram)
   const zoom = useEditorStore((state) => state.zoom)
   const setZoom = useEditorStore((state) => state.setZoom)
@@ -202,13 +203,17 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
     const minZoom = 0.5
     const zoomFactor = zoom < minZoom ? minZoom / zoom : 1
 
+    // Base line widths scaled by user preference
+    const baseMajorWidth = gridLineWidth * 1.0
+    const baseMinorWidth = gridLineWidth * 0.6
+
     return {
       majorGap: gridSize * 5 * zoomFactor,
       minorGap: gridSize * zoomFactor,
-      majorLineWidth: Math.max(0.5, 0.5 * zoomFactor),
-      minorLineWidth: Math.max(0.3, 0.3 * zoomFactor),
+      majorLineWidth: Math.max(0.5, baseMajorWidth * zoomFactor),
+      minorLineWidth: Math.max(0.3, baseMinorWidth * zoomFactor),
     }
-  }, [zoom, gridSize])
+  }, [zoom, gridSize, gridLineWidth])
 
   // Load diagram on mount
   useEffect(() => {

@@ -51,8 +51,8 @@
     --scrollbar-thumb-hover: #444444;
 
     /* Grid (for React Flow canvas) */
-    --grid-color-major: rgba(255, 255, 255, 0.06);
-    --grid-color-minor: rgba(255, 255, 255, 0.03);
+    --grid-color-major: rgba(255, 255, 255, 0.15);
+    --grid-color-minor: rgba(255, 255, 255, 0.08);
 
     /* shadcn/ui compatible variables (HSL) */
     --background: 0 0% 11%;
@@ -125,8 +125,8 @@
     --scrollbar-thumb-hover: #9ca3af;
 
     /* Grid (for React Flow canvas) */
-    --grid-color-major: rgba(0, 0, 0, 0.08);
-    --grid-color-minor: rgba(0, 0, 0, 0.04);
+    --grid-color-major: rgba(0, 0, 0, 0.15);
+    --grid-color-minor: rgba(0, 0, 0, 0.08);
 
     /* shadcn/ui compatible variables (HSL) */
     --background: 0 0% 100%;

@@ -25,6 +25,7 @@ interface EditorState {
   gridEnabled: boolean
   snapToGrid: boolean
   gridSize: number
+  gridLineWidth: number
   past: HistoryEntry[]
   future: HistoryEntry[]
   isDirty: boolean
@@ -71,6 +72,7 @@ interface EditorActions {
   setGridEnabled: (enabled: boolean) => void
   setSnapToGrid: (snap: boolean) => void
   setGridSize: (size: number) => void
+  setGridLineWidth: (width: number) => void
   undo: () => void
   redo: () => void
   pushHistory: () => void
@@ -155,6 +157,7 @@ const initialState: EditorState = {
   gridEnabled: true,
   snapToGrid: false,  // Disabled by default for 1px movement like Lucidchart
   gridSize: 10,  // Smaller grid when snapping is enabled
+  gridLineWidth: 1,  // Base line width for grid
   propertiesPanelOpen: true,
   interactionMode: 'select',
   shapePanelCollapsed: false,
@@ -494,6 +497,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   setGridEnabled: (gridEnabled) => set({ gridEnabled }),
   setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
   setGridSize: (gridSize) => set({ gridSize }),
+  setGridLineWidth: (gridLineWidth) => set({ gridLineWidth }),
 
   undo: () => {
     const { past, nodes, edges } = get()
