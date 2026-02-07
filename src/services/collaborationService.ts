@@ -480,10 +480,17 @@ class CollaborationService {
 
       await this.join(savedDiagramId!, savedCallbacks)
       console.log('[Collaboration] Reconnected successfully')
+      this.isReconnecting = false
+      this.reconnectAttempts = 0 // Reset on successful reconnection
     } catch (error) {
       console.error('[Collaboration] Reconnection failed:', error)
       this.isReconnecting = false
-      this.handleDisconnect() // Retry
+      // Schedule next retry instead of recursive call to prevent infinite loop
+      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        setTimeout(() => this.handleDisconnect(), 1000)
+      } else {
+        this.callbacks.onError?.(new Error('Max reconnection attempts reached. Please refresh the page.'))
+      }
     }
   }
 

@@ -19,6 +19,9 @@ interface UserPreferences {
   recentTemplateIds: string[]
   recentDiagramIds: string[]
 
+  // Favorite diagrams
+  favoriteDiagramIds: string[]
+
   // View preferences
   defaultZoom: number
   showMinimap: boolean
@@ -44,6 +47,12 @@ interface PreferencesActions {
   addRecentDiagram: (diagramId: string) => void
   clearRecentItems: () => void
 
+  // Favorites
+  addFavorite: (diagramId: string) => void
+  removeFavorite: (diagramId: string) => void
+  isFavorite: (diagramId: string) => boolean
+  toggleFavorite: (diagramId: string) => void
+
   // View preferences
   setDefaultZoom: (zoom: number) => void
   setShowMinimap: (show: boolean) => void
@@ -67,6 +76,7 @@ const defaultPreferences: UserPreferences = {
   interactionMode: 'select',
   recentTemplateIds: [],
   recentDiagramIds: [],
+  favoriteDiagramIds: [],
   defaultZoom: 1,
   showMinimap: true,
   showGrid: true,
@@ -107,6 +117,32 @@ export const usePreferencesStore = create<PreferencesStore>()(
 
       clearRecentItems: () => set({ recentTemplateIds: [], recentDiagramIds: [] }),
 
+      // Favorites
+      addFavorite: (diagramId) => {
+        const current = get().favoriteDiagramIds
+        if (!current.includes(diagramId)) {
+          set({ favoriteDiagramIds: [...current, diagramId] })
+        }
+      },
+
+      removeFavorite: (diagramId) => {
+        const current = get().favoriteDiagramIds
+        set({ favoriteDiagramIds: current.filter((id) => id !== diagramId) })
+      },
+
+      isFavorite: (diagramId) => {
+        return get().favoriteDiagramIds.includes(diagramId)
+      },
+
+      toggleFavorite: (diagramId) => {
+        const current = get().favoriteDiagramIds
+        if (current.includes(diagramId)) {
+          set({ favoriteDiagramIds: current.filter((id) => id !== diagramId) })
+        } else {
+          set({ favoriteDiagramIds: [...current, diagramId] })
+        }
+      },
+
       // View preferences
       setDefaultZoom: (zoom) => set({ defaultZoom: zoom }),
       setShowMinimap: (show) => set({ showMinimap: show }),
@@ -128,6 +164,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
         interactionMode: state.interactionMode,
         recentTemplateIds: state.recentTemplateIds,
         recentDiagramIds: state.recentDiagramIds,
+        favoriteDiagramIds: state.favoriteDiagramIds,
         defaultZoom: state.defaultZoom,
         showMinimap: state.showMinimap,
         showGrid: state.showGrid,

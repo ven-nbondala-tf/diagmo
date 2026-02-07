@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useDiagramsByFolder, useCreateDiagram, useSharedDiagrams, useWorkspaces } from '@/hooks'
 import type { Diagram } from '@/types'
@@ -68,16 +69,23 @@ function StatCard({ title, value, change, icon: Icon }: {
 
 export function DashboardPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user } = useAuthStore()
   const { currentWorkspaceId } = useWorkspaceStore()
+  const { recentDiagramIds, favoriteDiagramIds } = usePreferencesStore()
   const [selectedFolderId] = useState<string | null>(null)
-  const [showShared] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showTemplateGallery, setShowTemplateGallery] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [sortBy, setSortBy] = useState<SortBy>('updated')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  // Get view from URL query parameter
+  const currentView = searchParams.get('view') || 'all'
+  const showShared = currentView === 'shared'
+  const showFavorites = currentView === 'favorites'
+  const showRecent = currentView === 'recent'
 
   // Get current workspace name for display
   const { data: workspaces = [] } = useWorkspaces()
@@ -104,7 +112,26 @@ export function DashboardPage() {
     }))
   }, [sharedDiagramsData])
 
-  const diagrams = showShared ? sharedDiagrams : ownDiagrams
+  // Filter diagrams based on current view
+  const diagrams = useMemo(() => {
+    if (showShared) return sharedDiagrams
+    if (!ownDiagrams) return []
+
+    if (showFavorites) {
+      return ownDiagrams.filter(d => favoriteDiagramIds.includes(d.id))
+    }
+
+    if (showRecent) {
+      // Return diagrams in order of recent access
+      const recentDiagramsFiltered = recentDiagramIds
+        .map(id => ownDiagrams.find(d => d.id === id))
+        .filter((d): d is Diagram => d !== undefined)
+      return recentDiagramsFiltered
+    }
+
+    return ownDiagrams
+  }, [showShared, showFavorites, showRecent, ownDiagrams, sharedDiagrams, favoriteDiagramIds, recentDiagramIds])
+
   const isLoading = showShared ? isLoadingShared : isLoadingOwn
   const error = showShared ? errorShared : errorOwn
 
@@ -219,6 +246,10 @@ export function DashboardPage() {
                 <h1 className="text-2xl font-semibold text-supabase-text-primary">
                   {showShared
                     ? 'Shared with me'
+                    : showFavorites
+                    ? 'Favorites'
+                    : showRecent
+                    ? 'Recent'
                     : currentWorkspace
                     ? currentWorkspace.name
                     : 'My Diagrams'}
@@ -226,6 +257,10 @@ export function DashboardPage() {
                 <p className="text-sm text-supabase-text-muted mt-1">
                   {showShared
                     ? 'Diagrams that others have shared with you'
+                    : showFavorites
+                    ? 'Your starred diagrams'
+                    : showRecent
+                    ? 'Recently opened diagrams'
                     : currentWorkspace
                     ? currentWorkspace.description || 'Team workspace'
                     : `Welcome back${user?.email ? `, ${user.email.split('@')[0]}` : ''}`}

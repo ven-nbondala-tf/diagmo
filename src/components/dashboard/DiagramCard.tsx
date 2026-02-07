@@ -21,8 +21,9 @@ import {
   Badge,
 } from '@/components/ui'
 import { MoveToWorkspaceDialog } from './MoveToWorkspaceDialog'
-import { MoreVertical, Copy, FolderInput, Trash2, Loader2, Home, Users, Layers, ArrowRightLeft } from 'lucide-react'
+import { MoreVertical, Copy, FolderInput, Trash2, Loader2, Home, Users, Layers, ArrowRightLeft, Star } from 'lucide-react'
 import { useDeleteDiagram, useDuplicateDiagram, useMoveDiagramToFolder, useFolders, useWorkspaces } from '@/hooks'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { toast } from 'sonner'
 
 interface DiagramCardProps {
@@ -222,6 +223,15 @@ export function DiagramCard({ diagram, onClick, isShared, isTemplate }: DiagramC
   const moveDiagram = useMoveDiagramToFolder()
   const { data: folders } = useFolders()
   const { data: workspaces = [] } = useWorkspaces()
+  const { isFavorite, toggleFavorite } = usePreferencesStore()
+
+  const isFav = isFavorite(diagram.id)
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    toggleFavorite(diagram.id)
+    toast.success(isFav ? 'Removed from favorites' : 'Added to favorites')
+  }
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -278,8 +288,20 @@ export function DiagramCard({ diagram, onClick, isShared, isTemplate }: DiagramC
           {/* Hover overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
-          {/* Menu button */}
-          <div className="absolute top-2 right-2 z-10">
+          {/* Top actions: Favorite + Menu */}
+          <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+            {/* Favorite button */}
+            <button
+              onClick={handleToggleFavorite}
+              className={`p-1.5 rounded-md backdrop-blur-sm transition-all shadow-sm ${
+                isFav
+                  ? 'bg-yellow-500/90 text-white opacity-100'
+                  : 'bg-supabase-bg-secondary/90 text-supabase-text-primary opacity-0 group-hover:opacity-100 hover:bg-supabase-bg-tertiary'
+              }`}
+              title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Star className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
+            </button>
             <DropdownMenu>
               <DropdownMenuTrigger
                 onClick={(e) => e.stopPropagation()}

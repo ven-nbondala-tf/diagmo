@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { cn } from '@/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
+import { WorkspaceSettingsDialog } from '@/components/dashboard/WorkspaceSettingsDialog'
 import {
   Home,
   FolderOpen,
@@ -13,7 +14,6 @@ import {
   GitBranch,
   Network,
   Settings,
-  Key,
   ChevronDown,
   ChevronRight,
   Plus,
@@ -41,7 +41,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: SidebarProps) {
   const location = useLocation()
   const [expandedSections, setExpandedSections] = useState(['TEMPLATES'])
-  const { currentWorkspaceId, setCurrentWorkspace } = useWorkspaceStore()
+  const { currentWorkspaceId, setCurrentWorkspace, setWorkspaceSettingsOpen } = useWorkspaceStore()
   const { data: workspaces = [] } = useWorkspaces()
 
   const currentWorkspace = workspaces.find((w) => w.id === currentWorkspaceId)
@@ -255,9 +255,20 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
             </button>
             {expandedSections.includes('WORKSPACE') && (
               <div className="px-3 mt-1 space-y-1">
-                <SidebarItem icon={Settings} label="Settings" href="/settings" />
-                <SidebarItem icon={Users} label="Team" href="/team" />
-                <SidebarItem icon={Key} label="API Keys" href="/api-keys" />
+                <SidebarButton
+                  icon={Settings}
+                  label="Settings"
+                  onClick={() => setWorkspaceSettingsOpen(true, currentWorkspaceId)}
+                  disabled={!currentWorkspaceId}
+                  tooltip={!currentWorkspaceId ? 'Select a workspace first' : undefined}
+                />
+                <SidebarButton
+                  icon={Users}
+                  label="Team"
+                  onClick={() => setWorkspaceSettingsOpen(true, currentWorkspaceId)}
+                  disabled={!currentWorkspaceId}
+                  tooltip={!currentWorkspaceId ? 'Select a workspace first' : undefined}
+                />
               </div>
             )}
           </div>
@@ -278,6 +289,9 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
           {!collapsed && <span>New Diagram</span>}
         </button>
       </div>
+
+      {/* Workspace Settings Dialog - rendered via store state */}
+      <WorkspaceSettingsDialog />
     </aside>
   )
 }
@@ -332,4 +346,42 @@ function SidebarItem({ icon: Icon, label, href, collapsed, active, badge }: Side
       )}
     </NavLink>
   )
+}
+
+// Button variant for non-navigation actions
+interface SidebarButtonProps {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  onClick: () => void
+  disabled?: boolean
+  tooltip?: string
+}
+
+function SidebarButton({ icon: Icon, label, onClick, disabled, tooltip }: SidebarButtonProps) {
+  const button = (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors w-full text-left',
+        disabled
+          ? 'text-supabase-text-muted cursor-not-allowed'
+          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'
+      )}
+    >
+      <Icon className="w-4 h-4 flex-shrink-0" />
+      <span className="flex-1">{label}</span>
+    </button>
+  )
+
+  if (tooltip) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent>{tooltip}</TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  return button
 }
