@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -172,6 +172,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const snapToGrid = useEditorStore((state) => state.snapToGrid)
   const gridSize = useEditorStore((state) => state.gridSize)
   const loadDiagram = useEditorStore((state) => state.loadDiagram)
+  const zoom = useEditorStore((state) => state.zoom)
   const setZoom = useEditorStore((state) => state.setZoom)
   const pushHistory = useEditorStore((state) => state.pushHistory)
   const setNodes = useEditorStore((state) => state.setNodes)
@@ -193,6 +194,21 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
 
   // Track diagram in recent items
   const addRecentDiagram = usePreferencesStore((state) => state.addRecentDiagram)
+
+  // Calculate zoom-independent grid values
+  // At lower zoom levels, increase the gap to keep grid visible
+  const gridConfig = useMemo(() => {
+    // Minimum zoom threshold below which we compensate
+    const minZoom = 0.5
+    const zoomFactor = zoom < minZoom ? minZoom / zoom : 1
+
+    return {
+      majorGap: gridSize * 5 * zoomFactor,
+      minorGap: gridSize * zoomFactor,
+      majorLineWidth: Math.max(0.5, 0.5 * zoomFactor),
+      minorLineWidth: Math.max(0.3, 0.3 * zoomFactor),
+    }
+  }, [zoom, gridSize])
 
   // Load diagram on mount
   useEffect(() => {
@@ -438,15 +454,15 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
               <Background
                 id="major-grid"
                 variant={BackgroundVariant.Lines}
-                gap={gridSize * 5}
-                lineWidth={0.5}
+                gap={gridConfig.majorGap}
+                lineWidth={gridConfig.majorLineWidth}
                 color="var(--grid-color-major, rgba(0, 0, 0, 0.08))"
               />
               <Background
                 id="minor-grid"
                 variant={BackgroundVariant.Lines}
-                gap={gridSize}
-                lineWidth={0.3}
+                gap={gridConfig.minorGap}
+                lineWidth={gridConfig.minorLineWidth}
                 color="var(--grid-color-minor, rgba(0, 0, 0, 0.04))"
               />
             </>
