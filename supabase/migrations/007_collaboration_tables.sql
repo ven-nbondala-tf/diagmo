@@ -50,6 +50,12 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 -- Presence Policies
 -- =============================================
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view presence on accessible diagrams" ON diagram_presence;
+DROP POLICY IF EXISTS "Users can insert own presence" ON diagram_presence;
+DROP POLICY IF EXISTS "Users can update own presence" ON diagram_presence;
+DROP POLICY IF EXISTS "Users can delete own presence" ON diagram_presence;
+
 -- Users can view presence on diagrams they have access to
 CREATE POLICY "Users can view presence on accessible diagrams"
   ON diagram_presence FOR SELECT
@@ -100,6 +106,11 @@ CREATE POLICY "Users can delete own presence"
 -- =============================================
 -- Profile Policies
 -- =============================================
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Profiles are viewable by authenticated users" ON profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 
 -- Anyone can view profiles (needed for collaboration display)
 CREATE POLICY "Profiles are viewable by authenticated users"
