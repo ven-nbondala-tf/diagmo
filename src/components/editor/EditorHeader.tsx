@@ -37,6 +37,7 @@ import { ExportCodeDialog } from './ExportCodeDialog'
 import { EmbedDialog } from './EmbedDialog'
 import { AutoLayoutDialog } from './AutoLayoutDialog'
 import { ShareDialog } from './ShareDialog'
+import { DiagramActivityButton } from './DiagramActivityButton'
 
 interface EditorHeaderProps {
   diagram: Diagram
@@ -300,6 +301,9 @@ export function EditorHeader({ diagram }: EditorHeaderProps) {
 
           {/* Collaboration presence indicators */}
           <PresenceIndicators collaborators={collaborators} />
+
+          {/* Activity button */}
+          <DiagramActivityButton />
 
           {/* Share button */}
           <Button

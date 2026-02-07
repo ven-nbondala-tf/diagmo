@@ -11,6 +11,7 @@ import {
 } from '@/components/ui'
 import { ThemeToggle } from './ThemeToggle'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
+import { ActivityButton } from './ActivityDialog'
 import { User, LogOut, Settings } from 'lucide-react'
 
 export function DashboardHeader() {
@@ -31,6 +32,7 @@ export function DashboardHeader() {
         </div>
 
         <div className="flex items-center gap-4">
+          <ActivityButton />
           <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
