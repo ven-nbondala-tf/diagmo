@@ -52,29 +52,42 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Supabase-inspired dark theme colors
+        // Theme-aware Supabase-inspired colors using CSS variables
         supabase: {
           bg: {
-            DEFAULT: '#1c1c1c',
-            secondary: '#232323',
-            tertiary: '#2a2a2a',
-            elevated: '#303030',
+            DEFAULT: 'var(--bg-primary)',
+            secondary: 'var(--bg-secondary)',
+            tertiary: 'var(--bg-tertiary)',
+            elevated: 'var(--bg-elevated)',
+            canvas: 'var(--bg-canvas)',
           },
           border: {
-            DEFAULT: '#333333',
-            subtle: '#2a2a2a',
-            strong: '#444444',
+            DEFAULT: 'var(--border-default)',
+            subtle: 'var(--border-subtle)',
+            strong: 'var(--border-strong)',
           },
           text: {
-            primary: '#ededed',
-            secondary: '#a1a1a1',
-            muted: '#666666',
+            primary: 'var(--text-primary)',
+            secondary: 'var(--text-secondary)',
+            muted: 'var(--text-muted)',
+            inverse: 'var(--text-inverse)',
           },
           green: {
-            DEFAULT: '#3ECF8E',
-            hover: '#2eb77a',
-            muted: 'rgba(62, 207, 142, 0.15)',
+            DEFAULT: 'var(--accent-primary)',
+            hover: 'var(--accent-hover)',
+            muted: 'var(--accent-muted)',
           },
+        },
+        // Status colors using CSS variables
+        status: {
+          success: 'var(--success)',
+          'success-muted': 'var(--success-muted)',
+          warning: 'var(--warning)',
+          'warning-muted': 'var(--warning-muted)',
+          error: 'var(--error)',
+          'error-muted': 'var(--error-muted)',
+          info: 'var(--info)',
+          'info-muted': 'var(--info-muted)',
         },
       },
       borderRadius: {

@@ -6,10 +6,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui'
-import { Sun, Moon, Monitor } from 'lucide-react'
+import { Sun, Moon, Monitor, Check } from 'lucide-react'
 
 export function ThemeToggle() {
-  const { setTheme } = useThemeStore()
+  const { mode, setMode } = useThemeStore()
 
   return (
     <DropdownMenu>
@@ -21,17 +21,26 @@ export function ThemeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme('light')}>
-          <Sun className="mr-2 h-4 w-4" />
-          Light
+        <DropdownMenuItem onClick={() => setMode('light')} className="flex justify-between">
+          <div className="flex items-center">
+            <Sun className="mr-2 h-4 w-4" />
+            Light
+          </div>
+          {mode === 'light' && <Check className="h-4 w-4 text-supabase-green" />}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('dark')}>
-          <Moon className="mr-2 h-4 w-4" />
-          Dark
+        <DropdownMenuItem onClick={() => setMode('dark')} className="flex justify-between">
+          <div className="flex items-center">
+            <Moon className="mr-2 h-4 w-4" />
+            Dark
+          </div>
+          {mode === 'dark' && <Check className="h-4 w-4 text-supabase-green" />}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('system')}>
-          <Monitor className="mr-2 h-4 w-4" />
-          System
+        <DropdownMenuItem onClick={() => setMode('system')} className="flex justify-between">
+          <div className="flex items-center">
+            <Monitor className="mr-2 h-4 w-4" />
+            System
+          </div>
+          {mode === 'system' && <Check className="h-4 w-4 text-supabase-green" />}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1,8 +1,56 @@
 @import "tailwindcss";
 
+/* ===== DUAL THEME CSS VARIABLES ===== */
 @layer base {
-  /* Supabase-inspired dark theme as default */
-  :root {
+  /* Dark theme (Default) */
+  :root,
+  .dark {
+    /* Backgrounds */
+    --bg-primary: #1c1c1c;
+    --bg-secondary: #232323;
+    --bg-tertiary: #2a2a2a;
+    --bg-elevated: #303030;
+    --bg-canvas: #1a1a1a;
+
+    /* Borders */
+    --border-default: #333333;
+    --border-subtle: #2a2a2a;
+    --border-strong: #444444;
+
+    /* Text */
+    --text-primary: #ededed;
+    --text-secondary: #a1a1a1;
+    --text-muted: #666666;
+    --text-inverse: #1c1c1c;
+
+    /* Accent */
+    --accent-primary: #3ECF8E;
+    --accent-hover: #2eb77a;
+    --accent-muted: rgba(62, 207, 142, 0.15);
+    --accent-text: #1c1c1c;
+
+    /* Status */
+    --success: #3ECF8E;
+    --success-muted: rgba(62, 207, 142, 0.15);
+    --warning: #F5A623;
+    --warning-muted: rgba(245, 166, 35, 0.15);
+    --error: #F25C54;
+    --error-muted: rgba(242, 92, 84, 0.15);
+    --info: #3B82F6;
+    --info-muted: rgba(59, 130, 246, 0.15);
+
+    /* Special */
+    --selection: rgba(62, 207, 142, 0.3);
+    --focus-ring: rgba(62, 207, 142, 0.5);
+    --overlay: rgba(0, 0, 0, 0.6);
+    --shadow: rgba(0, 0, 0, 0.4);
+
+    /* Scrollbar */
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: #333333;
+    --scrollbar-thumb-hover: #444444;
+
+    /* shadcn/ui compatible variables (HSL) */
     --background: 0 0% 11%;
     --foreground: 0 0% 93%;
     --card: 0 0% 14%;
@@ -25,8 +73,54 @@
     --radius: 0.5rem;
   }
 
-  /* Light theme (optional) */
+  /* Light theme */
   .light {
+    /* Backgrounds */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #f1f3f4;
+    --bg-elevated: #ffffff;
+    --bg-canvas: #f5f5f5;
+
+    /* Borders */
+    --border-default: #e5e7eb;
+    --border-subtle: #f1f3f4;
+    --border-strong: #d1d5db;
+
+    /* Text */
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+    --text-inverse: #ffffff;
+
+    /* Accent */
+    --accent-primary: #10b981;
+    --accent-hover: #059669;
+    --accent-muted: rgba(16, 185, 129, 0.1);
+    --accent-text: #ffffff;
+
+    /* Status */
+    --success: #10b981;
+    --success-muted: rgba(16, 185, 129, 0.1);
+    --warning: #f59e0b;
+    --warning-muted: rgba(245, 158, 11, 0.1);
+    --error: #ef4444;
+    --error-muted: rgba(239, 68, 68, 0.1);
+    --info: #3b82f6;
+    --info-muted: rgba(59, 130, 246, 0.1);
+
+    /* Special */
+    --selection: rgba(16, 185, 129, 0.2);
+    --focus-ring: rgba(16, 185, 129, 0.5);
+    --overlay: rgba(0, 0, 0, 0.4);
+    --shadow: rgba(0, 0, 0, 0.1);
+
+    /* Scrollbar */
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: #d1d5db;
+    --scrollbar-thumb-hover: #9ca3af;
+
+    /* shadcn/ui compatible variables (HSL) */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -72,6 +166,32 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* Theme-aware color variables */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-canvas: var(--bg-canvas);
+  --color-border-default: var(--border-default);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-inverse: var(--text-inverse);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-text: var(--accent-text);
+  --color-success: var(--success);
+  --color-success-muted: var(--success-muted);
+  --color-warning: var(--warning);
+  --color-warning-muted: var(--warning-muted);
+  --color-error: var(--error);
+  --color-error-muted: var(--error-muted);
+  --color-info: var(--info);
+  --color-info-muted: var(--info-muted);
 }
 
 @layer base {
@@ -79,38 +199,41 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    background: var(--bg-primary);
+    color: var(--text-primary);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    @apply antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
-  /* Supabase-style scrollbar */
+  /* Scrollbar styling with theme variables */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--scrollbar-track);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #333;
+    background: var(--scrollbar-thumb);
     border-radius: 999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #444;
+    background: var(--scrollbar-thumb-hover);
   }
 
-  /* Focus styles with green ring */
+  /* Focus styles with theme-aware ring */
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(62, 207, 142, 0.5);
+    box-shadow: 0 0 0 2px var(--focus-ring);
   }
 
   /* Text selection */
   ::selection {
-    background: rgba(62, 207, 142, 0.3);
+    background: var(--selection);
   }
 }
 
@@ -119,82 +242,82 @@
   /* Dark input style */
   .input-dark {
     @apply w-full px-3 py-2 rounded-md text-sm transition-colors;
-    background: #232323;
-    border: 1px solid #333;
-    color: #ededed;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
   }
   .input-dark::placeholder {
-    color: #666;
+    color: var(--text-muted);
   }
   .input-dark:focus {
     outline: none;
-    border-color: rgba(62, 207, 142, 0.5);
-    box-shadow: 0 0 0 1px rgba(62, 207, 142, 0.2);
+    border-color: var(--focus-ring);
+    box-shadow: 0 0 0 1px var(--accent-muted);
   }
 
   /* Primary button (green) */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors;
-    background: #3ECF8E;
-    color: #1c1c1c;
+    background: var(--accent-primary);
+    color: var(--accent-text);
   }
   .btn-primary:hover {
-    background: #2eb77a;
+    background: var(--accent-hover);
   }
   .btn-primary:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(62, 207, 142, 0.5);
+    box-shadow: 0 0 0 2px var(--focus-ring);
   }
 
-  /* Secondary button (dark) */
+  /* Secondary button */
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors;
-    background: #232323;
-    border: 1px solid #333;
-    color: #ededed;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
   }
   .btn-secondary:hover {
-    background: #2a2a2a;
-    border-color: #444;
+    background: var(--bg-tertiary);
+    border-color: var(--border-strong);
   }
 
   /* Ghost button */
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors;
-    color: #a1a1a1;
+    color: var(--text-secondary);
     background: transparent;
   }
   .btn-ghost:hover {
-    color: #ededed;
-    background: #2a2a2a;
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
   }
 
-  /* Dark card style */
+  /* Card style */
   .card-dark {
     @apply rounded-lg overflow-hidden transition-colors;
-    background: #232323;
-    border: 1px solid #333;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
   }
   .card-dark:hover {
-    border-color: #444;
+    border-color: var(--border-strong);
   }
 
   /* Tab bar container */
   .tab-bar {
     @apply flex;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border-default);
   }
 
   /* Tab item */
   .tab-item {
     @apply px-4 py-2.5 text-sm font-medium relative transition-colors;
-    color: #666;
+    color: var(--text-muted);
   }
   .tab-item:hover {
-    color: #a1a1a1;
+    color: var(--text-secondary);
   }
   .tab-item.active {
-    color: #ededed;
+    color: var(--text-primary);
   }
   .tab-item.active::after {
     content: '';
@@ -203,7 +326,48 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: #3ECF8E;
+    background: var(--accent-primary);
+  }
+
+  /* Sidebar item */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors;
+    color: var(--text-secondary);
+  }
+  .sidebar-item:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+  }
+  .sidebar-item.active {
+    background: var(--accent-muted);
+    color: var(--accent-primary);
+  }
+
+  /* Dialog/Modal */
+  .dialog-overlay {
+    background: var(--overlay);
+  }
+
+  .dialog-content {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    @apply rounded-lg shadow-lg;
+  }
+
+  /* Dropdown */
+  .dropdown-content {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    @apply rounded-lg shadow-lg;
+  }
+
+  .dropdown-item {
+    @apply px-3 py-2 text-sm cursor-pointer transition-colors;
+    color: var(--text-secondary);
+  }
+  .dropdown-item:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
   }
 }
 
@@ -216,12 +380,12 @@
 
 /* Node hover - subtle lift effect */
 .react-flow__node:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 16px var(--shadow), 0 1px 4px var(--shadow);
 }
 
 /* Selected node - slightly stronger lift */
 .react-flow__node.selected {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 20px var(--shadow), 0 2px 6px var(--shadow);
 }
 
 /* Node being dragged */
@@ -231,7 +395,7 @@
 }
 
 .react-flow__node.dragging > div {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--shadow);
 }
 
 /* ========== CONNECTION HANDLES ========== */
@@ -344,14 +508,10 @@
 
 .react-flow__minimap {
   backdrop-filter: blur(12px);
-  background-color: rgba(255, 255, 255, 0.8) !important;
+  background-color: var(--bg-secondary) !important;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.dark .react-flow__minimap {
-  background-color: rgba(17, 24, 39, 0.8) !important;
+  box-shadow: 0 4px 6px -1px var(--shadow);
+  border: 1px solid var(--border-default);
 }
 
 /* ========== RESIZE HANDLES - LUCIDCHART STYLE ========== */
@@ -416,7 +576,7 @@
 [cmdk-overlay] {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay);
   z-index: 50;
 }
 

@@ -1,3 +1,4 @@
 export { useAuthStore } from './authStore'
 export { useEditorStore } from './editorStore'
 export { useWorkspaceStore } from './workspaceStore'
+export { useThemeStore, useSystemThemeListener } from './themeStore'

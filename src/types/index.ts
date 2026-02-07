@@ -1,5 +1,8 @@
 import type { Node, Edge } from '@xyflow/react'
 
+// Theme types
+export * from './theme'
+
 // User types
 export interface User {
   id: string

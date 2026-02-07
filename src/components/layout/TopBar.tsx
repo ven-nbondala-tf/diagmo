@@ -20,6 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui'
+import { ThemeSwitcher } from '@/components/shared/ThemeSwitcher'
 
 interface TopBarProps {
   breadcrumbs?: { label: string; href?: string }[]
@@ -98,6 +99,9 @@ export function TopBar({ breadcrumbs, actions, showSearch = true }: TopBarProps)
         <button className="px-3 py-1.5 text-sm text-supabase-text-secondary hover:text-supabase-text-primary transition-colors hidden lg:block">
           Feedback
         </button>
+
+        {/* Theme Switcher */}
+        <ThemeSwitcher showLabel={false} />
 
         {/* Help */}
         <Tooltip>
