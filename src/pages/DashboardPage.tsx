@@ -164,6 +164,28 @@ export function DashboardPage() {
     return sortOrder === 'desc' ? sorted.reverse() : sorted
   }, [filteredDiagrams, sortBy, sortOrder])
 
+  // Helper function to calculate optimal edge handles based on node positions
+  const getEdgeHandles = (
+    sourcePos: { x: number; y: number },
+    targetPos: { x: number; y: number }
+  ): { sourceHandle: string; targetHandle: string } => {
+    const dx = targetPos.x - sourcePos.x
+    const dy = targetPos.y - sourcePos.y
+
+    // Determine primary direction based on which delta is larger
+    if (Math.abs(dx) > Math.abs(dy)) {
+      // Horizontal connection preferred
+      return dx > 0
+        ? { sourceHandle: 'right', targetHandle: 'left' }
+        : { sourceHandle: 'left', targetHandle: 'right' }
+    } else {
+      // Vertical connection preferred
+      return dy > 0
+        ? { sourceHandle: 'bottom', targetHandle: 'top' }
+        : { sourceHandle: 'top', targetHandle: 'bottom' }
+    }
+  }
+
   const handleCreateDiagram = async (template?: DiagramTemplate | ArchitectureTemplate) => {
     try {
       // Check if it's an architecture template (has 'categories' array)
@@ -175,8 +197,16 @@ export function DashboardPage() {
 
       if (template) {
         if (isArchitectureTemplate) {
+          const archTemplate = template as ArchitectureTemplate
+
+          // Create a position map for calculating edge handles
+          const nodePositions = new Map<string, { x: number; y: number }>()
+          archTemplate.nodes.forEach(node => {
+            nodePositions.set(node.id, node.position)
+          })
+
           // Convert ArchitectureTemplate nodes: set type to 'custom', add width/height
-          nodes = (template as ArchitectureTemplate).nodes.map(node => ({
+          nodes = archTemplate.nodes.map(node => ({
             id: node.id,
             type: 'custom', // React Flow node type must be 'custom'
             position: node.position,
@@ -188,24 +218,41 @@ export function DashboardPage() {
             },
           })) as DiagramNode[]
 
-          // Convert edges - preserve all handle and style properties
-          edges = (template as ArchitectureTemplate).edges.map(edge => ({
-            id: edge.id,
-            source: edge.source,
-            target: edge.target,
-            sourceHandle: edge.sourceHandle || undefined,
-            targetHandle: edge.targetHandle || undefined,
-            type: edge.type || 'smoothstep',
-            label: edge.label,
-            data: edge.data || {},
-            style: edge.style,
-            markerEnd: {
-              type: 'arrowclosed' as const,
-              width: 8,
-              height: 8,
-              color: '#64748b',
-            },
-          })) as DiagramEdge[]
+          // Convert edges - calculate handles if not provided
+          edges = archTemplate.edges.map(edge => {
+            // If handles are already defined, use them
+            let sourceHandle = edge.sourceHandle
+            let targetHandle = edge.targetHandle
+
+            // If handles are not defined, calculate optimal ones based on node positions
+            if (!sourceHandle || !targetHandle) {
+              const sourcePos = nodePositions.get(edge.source)
+              const targetPos = nodePositions.get(edge.target)
+              if (sourcePos && targetPos) {
+                const calculatedHandles = getEdgeHandles(sourcePos, targetPos)
+                sourceHandle = sourceHandle || calculatedHandles.sourceHandle
+                targetHandle = targetHandle || calculatedHandles.targetHandle
+              }
+            }
+
+            return {
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              sourceHandle,
+              targetHandle,
+              type: edge.type || 'smoothstep',
+              label: edge.label,
+              data: edge.data || {},
+              style: edge.style,
+              markerEnd: {
+                type: 'arrowclosed' as const,
+                width: 8,
+                height: 8,
+                color: '#64748b',
+              },
+            }
+          }) as DiagramEdge[]
         } else {
           // DiagramTemplate nodes are already in the correct format
           nodes = (template as DiagramTemplate).nodes
