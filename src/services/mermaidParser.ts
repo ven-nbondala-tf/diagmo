@@ -441,16 +441,78 @@ function layoutAndConvert(
     }
   })
 
+  // Helper function to determine best connection handles based on node positions and direction
+  const getEdgeHandles = (
+    sourcePos: { x: number; y: number },
+    targetPos: { x: number; y: number },
+    graphDirection: 'TB' | 'LR' | 'BT' | 'RL'
+  ): { sourceHandle: string; targetHandle: string } => {
+    const dx = targetPos.x - sourcePos.x
+    const dy = targetPos.y - sourcePos.y
+
+    // For left-to-right graphs, prefer horizontal connections
+    if (graphDirection === 'LR') {
+      if (dx > 0) return { sourceHandle: 'right', targetHandle: 'left' }
+      if (dx < 0) return { sourceHandle: 'left', targetHandle: 'right' }
+      // Same column - use vertical
+      if (dy > 0) return { sourceHandle: 'bottom', targetHandle: 'top' }
+      return { sourceHandle: 'top', targetHandle: 'bottom' }
+    }
+
+    // For right-to-left graphs
+    if (graphDirection === 'RL') {
+      if (dx < 0) return { sourceHandle: 'left', targetHandle: 'right' }
+      if (dx > 0) return { sourceHandle: 'right', targetHandle: 'left' }
+      if (dy > 0) return { sourceHandle: 'bottom', targetHandle: 'top' }
+      return { sourceHandle: 'top', targetHandle: 'bottom' }
+    }
+
+    // For top-to-bottom graphs, prefer vertical connections
+    if (graphDirection === 'TB') {
+      if (dy > 0) return { sourceHandle: 'bottom', targetHandle: 'top' }
+      if (dy < 0) return { sourceHandle: 'top', targetHandle: 'bottom' }
+      // Same row - use horizontal
+      if (dx > 0) return { sourceHandle: 'right', targetHandle: 'left' }
+      return { sourceHandle: 'left', targetHandle: 'right' }
+    }
+
+    // For bottom-to-top graphs
+    if (graphDirection === 'BT') {
+      if (dy < 0) return { sourceHandle: 'top', targetHandle: 'bottom' }
+      if (dy > 0) return { sourceHandle: 'bottom', targetHandle: 'top' }
+      if (dx > 0) return { sourceHandle: 'right', targetHandle: 'left' }
+      return { sourceHandle: 'left', targetHandle: 'right' }
+    }
+
+    // Default: use horizontal if dx is larger, vertical if dy is larger
+    if (Math.abs(dx) > Math.abs(dy)) {
+      return dx > 0
+        ? { sourceHandle: 'right', targetHandle: 'left' }
+        : { sourceHandle: 'left', targetHandle: 'right' }
+    } else {
+      return dy > 0
+        ? { sourceHandle: 'bottom', targetHandle: 'top' }
+        : { sourceHandle: 'top', targetHandle: 'bottom' }
+    }
+  }
+
   // Convert to Diagmo edges
   const edges: DiagramEdge[] = mermaidEdges.map((mEdge) => {
     const strokeWidth = mEdge.style === 'thick' ? 3 : 1.5
     const strokeDasharray = mEdge.style === 'dotted' ? '5,5' : undefined
 
+    // Get positions to determine best handles
+    const sourcePos = positions.get(mEdge.source) || { x: 0, y: 0 }
+    const targetPos = positions.get(mEdge.target) || { x: 0, y: 0 }
+    const handles = getEdgeHandles(sourcePos, targetPos, direction)
+
     return {
       id: nanoid(),
       source: mEdge.source,
       target: mEdge.target,
-      type: 'labeled',
+      sourceHandle: handles.sourceHandle,
+      targetHandle: handles.targetHandle,
+      type: 'smoothstep',
       markerEnd: mEdge.hasArrow
         ? {
             type: 'arrowclosed' as const,

@@ -328,6 +328,28 @@ function layoutResources(resources: TerraformResource[]): Map<string, { x: numbe
   return positions
 }
 
+// Helper function to determine best connection handles based on node positions
+function getEdgeHandles(
+  sourcePos: { x: number; y: number },
+  targetPos: { x: number; y: number }
+): { sourceHandle: string; targetHandle: string } {
+  const dx = targetPos.x - sourcePos.x
+  const dy = targetPos.y - sourcePos.y
+
+  // Determine primary direction based on which delta is larger
+  if (Math.abs(dx) > Math.abs(dy)) {
+    // Horizontal connection preferred
+    return dx > 0
+      ? { sourceHandle: 'right', targetHandle: 'left' }
+      : { sourceHandle: 'left', targetHandle: 'right' }
+  } else {
+    // Vertical connection preferred
+    return dy > 0
+      ? { sourceHandle: 'bottom', targetHandle: 'top' }
+      : { sourceHandle: 'top', targetHandle: 'bottom' }
+  }
+}
+
 export function parseTerraform(input: string): ParseResult {
   const errors: string[] = []
   const nodes: DiagramNode[] = []
@@ -402,16 +424,24 @@ export function parseTerraform(input: string): ParseResult {
     for (const res of resources) {
       const sourceKey = `${res.type}.${res.name}`
       const sourceId = idMap.get(sourceKey)
-      if (!sourceId) continue
+      const sourcePos = positions.get(sourceKey)
+      if (!sourceId || !sourcePos) continue
 
       for (const dep of res.dependencies) {
         const targetId = idMap.get(dep)
-        if (targetId && targetId !== sourceId) {
+        const targetPos = positions.get(dep)
+        if (targetId && targetId !== sourceId && targetPos) {
+          // Get optimal handles based on node positions
+          // Note: dependency flows FROM target TO source (target depends on source)
+          const handles = getEdgeHandles(targetPos, sourcePos)
+          
           const edge: DiagramEdge = {
             id: nanoid(),
             source: targetId, // Dependency points FROM the target
             target: sourceId, // TO the source (which depends on it)
-            type: 'labeled',
+            sourceHandle: handles.sourceHandle,
+            targetHandle: handles.targetHandle,
+            type: 'smoothstep',
             markerEnd: {
               type: 'arrowclosed',
               width: 8,

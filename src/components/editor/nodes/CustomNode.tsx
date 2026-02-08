@@ -437,10 +437,11 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
         }}
       />
 
-      {/* Connection handles - explicitly positioned at center of each edge */}
+      {/* Connection handles - render BOTH source and target for each position */}
+      {/* This ensures edges can connect properly using sourceHandle/targetHandle */}
       {connectionPoints.map((point) => (
         <Handle
-          key={point.id}
+          key={`${point.id}-source`}
           id={point.id}
           type="source"
           position={point.position}
@@ -452,8 +453,22 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
             isValidTarget && 'valid-target'
           )}
           isConnectable={!locked}
-          isConnectableStart={true}
-          isConnectableEnd={true}
+        />
+      ))}
+      {connectionPoints.map((point) => (
+        <Handle
+          key={`${point.id}-target`}
+          id={point.id}
+          type="target"
+          position={point.position}
+          style={point.style}
+          className={cn(
+            'custom-handle',
+            !showHandles && '!opacity-0',
+            showHandles && '!opacity-100',
+            isValidTarget && 'valid-target'
+          )}
+          isConnectable={!locked}
         />
       ))}
 
