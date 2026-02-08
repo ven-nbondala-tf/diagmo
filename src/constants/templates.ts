@@ -1,4 +1,5 @@
 import type { DiagramNode, DiagramEdge } from '@/types'
+import { ALL_CLOUD_TEMPLATES } from './cloudTemplates'
 
 export interface DiagramTemplate {
   id: string
@@ -538,6 +539,7 @@ export const DIAGRAM_TEMPLATES: DiagramTemplate[] = [
   blankTemplate,
   awsArchitectureTemplate,
   azureArchitectureTemplate,
+  ...ALL_CLOUD_TEMPLATES,
   flowchartTemplate,
   networkDiagramTemplate,
   umlClassDiagramTemplate,
