@@ -11,11 +11,11 @@
  * For lazy loading by provider, use LazyCloudIcon component.
  */
 
-// Re-export all icons from provider-specific files
-export * from './aws'
-export * from './azure'
-export * from './gcp'
-export * from './generic'
+// Note: Individual icons can be imported directly from provider files:
+// import { AwsEc2Icon } from './aws'
+// import { AzureVmIcon } from './azure'
+// import { GcpComputeIcon } from './gcp'
+// import { KubernetesIcon } from './generic'
 
 // Import all icons for the registry
 import * as AwsIcons from './aws'
@@ -43,6 +43,24 @@ export const cloudIconComponents = {
   'aws-iam': AwsIcons.AwsIamIcon,
   'aws-ecs': AwsIcons.AwsEcsIcon,
   'aws-eks': AwsIcons.AwsEksIcon,
+  // AWS - AI/ML
+  'aws-bedrock': AwsIcons.AwsBedrockIcon,
+  'aws-q': AwsIcons.AwsQIcon,
+  // AWS - Networking Additional
+  'aws-nat-gateway': AwsIcons.AwsNatGatewayIcon,
+  'aws-internet-gateway': AwsIcons.AwsInternetGatewayIcon,
+  'aws-elb': AwsIcons.AwsElbIcon,
+  // AWS - Additional Services (from GCP file - legacy location)
+  'aws-cognito': GcpIcons.AwsCognitoIcon,
+  'aws-ecr': GcpIcons.AwsEcrIcon,
+  'aws-elasticache': GcpIcons.AwsElastiCacheIcon,
+  'aws-secrets-manager': GcpIcons.AwsSecretsManagerIcon,
+  'aws-cloudwatch': GcpIcons.AwsCloudWatchIcon,
+  'aws-kinesis': GcpIcons.AwsKinesisIcon,
+  'aws-glue': GcpIcons.AwsGlueIcon,
+  'aws-athena': GcpIcons.AwsAthenaIcon,
+  'aws-quicksight': GcpIcons.AwsQuickSightIcon,
+  'aws-opensearch': GcpIcons.AwsOpenSearchIcon,
   // Azure - Core (available icons)
   'azure-vm': AzureIcons.AzureVmIcon,
   'azure-storage': AzureIcons.AzureStorageIcon,
@@ -54,6 +72,30 @@ export const cloudIconComponents = {
   'azure-cdn': AzureIcons.AzureCdnIcon,
   'azure-vnet': AzureIcons.AzureVnetIcon,
   'azure-keyvault': AzureIcons.AzureKeyVaultIcon,
+  // Azure - Microsoft Fabric
+  'azure-fabric': AzureIcons.AzureFabricIcon,
+  'azure-fabric-lakehouse': AzureIcons.AzureFabricLakehouseIcon,
+  'azure-fabric-warehouse': AzureIcons.AzureFabricWarehouseIcon,
+  'azure-fabric-eventhouse': AzureIcons.AzureFabricEventhouseIcon,
+  'azure-onelake': AzureIcons.AzureOneLakeIcon,
+  'azure-fabric-pipeline': AzureIcons.AzureFabricPipelineIcon,
+  'azure-power-bi': AzureIcons.AzurePowerBIIcon,
+  'azure-fabric-spark': AzureIcons.AzureFabricSparkIcon,
+  'azure-fabric-dataflow': AzureIcons.AzureFabricDataflowIcon,
+  'azure-entra-id': AzureIcons.AzureEntraIdIcon,
+  'azure-openai': AzureIcons.AzureOpenAIIcon,
+  // Azure - Additional Services (from GCP file - legacy location)
+  'azure-front-door': GcpIcons.AzureFrontDoorIcon,
+  'azure-redis-cache': GcpIcons.AzureRedisCacheIcon,
+  'azure-api-management': GcpIcons.AzureAPIManagementIcon,
+  'azure-event-hub': GcpIcons.AzureEventHubIcon,
+  'azure-event-grid': GcpIcons.AzureEventGridIcon,
+  'azure-service-bus': GcpIcons.AzureServiceBusIcon,
+  'azure-container-registry': GcpIcons.AzureContainerRegistryIcon,
+  'azure-monitor': GcpIcons.AzureMonitorIcon,
+  'azure-machine-learning': GcpIcons.AzureMachineLearningIcon,
+  'azure-cognitive-services': GcpIcons.AzureCognitiveServicesIcon,
+  'azure-synapse': GcpIcons.AzureSynapseIcon,
   // GCP - Core
   'gcp-compute': GcpIcons.GcpComputeIcon,
   'gcp-functions': GcpIcons.GcpFunctionsIcon,
@@ -71,6 +113,16 @@ export const cloudIconComponents = {
   'gcp-iam': GcpIcons.GcpIamIcon,
   'gcp-bigquery': GcpIcons.GcpBigQueryIcon,
   'gcp-pubsub': GcpIcons.GcpPubSubIcon,
+  // GCP - AI/ML
+  'gcp-vertex-ai': GcpIcons.GcpVertexAiIcon,
+  'gcp-gemini': GcpIcons.GcpGeminiIcon,
+  // GCP - Additional Services
+  'gcp-dataflow': GcpIcons.GcpDataflowIcon,
+  'gcp-looker': GcpIcons.GcpLookerIcon,
+  'gcp-artifact-registry': GcpIcons.GcpArtifactRegistryIcon,
+  'gcp-memorystore': GcpIcons.GcpMemorystoreIcon,
+  'gcp-secret-manager': GcpIcons.GcpSecretManagerIcon,
+  'gcp-cloud-monitoring': GcpIcons.GcpCloudMonitoringIcon,
   // Generic
   'kubernetes': GenericIcons.KubernetesIcon,
   'docker': GenericIcons.DockerIcon,
