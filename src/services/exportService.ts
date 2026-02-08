@@ -303,8 +303,13 @@ export const exportService = {
         width,
         height,
         pixelRatio: 1,
+        skipFonts: true, // Skip external fonts to avoid CORS errors
       })
       return dataUrl
+    } catch (error) {
+      console.warn('Thumbnail generation failed, returning empty:', error)
+      // Return a simple placeholder on error
+      return ''
     } finally {
       document.body.removeChild(container)
     }
