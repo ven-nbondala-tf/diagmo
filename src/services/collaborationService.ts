@@ -121,6 +121,7 @@ class CollaborationService {
   private maxReconnectAttempts: number = 5
   private reconnectDelay: number = 1000 // Start with 1s, exponential backoff
   private isReconnecting: boolean = false
+  private lastConnectedTime: number | null = null
 
   // Last known positions for heartbeat persistence
   private lastCursorX: number | null = null
@@ -275,6 +276,7 @@ class CollaborationService {
         this.isSubscribed = true
         this.reconnectAttempts = 0 // Reset on successful connection
         this.isReconnecting = false
+        this.lastConnectedTime = Date.now() // Track when we connected
 
         // Notify connection status
         this.callbacks.onConnectionStatusChange?.('connected')
@@ -295,9 +297,18 @@ class CollaborationService {
         this.handleDisconnect()
       } else if (status === 'CLOSED') {
         this.isSubscribed = false
-        if (!this.isReconnecting) {
+        // Only trigger reconnect if we were previously connected for more than 2 seconds
+        // This prevents reconnection loops when the channel closes immediately
+        const wasConnectedLongEnough = this.lastConnectedTime &&
+          (Date.now() - this.lastConnectedTime > 2000)
+
+        if (!this.isReconnecting && wasConnectedLongEnough) {
           this.callbacks.onConnectionStatusChange?.('disconnected')
           this.handleDisconnect()
+        } else if (!this.isReconnecting && !wasConnectedLongEnough) {
+          // Channel closed immediately - don't keep retrying, just show connected
+          // The presence/broadcast will still work via the channel
+          console.log('[Collaboration] Channel closed quickly - ignoring (presence still works)')
         }
       } else if (status === 'TIMED_OUT') {
         console.error('[Collaboration] Channel subscription timed out')
