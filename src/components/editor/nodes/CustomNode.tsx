@@ -9,8 +9,8 @@ import { NodeContextMenu } from '../NodeContextMenu'
 
 type CustomNodeProps = NodeProps<DiagramNode & { position: { x: number; y: number } }>
 
-// Simple 4 cardinal connection points with explicit inline positioning
-// Using inline styles to ensure handles are centered on each edge
+// Simple 4 cardinal connection points with explicit absolute positioning
+// Forces handles to be at the exact center of each edge
 const getShapeConnectionPoints = (_type: ShapeType): Array<{
   id: string
   position: Position
@@ -20,22 +20,50 @@ const getShapeConnectionPoints = (_type: ShapeType): Array<{
     {
       id: 'top',
       position: Position.Top,
-      style: { left: '50%', top: 0, transform: 'translate(-50%, -50%)' }
+      style: {
+        position: 'absolute',
+        left: '50%',
+        top: 0,
+        right: 'auto',
+        bottom: 'auto',
+        transform: 'translate(-50%, -50%)'
+      }
     },
     {
       id: 'right',
       position: Position.Right,
-      style: { right: 0, left: 'auto', top: '50%', transform: 'translate(50%, -50%)' }
+      style: {
+        position: 'absolute',
+        right: 0,
+        left: 'auto',
+        top: '50%',
+        bottom: 'auto',
+        transform: 'translate(50%, -50%)'
+      }
     },
     {
       id: 'bottom',
       position: Position.Bottom,
-      style: { left: '50%', top: 'auto', bottom: 0, transform: 'translate(-50%, 50%)' }
+      style: {
+        position: 'absolute',
+        left: '50%',
+        top: 'auto',
+        right: 'auto',
+        bottom: 0,
+        transform: 'translate(-50%, 50%)'
+      }
     },
     {
       id: 'left',
       position: Position.Left,
-      style: { left: 0, top: '50%', transform: 'translate(-50%, -50%)' }
+      style: {
+        position: 'absolute',
+        left: 0,
+        top: '50%',
+        right: 'auto',
+        bottom: 'auto',
+        transform: 'translate(-50%, -50%)'
+      }
     },
   ]
 }

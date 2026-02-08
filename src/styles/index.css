@@ -447,7 +447,7 @@
   /* Will be shown via !opacity-100 class when connection in progress */
 }
 
-/* Custom handle style - appearance only, let React Flow handle positioning */
+/* Custom handle style and positioning */
 .react-flow__handle.custom-handle {
   width: 8px !important;
   height: 8px !important;
@@ -458,6 +458,41 @@
   border-radius: 50% !important;
   cursor: crosshair !important;
   z-index: 10 !important;
+  /* Force absolute positioning */
+  position: absolute !important;
+}
+
+/* Force handle positions at center of each edge with maximum specificity */
+.react-flow .react-flow__node .custom-handle.react-flow__handle-top {
+  left: 50% !important;
+  top: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.react-flow .react-flow__node .custom-handle.react-flow__handle-right {
+  right: 0 !important;
+  left: auto !important;
+  top: 50% !important;
+  bottom: auto !important;
+  transform: translate(50%, -50%) !important;
+}
+
+.react-flow .react-flow__node .custom-handle.react-flow__handle-bottom {
+  left: 50% !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: 0 !important;
+  transform: translate(-50%, 50%) !important;
+}
+
+.react-flow .react-flow__node .custom-handle.react-flow__handle-left {
+  left: 0 !important;
+  top: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
 }
 
 /* Handle hover - slightly larger and brighter */
