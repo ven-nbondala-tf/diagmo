@@ -149,7 +149,11 @@ export function useAIAssistant(options: UseAIAssistantOptions = {}) {
       'microservices': 'Create a microservices architecture with API gateway, multiple services, and databases',
     }
 
-    return generateDiagram(prompts[template], template === 'flowchart' ? 'flowchart' : 'architecture')
+    const prompt = prompts[template]
+    if (!prompt) {
+      throw new Error(`Unknown template: ${template}`)
+    }
+    return generateDiagram(prompt, template === 'flowchart' ? 'flowchart' : 'architecture')
   }, [generateDiagram])
 
   return {

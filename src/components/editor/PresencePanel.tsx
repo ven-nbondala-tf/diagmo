@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { cn } from '@/utils/cn'
-import { Users, ChevronDown, ChevronUp, Circle, MousePointer2 } from 'lucide-react'
+import { Users, ChevronUp, Circle, MousePointer2 } from 'lucide-react'
 import {
   Tooltip,
   TooltipContent,

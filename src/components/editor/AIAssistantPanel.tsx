@@ -11,7 +11,6 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  Check,
   AlertCircle,
   Zap,
   Grid3X3,
@@ -27,6 +26,7 @@ interface AIAssistantPanelProps {
   onAddEdges: (edges: DiagramEdge[]) => void
   onUpdateNodePositions: (updates: Array<{ id: string; position: { x: number; y: number } }>) => void
   onReplaceAll: (nodes: DiagramNode[], edges: DiagramEdge[]) => void
+  onClose?: () => void
   className?: string
 }
 
@@ -46,6 +46,7 @@ export function AIAssistantPanel({
   onAddEdges,
   onUpdateNodePositions,
   onReplaceAll,
+  onClose,
   className,
 }: AIAssistantPanelProps) {
   const [mode, setMode] = useState<AIMode>('generate')
@@ -244,12 +245,23 @@ export function AIAssistantPanel({
           </div>
           <span className="font-medium text-supabase-text-primary">AI Assistant</span>
         </div>
-        <button
-          onClick={() => setShowSettings(!showSettings)}
-          className="p-1.5 rounded-lg text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors"
-        >
-          {showSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="p-1.5 rounded-lg text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors"
+          >
+            {showSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors"
+              title="Close AI Panel"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Settings Panel */}

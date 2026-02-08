@@ -188,15 +188,23 @@ export function DashboardPage() {
             },
           })) as DiagramNode[]
 
-          // Convert edges
+          // Convert edges - preserve all handle and style properties
           edges = (template as ArchitectureTemplate).edges.map(edge => ({
             id: edge.id,
             source: edge.source,
             target: edge.target,
-            type: 'smoothstep',
+            sourceHandle: edge.sourceHandle || undefined,
+            targetHandle: edge.targetHandle || undefined,
+            type: edge.type || 'smoothstep',
+            label: edge.label,
             data: edge.data || {},
-            ...(edge.sourceHandle && { sourceHandle: edge.sourceHandle }),
-            ...(edge.targetHandle && { targetHandle: edge.targetHandle }),
+            style: edge.style,
+            markerEnd: {
+              type: 'arrowclosed' as const,
+              width: 8,
+              height: 8,
+              color: '#64748b',
+            },
           })) as DiagramEdge[]
         } else {
           // DiagramTemplate nodes are already in the correct format

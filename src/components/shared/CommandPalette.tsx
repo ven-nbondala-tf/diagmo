@@ -8,18 +8,15 @@ import {
   HelpCircle,
   Moon,
   Sun,
-  LogOut,
   Plus,
   Download,
   Upload,
   Share2,
   Keyboard,
-  Users,
   LayoutTemplate,
   Clock,
   Star,
   Trash2,
-  Copy,
   Command,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -319,7 +316,7 @@ export function CommandPalette({
       if (!groups[cmd.category]) {
         groups[cmd.category] = []
       }
-      groups[cmd.category].push(cmd)
+      groups[cmd.category]!.push(cmd)
     })
     return groups
   }, [filteredCommands])

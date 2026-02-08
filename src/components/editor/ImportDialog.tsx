@@ -188,7 +188,7 @@ export function ImportDialog({
         const [, sourceId, sourceLabel, , targetId, targetLabel] = connectionMatch
 
         // Add source node if not exists
-        if (!nodeMap.has(sourceId)) {
+        if (sourceId && !nodeMap.has(sourceId)) {
           nodeMap.set(sourceId, true)
           nodes.push({
             id: sourceId,
@@ -205,7 +205,7 @@ export function ImportDialog({
         }
 
         // Add target node if not exists
-        if (!nodeMap.has(targetId)) {
+        if (targetId && !nodeMap.has(targetId)) {
           nodeMap.set(targetId, true)
           nodes.push({
             id: targetId,
@@ -222,12 +222,14 @@ export function ImportDialog({
         }
 
         // Add edge
-        edges.push({
-          id: `edge-${index}`,
-          source: sourceId,
-          target: targetId,
-          type: 'default',
-        })
+        if (sourceId && targetId) {
+          edges.push({
+            id: `edge-${index}`,
+            source: sourceId,
+            target: targetId,
+            type: 'default',
+          })
+        }
       }
     })
 
@@ -248,6 +250,8 @@ export function ImportDialog({
 
     while ((match = resourceRegex.exec(content)) !== null) {
       const [, resourceType, resourceName] = match
+      if (!resourceType || !resourceName) continue
+
       const provider = resourceType.split('_')[0] // aws, azure, google
 
       // Map to cloud icons

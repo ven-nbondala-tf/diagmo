@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui'
-import type { ArchitectureTemplate, TemplateVariable } from '@/types'
+import type { ArchitectureTemplate } from '@/types'
 import { Settings2, Layers } from 'lucide-react'
 
 interface TemplateVariablesDialogProps {

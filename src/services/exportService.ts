@@ -494,7 +494,11 @@ export const exportService = {
       const svgDataUrl = await this.exportFullDiagramToSvg(viewportElement, nodes, options)
 
       // Decode the data URL to get SVG string
-      const svgString = decodeURIComponent(svgDataUrl.split(',')[1])
+      const svgPart = svgDataUrl.split(',')[1]
+      if (!svgPart) {
+        throw new Error('Invalid SVG data URL')
+      }
+      const svgString = decodeURIComponent(svgPart)
 
       await navigator.clipboard.writeText(svgString)
       return true

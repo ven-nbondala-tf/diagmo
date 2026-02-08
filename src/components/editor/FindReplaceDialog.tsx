@@ -80,7 +80,7 @@ export function FindReplaceDialog({
 
   // Reset current match when matches change
   useEffect(() => {
-    if (matches.length > 0) {
+    if (matches.length > 0 && matches[0]) {
       setCurrentMatchIndex(0)
       onSelectNode(matches[0].nodeId)
     }
@@ -92,7 +92,10 @@ export function FindReplaceDialog({
 
     const newIndex = ((index % matches.length) + matches.length) % matches.length
     setCurrentMatchIndex(newIndex)
-    onSelectNode(matches[newIndex].nodeId)
+    const match = matches[newIndex]
+    if (match) {
+      onSelectNode(match.nodeId)
+    }
   }, [matches, onSelectNode])
 
   const goToNextMatch = useCallback(() => {

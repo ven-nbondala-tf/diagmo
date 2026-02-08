@@ -58,7 +58,7 @@ export function QuickActionsMenu({
   className,
 }: QuickActionsMenuProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [activeGroup, setActiveGroup] = useState<'main' | 'shapes' | null>(null)
+  const [_activeGroup, setActiveGroup] = useState<'main' | 'shapes' | null>(null)
 
   const toggleExpand = useCallback(() => {
     setIsExpanded((prev) => !prev)

@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { DiagramNode, DiagramEdge } from '@/types'
+import type { DiagramNode, DiagramEdge, ShapeType } from '@/types'
 
 // AI Provider configuration
 export type AIProvider = 'openai' | 'anthropic' | 'local'
@@ -220,17 +220,22 @@ Only respond with valid JSON, no markdown.`
 
     // Simple keyword-based generation
     let nodeCount = 0
-    const createNode = (type: string, label: string, x: number, y: number): DiagramNode => ({
-      id: `node-${++nodeCount}`,
-      type: 'shape',
-      position: { x, y },
-      data: {
-        type,
-        label,
-        width: type.includes('aws-') || type.includes('azure-') || type.includes('gcp-') ? 80 : 120,
-        height: type.includes('aws-') || type.includes('azure-') || type.includes('gcp-') ? 80 : 60,
-      },
-    })
+    const createNode = (type: ShapeType, label: string, x: number, y: number): DiagramNode => {
+      const isCloudIcon = type.includes('aws-') || type.includes('azure-') || type.includes('gcp-')
+      return {
+        id: `node-${++nodeCount}`,
+        type: 'custom',
+        position: { x, y },
+        style: {
+          width: isCloudIcon ? 80 : 120,
+          height: isCloudIcon ? 80 : 60,
+        },
+        data: {
+          type,
+          label,
+        },
+      }
+    }
 
     // Generate based on keywords
     if (hasAWS || words.includes('serverless')) {
@@ -246,7 +251,7 @@ Only respond with valid JSON, no markdown.`
       edges.push({ id: 'edge-1', source: 'node-1', target: 'node-2', type: 'default' })
       edges.push({ id: 'edge-2', source: 'node-2', target: 'node-3', type: 'default' })
     } else if (hasGCP) {
-      nodes.push(createNode('gcp-load-balancer', 'Load Balancer', 100, 200))
+      nodes.push(createNode('gcp-load-balancing', 'Load Balancer', 100, 200))
       nodes.push(createNode('gcp-cloud-run', 'Cloud Run', 300, 200))
       nodes.push(createNode('gcp-bigquery', 'BigQuery', 500, 200))
       edges.push({ id: 'edge-1', source: 'node-1', target: 'node-2', type: 'default' })
@@ -404,8 +409,12 @@ Only respond with valid JSON, no markdown.`
       // Repulsion between all nodes
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
-          const p1 = positions.get(nodes[i].id)!
-          const p2 = positions.get(nodes[j].id)!
+          const nodeI = nodes[i]
+          const nodeJ = nodes[j]
+          if (!nodeI || !nodeJ) continue
+          const p1 = positions.get(nodeI.id)
+          const p2 = positions.get(nodeJ.id)
+          if (!p1 || !p2) continue
           const dx = p2.x - p1.x
           const dy = p2.y - p1.y
           const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1)
@@ -414,10 +423,14 @@ Only respond with valid JSON, no markdown.`
           const fx = (dx / dist) * force
           const fy = (dy / dist) * force
 
-          forces.get(nodes[i].id)!.fx -= fx
-          forces.get(nodes[i].id)!.fy -= fy
-          forces.get(nodes[j].id)!.fx += fx
-          forces.get(nodes[j].id)!.fy += fy
+          const forceI = forces.get(nodeI.id)
+          const forceJ = forces.get(nodeJ.id)
+          if (forceI && forceJ) {
+            forceI.fx -= fx
+            forceI.fy -= fy
+            forceJ.fx += fx
+            forceJ.fy += fy
+          }
         }
       }
 
@@ -429,15 +442,18 @@ Only respond with valid JSON, no markdown.`
 
         const dx = p2.x - p1.x
         const dy = p2.y - p1.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
 
         const fx = dx * attraction
         const fy = dy * attraction
 
-        forces.get(e.source)!.fx += fx
-        forces.get(e.source)!.fy += fy
-        forces.get(e.target)!.fx -= fx
-        forces.get(e.target)!.fy -= fy
+        const forceSource = forces.get(e.source)
+        const forceTarget = forces.get(e.target)
+        if (forceSource && forceTarget) {
+          forceSource.fx += fx
+          forceSource.fy += fy
+          forceTarget.fx -= fx
+          forceTarget.fy -= fy
+        }
       })
 
       // Apply forces

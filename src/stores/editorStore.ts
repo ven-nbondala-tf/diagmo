@@ -48,6 +48,9 @@ interface EditorState {
   // Conditional formatting
   conditionalRules: ConditionalRule[]
   conditionalFormattingPanelOpen: boolean
+  // AI Assistant
+  aiPanelOpen: boolean
+  aiDialogOpen: boolean
 }
 
 interface EditorActions {
@@ -130,6 +133,11 @@ interface EditorActions {
   morphSelectedShapes: (newType: ShapeType) => void
   // Conditional formatting
   toggleConditionalFormattingPanel: () => void
+  // AI Assistant
+  toggleAIPanel: () => void
+  setAIPanelOpen: (open: boolean) => void
+  toggleAIDialog: () => void
+  setAIDialogOpen: (open: boolean) => void
   addConditionalRule: (rule: Omit<ConditionalRule, 'id' | 'priority'>) => void
   updateConditionalRule: (id: string, updates: Partial<ConditionalRule>) => void
   deleteConditionalRule: (id: string) => void
@@ -180,6 +188,9 @@ const initialState: EditorState = {
   // Conditional formatting
   conditionalRules: [],
   conditionalFormattingPanelOpen: false,
+  // AI Assistant
+  aiPanelOpen: false,
+  aiDialogOpen: false,
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -1174,6 +1185,20 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   // Conditional formatting actions
   toggleConditionalFormattingPanel: () => {
     set((state) => ({ conditionalFormattingPanelOpen: !state.conditionalFormattingPanelOpen }))
+  },
+
+  // AI Assistant
+  toggleAIPanel: () => {
+    set((state) => ({ aiPanelOpen: !state.aiPanelOpen }))
+  },
+  setAIPanelOpen: (open: boolean) => {
+    set({ aiPanelOpen: open })
+  },
+  toggleAIDialog: () => {
+    set((state) => ({ aiDialogOpen: !state.aiDialogOpen }))
+  },
+  setAIDialogOpen: (open: boolean) => {
+    set({ aiDialogOpen: open })
   },
 
   addConditionalRule: (rule) => {

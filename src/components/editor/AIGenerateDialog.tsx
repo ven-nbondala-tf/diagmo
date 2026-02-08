@@ -16,7 +16,6 @@ import {
   Boxes,
   ArrowRight,
   Loader2,
-  Check,
   AlertCircle,
 } from 'lucide-react'
 import { aiService } from '@/services/aiService'

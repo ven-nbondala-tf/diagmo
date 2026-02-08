@@ -56,7 +56,7 @@ export function MobileControls({
   zoomLevel,
   className,
 }: MobileControlsProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [_isExpanded, setIsExpanded] = useState(false)
   const [activePanel, setActivePanel] = useState<'zoom' | 'actions' | 'view' | null>(null)
 
   const togglePanel = useCallback((panel: 'zoom' | 'actions' | 'view') => {

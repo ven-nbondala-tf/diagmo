@@ -70,6 +70,7 @@ export function useTouchGestures({
         e.preventDefault()
         const touch1 = e.touches[0]
         const touch2 = e.touches[1]
+        if (!touch1 || !touch2) return
 
         state.initialDistance = getDistance(touch1, touch2)
         state.initialZoom = reactFlowInstance.getZoom()
@@ -79,9 +80,11 @@ export function useTouchGestures({
         state.isPanning = true
       } else if (e.touches.length === 1) {
         // Single finger - could be selecting or dragging
+        const touch = e.touches[0]
+        if (!touch) return
         state.lastPanPosition = {
-          x: e.touches[0].clientX,
-          y: e.touches[0].clientY,
+          x: touch.clientX,
+          y: touch.clientY,
         }
       }
     },
@@ -98,6 +101,7 @@ export function useTouchGestures({
         e.preventDefault()
         const touch1 = e.touches[0]
         const touch2 = e.touches[1]
+        if (!touch1 || !touch2) return
 
         // Handle pinch zoom
         const currentDistance = getDistance(touch1, touch2)
@@ -142,9 +146,12 @@ export function useTouchGestures({
       if (e.touches.length === 0) {
         state.lastPanPosition = null
       } else if (e.touches.length === 1) {
-        state.lastPanPosition = {
-          x: e.touches[0].clientX,
-          y: e.touches[0].clientY,
+        const touch = e.touches[0]
+        if (touch) {
+          state.lastPanPosition = {
+            x: touch.clientX,
+            y: touch.clientY,
+          }
         }
       }
 
@@ -156,8 +163,7 @@ export function useTouchGestures({
   useEffect(() => {
     if (!enabled) return
 
-    // Find the React Flow viewport element
-    const viewport = document.querySelector('.react-flow__viewport')
+    // Find the React Flow container element
     const container = document.querySelector('.react-flow')
 
     if (!container) return

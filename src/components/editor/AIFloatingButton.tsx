@@ -8,7 +8,6 @@ import {
   Lightbulb,
   X,
   Loader2,
-  Zap,
 } from 'lucide-react'
 import {
   Tooltip,
