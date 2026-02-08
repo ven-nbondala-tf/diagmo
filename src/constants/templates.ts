@@ -103,14 +103,14 @@ const awsArchitectureTemplate: DiagramTemplate = {
     },
   ],
   edges: [
-    { id: 'e1', source: 'user', target: 'cloudfront', type: 'smoothstep' },
-    { id: 'e2', source: 'cloudfront', target: 'alb', type: 'smoothstep' },
-    { id: 'e3', source: 'alb', target: 'ec2-1', type: 'smoothstep' },
-    { id: 'e4', source: 'alb', target: 'ec2-2', type: 'smoothstep' },
-    { id: 'e5', source: 'ec2-1', target: 'rds', type: 'smoothstep' },
-    { id: 'e6', source: 'ec2-2', target: 'rds', type: 'smoothstep' },
-    { id: 'e7', source: 'ec2-1', target: 's3', type: 'smoothstep' },
-    { id: 'e8', source: 'ec2-2', target: 's3', type: 'smoothstep' },
+    { id: 'e1', source: 'user', target: 'cloudfront', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'cloudfront', target: 'alb', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'alb', target: 'ec2-1', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'alb', target: 'ec2-2', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'ec2-1', target: 'rds', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'ec2-2', target: 'rds', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e7', source: 'ec2-1', target: 's3', type: 'smoothstep', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e8', source: 'ec2-2', target: 's3', type: 'smoothstep', sourceHandle: 'bottom', targetHandle: 'top' },
   ],
 }
 
@@ -195,12 +195,12 @@ const flowchartTemplate: DiagramTemplate = {
     },
   ],
   edges: [
-    { id: 'e1', source: 'start', target: 'process1', type: 'smoothstep' },
-    { id: 'e2', source: 'process1', target: 'decision', type: 'smoothstep' },
-    { id: 'e3', source: 'decision', target: 'process2', type: 'smoothstep', label: 'No' },
-    { id: 'e4', source: 'decision', target: 'process3', type: 'smoothstep', label: 'Yes' },
-    { id: 'e5', source: 'process2', target: 'process1', type: 'smoothstep' },
-    { id: 'e6', source: 'process3', target: 'end', type: 'smoothstep' },
+    { id: 'e1', source: 'start', target: 'process1', type: 'smoothstep', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e2', source: 'process1', target: 'decision', type: 'smoothstep', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e3', source: 'decision', target: 'process2', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left', label: 'No' },
+    { id: 'e4', source: 'decision', target: 'process3', type: 'smoothstep', sourceHandle: 'bottom', targetHandle: 'top', label: 'Yes' },
+    { id: 'e5', source: 'process2', target: 'process1', type: 'smoothstep', sourceHandle: 'top', targetHandle: 'right' },
+    { id: 'e6', source: 'process3', target: 'end', type: 'smoothstep', sourceHandle: 'bottom', targetHandle: 'top' },
   ],
 }
 
@@ -321,14 +321,14 @@ const networkDiagramTemplate: DiagramTemplate = {
     },
   ],
   edges: [
-    { id: 'e1', source: 'internet', target: 'firewall', type: 'smoothstep' },
-    { id: 'e2', source: 'firewall', target: 'router', type: 'smoothstep' },
-    { id: 'e3', source: 'router', target: 'switch', type: 'smoothstep' },
-    { id: 'e4', source: 'switch', target: 'server1', type: 'smoothstep' },
-    { id: 'e5', source: 'switch', target: 'server2', type: 'smoothstep' },
-    { id: 'e6', source: 'switch', target: 'database', type: 'smoothstep' },
-    { id: 'e7', source: 'switch', target: 'laptop1', type: 'smoothstep' },
-    { id: 'e8', source: 'switch', target: 'laptop2', type: 'smoothstep' },
+    { id: 'e1', source: 'internet', target: 'firewall', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'firewall', target: 'router', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'router', target: 'switch', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'switch', target: 'server1', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'switch', target: 'server2', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'switch', target: 'database', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e7', source: 'switch', target: 'laptop1', type: 'smoothstep', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e8', source: 'switch', target: 'laptop2', type: 'smoothstep', sourceHandle: 'bottom', targetHandle: 'top' },
   ],
 }
 
@@ -413,11 +413,11 @@ const umlClassDiagramTemplate: DiagramTemplate = {
     },
   ],
   edges: [
-    { id: 'e1', source: 'class1', target: 'base-class', type: 'smoothstep', data: { label: 'extends' } },
-    { id: 'e2', source: 'class2', target: 'base-class', type: 'smoothstep', data: { label: 'extends' } },
-    { id: 'e3', source: 'class3', target: 'base-class', type: 'smoothstep', data: { label: 'extends' } },
-    { id: 'e4', source: 'base-class', target: 'interface', type: 'smoothstep', data: { label: 'implements', style: { strokeDasharray: '5,5' } } },
-    { id: 'e5', source: 'owner', target: 'base-class', type: 'smoothstep', data: { label: 'owns *' } },
+    { id: 'e1', source: 'class1', target: 'base-class', type: 'smoothstep', sourceHandle: 'top', targetHandle: 'bottom', data: { label: 'extends' } },
+    { id: 'e2', source: 'class2', target: 'base-class', type: 'smoothstep', sourceHandle: 'top', targetHandle: 'bottom', data: { label: 'extends' } },
+    { id: 'e3', source: 'class3', target: 'base-class', type: 'smoothstep', sourceHandle: 'top', targetHandle: 'bottom', data: { label: 'extends' } },
+    { id: 'e4', source: 'base-class', target: 'interface', type: 'smoothstep', sourceHandle: 'left', targetHandle: 'right', data: { label: 'implements', style: { strokeDasharray: '5,5' } } },
+    { id: 'e5', source: 'owner', target: 'base-class', type: 'smoothstep', sourceHandle: 'left', targetHandle: 'right', data: { label: 'owns *' } },
   ],
 }
 
@@ -514,13 +514,13 @@ const azureArchitectureTemplate: DiagramTemplate = {
     },
   ],
   edges: [
-    { id: 'e1', source: 'users', target: 'cdn', type: 'smoothstep' },
-    { id: 'e2', source: 'cdn', target: 'app-service', type: 'smoothstep' },
-    { id: 'e3', source: 'app-service', target: 'functions', type: 'smoothstep' },
-    { id: 'e4', source: 'app-service', target: 'sql', type: 'smoothstep' },
-    { id: 'e5', source: 'app-service', target: 'storage', type: 'smoothstep' },
-    { id: 'e6', source: 'functions', target: 'storage', type: 'smoothstep' },
-    { id: 'e7', source: 'app-service', target: 'keyvault', type: 'smoothstep' },
+    { id: 'e1', source: 'users', target: 'cdn', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'cdn', target: 'app-service', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'app-service', target: 'functions', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'app-service', target: 'sql', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'app-service', target: 'storage', type: 'smoothstep', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'functions', target: 'storage', type: 'smoothstep', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e7', source: 'app-service', target: 'keyvault', type: 'smoothstep', sourceHandle: 'bottom', targetHandle: 'top' },
   ],
 }
 

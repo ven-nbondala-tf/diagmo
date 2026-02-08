@@ -635,3 +635,41 @@
   border: 1.5px dashed rgba(59, 130, 246, 0.4) !important;
   border-radius: 4px !important;
 }
+
+/* ========== INTERACTION MODE CURSOR STYLES ========== */
+
+/* Default cursor for select mode - pointer for normal interaction */
+.react-flow__pane {
+  cursor: default;
+}
+
+/* When actively selecting/dragging a selection box */
+.react-flow__pane.selecting,
+.react-flow__pane.selection {
+  cursor: crosshair;
+}
+
+/* Pan mode - show grab cursor */
+.react-flow[data-interaction-mode="pan"] .react-flow__pane {
+  cursor: grab;
+}
+
+/* When actively panning (mouse down) */
+.react-flow[data-interaction-mode="pan"] .react-flow__pane:active,
+.react-flow[data-interaction-mode="pan"] .react-flow__pane.dragging {
+  cursor: grabbing;
+}
+
+/* Ensure nodes always show move cursor on hover in select mode */
+.react-flow[data-interaction-mode="select"] .react-flow__node {
+  cursor: move;
+}
+
+/* In pan mode, nodes shouldn't show move cursor */
+.react-flow[data-interaction-mode="pan"] .react-flow__node {
+  cursor: grab;
+}
+
+.react-flow[data-interaction-mode="pan"] .react-flow__node:active {
+  cursor: grabbing;
+}

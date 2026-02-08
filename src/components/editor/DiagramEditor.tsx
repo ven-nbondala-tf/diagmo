@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { nanoid } from 'nanoid'
-import { PanelRightOpen, Layers, History, MessageSquare, Wand2 } from 'lucide-react'
+import { PanelRightOpen, Layers, History, MessageSquare, Wand2, Sparkles } from 'lucide-react'
 import { useEditorStore } from '@/stores/editorStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
 import { usePreferencesSync, usePreferencesPersist, useCollaboration } from '@/hooks'
@@ -37,6 +37,9 @@ import { SmartGuides } from './SmartGuides'
 import { AnnotationLayer } from './AnnotationLayer'
 import { CollaboratorCursors } from './CollaboratorCursors'
 import { NodeLockIndicators } from './NodeLockIndicators'
+import { AIAssistantPanel } from './AIAssistantPanel'
+import { AIFloatingButton } from './AIFloatingButton'
+import { AIGenerateDialog } from './AIGenerateDialog'
 import { Button } from '@/components/ui'
 
 const defaultEdgeOptions = {
@@ -67,7 +70,7 @@ interface DiagramEditorProps {
 
 export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
-  const { screenToFlowPosition, setCenter } = useReactFlow()
+  const { screenToFlowPosition, setCenter, setViewport, getViewport } = useReactFlow()
   const [annotationMode, setAnnotationMode] = useState(false)
 
   // Sync user preferences from localStorage on mount
@@ -192,6 +195,10 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const layers = useEditorStore((state) => state.layers)
   const conditionalFormattingPanelOpen = useEditorStore((state) => state.conditionalFormattingPanelOpen)
   const toggleConditionalFormattingPanel = useEditorStore((state) => state.toggleConditionalFormattingPanel)
+  const aiPanelOpen = useEditorStore((state) => state.aiPanelOpen)
+  const toggleAIPanel = useEditorStore((state) => state.toggleAIPanel)
+  const aiDialogOpen = useEditorStore((state) => state.aiDialogOpen)
+  const setAIDialogOpen = useEditorStore((state) => state.setAIDialogOpen)
 
   // Track diagram in recent items
   const addRecentDiagram = usePreferencesStore((state) => state.addRecentDiagram)
@@ -221,6 +228,66 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
     // Track as recently opened
     addRecentDiagram(diagram.id)
   }, [diagram.id, diagram.nodes, diagram.edges, diagram.layers, loadDiagram, addRecentDiagram])
+
+  // Arrow key panning
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't handle if in input field
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        (event.target as HTMLElement)?.isContentEditable
+      ) {
+        return
+      }
+
+      // Only handle arrow keys without meta/ctrl/alt modifiers
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return
+      }
+
+      const panAmount = event.shiftKey ? 100 : 50 // Shift = faster
+      const currentViewport = getViewport()
+
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault()
+          setViewport({
+            x: currentViewport.x + panAmount,
+            y: currentViewport.y,
+            zoom: currentViewport.zoom,
+          })
+          break
+        case 'ArrowRight':
+          event.preventDefault()
+          setViewport({
+            x: currentViewport.x - panAmount,
+            y: currentViewport.y,
+            zoom: currentViewport.zoom,
+          })
+          break
+        case 'ArrowUp':
+          event.preventDefault()
+          setViewport({
+            x: currentViewport.x,
+            y: currentViewport.y + panAmount,
+            zoom: currentViewport.zoom,
+          })
+          break
+        case 'ArrowDown':
+          event.preventDefault()
+          setViewport({
+            x: currentViewport.x,
+            y: currentViewport.y - panAmount,
+            zoom: currentViewport.zoom,
+          })
+          break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [setViewport, getViewport])
 
   const onSelectionChange = useCallback(
     ({ nodes, edges }: OnSelectionChangeParams) => {
@@ -453,6 +520,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           onlyRenderVisibleElements={true}
           elevateEdgesOnSelect={true}
           className="bg-supabase-bg-tertiary"
+          data-interaction-mode={interactionMode}
         >
           {gridEnabled && (
             <>
@@ -491,12 +559,46 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           enabled={annotationMode}
           onToggle={() => setAnnotationMode(!annotationMode)}
         />
+        <AIFloatingButton
+          onOpenPanel={toggleAIPanel}
+          onQuickLayout={() => {
+            // Quick layout action using hierarchical layout
+            const { nodes: currentNodes, edges: currentEdges } = useEditorStore.getState()
+            if (currentNodes.length > 0) {
+              import('@/services/aiService').then(({ aiService }) => {
+                aiService.autoLayout(currentNodes, currentEdges, 'hierarchical').then(suggestions => {
+                  if (suggestions.length > 0) {
+                    const updates = suggestions.map(s => ({
+                      id: s.nodeId,
+                      position: s.suggestedPosition,
+                    }))
+                    updates.forEach(({ id, position }) => {
+                      useEditorStore.getState().updateNodePosition(id, position)
+                    })
+                  }
+                })
+              })
+            }
+          }}
+          onQuickSuggest={() => setAIDialogOpen(true)}
+        />
         <FindReplaceBar
           open={findReplaceOpen}
           onClose={() => setFindReplaceOpen(false)}
         />
         {/* Toggle buttons when panels are closed */}
         <div className="absolute right-4 top-4 z-10 flex gap-2">
+          {!aiPanelOpen && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/30 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 shadow-md"
+              onClick={toggleAIPanel}
+              title="AI Assistant"
+            >
+              <Sparkles className="w-4 h-4" />
+            </Button>
+          )}
           {!conditionalFormattingPanelOpen && (
             <Button
               variant="outline"
@@ -581,6 +683,56 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           <PropertiesPanel />
         </ErrorBoundary>
       )}
+      {aiPanelOpen && (
+        <ErrorBoundary>
+          <AIAssistantPanel
+            nodes={nodes}
+            edges={edges}
+            onAddNodes={(newNodes) => {
+              const currentNodes = useEditorStore.getState().nodes
+              setNodes([...currentNodes, ...newNodes])
+            }}
+            onAddEdges={(newEdges) => {
+              const currentEdges = useEditorStore.getState().edges
+              setEdges([...currentEdges, ...newEdges])
+            }}
+            onUpdateNodePositions={(updates) => {
+              updates.forEach(({ id, position }) => {
+                useEditorStore.getState().updateNodePosition(id, position)
+              })
+            }}
+            onReplaceAll={(newNodes, newEdges) => {
+              setNodes(newNodes)
+              setEdges(newEdges)
+            }}
+            onClose={toggleAIPanel}
+            className="w-80 border-l border-supabase-border"
+          />
+        </ErrorBoundary>
+      )}
+      <AIGenerateDialog
+        open={aiDialogOpen}
+        onOpenChange={setAIDialogOpen}
+        onGenerated={(newNodes, newEdges) => {
+          const currentNodes = useEditorStore.getState().nodes
+          const currentEdges = useEditorStore.getState().edges
+          if (currentNodes.length === 0) {
+            setNodes(newNodes)
+            setEdges(newEdges)
+          } else {
+            // Offset new nodes to not overlap
+            const offsetNodes = newNodes.map(n => ({
+              ...n,
+              position: {
+                x: n.position.x + 400,
+                y: n.position.y,
+              },
+            }))
+            setNodes([...currentNodes, ...offsetNodes])
+            setEdges([...currentEdges, ...newEdges])
+          }
+        }}
+      />
     </div>
   )
 }
