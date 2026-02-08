@@ -548,6 +548,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             onClick={handleMinimapClick}
             maskColor="rgba(28, 28, 28, 0.85)"
             className="bg-supabase-bg-secondary border border-supabase-border rounded-lg"
+            style={{ left: 10, bottom: 10, right: 'auto' }}
           />
           <SmartGuides enabled={snapToGrid} />
           <GroupBoundary nodes={nodes} />
