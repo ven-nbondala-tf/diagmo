@@ -253,7 +253,6 @@ export const CLOUD_PROVIDER_CATEGORIES = {
       'aws-athena',
       'aws-glue',
       'aws-redshift',
-      'aws-kinesis',
       'aws-opensearch-service',
       'aws-emr',
       'aws-lake-formation',
