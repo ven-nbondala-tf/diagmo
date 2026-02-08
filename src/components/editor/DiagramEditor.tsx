@@ -254,7 +254,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         case 'ArrowLeft':
           event.preventDefault()
           setViewport({
-            x: currentViewport.x + panAmount,
+            x: currentViewport.x - panAmount,
             y: currentViewport.y,
             zoom: currentViewport.zoom,
           })
@@ -262,7 +262,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         case 'ArrowRight':
           event.preventDefault()
           setViewport({
-            x: currentViewport.x - panAmount,
+            x: currentViewport.x + panAmount,
             y: currentViewport.y,
             zoom: currentViewport.zoom,
           })

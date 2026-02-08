@@ -9,16 +9,30 @@ import { NodeContextMenu } from '../NodeContextMenu'
 
 type CustomNodeProps = NodeProps<DiagramNode & { position: { x: number; y: number } }>
 
-// Simple 4 cardinal connection points - React Flow handles positioning automatically
-// We just specify the position (Top, Right, Bottom, Left) and React Flow places them correctly
+// Simple 4 cardinal connection points with explicit positioning
+// Position handles at the exact CENTER of each edge
 const getShapeConnectionPoints = (_type: ShapeType) => {
-  // All shapes use 4 cardinal points at the exact node boundary
-  // React Flow automatically places handles at the correct edge positions
   return [
-    { id: 'top', position: Position.Top },
-    { id: 'right', position: Position.Right },
-    { id: 'bottom', position: Position.Bottom },
-    { id: 'left', position: Position.Left },
+    {
+      id: 'top',
+      position: Position.Top,
+      style: { left: '50%', top: 0, transform: 'translate(-50%, -50%)' }
+    },
+    {
+      id: 'right',
+      position: Position.Right,
+      style: { right: 0, top: '50%', left: 'auto', transform: 'translate(50%, -50%)' }
+    },
+    {
+      id: 'bottom',
+      position: Position.Bottom,
+      style: { left: '50%', bottom: 0, top: 'auto', transform: 'translate(-50%, 50%)' }
+    },
+    {
+      id: 'left',
+      position: Position.Left,
+      style: { left: 0, top: '50%', transform: 'translate(-50%, -50%)' }
+    },
   ]
 }
 
@@ -383,13 +397,14 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         }}
       />
 
-      {/* Connection handles - Lucidchart style */}
+      {/* Connection handles - positioned at center of each edge */}
       {connectionPoints.map((point) => (
         <Handle
           key={point.id}
           id={point.id}
           type="source"
           position={point.position}
+          style={point.style}
           className={cn(
             'custom-handle',
             !showHandles && '!opacity-0',
