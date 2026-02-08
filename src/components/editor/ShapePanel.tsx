@@ -19,7 +19,7 @@ import { SHAPE_CATEGORIES, SHAPE_LABELS, CLOUD_PROVIDER_CATEGORIES, getOfficialI
 import type { ShapeType, WebImageResult, CustomShape } from '@/types'
 import { Search, ChevronRight, ChevronLeft, Shapes, ImageIcon, Square, Diamond, Circle, Type, ArrowRight, StickyNote, FolderOpen, Settings, Table2 } from 'lucide-react'
 import { Button } from '@/components/ui'
-import { cloudIconComponents, type CloudIconType } from './icons'
+import { LazyCloudIcon, type CloudIconType } from './icons'
 import { WebImageSearch } from './WebImageSearch'
 import { ShapeLibraryDialog } from './ShapeLibraryDialog'
 import { useShapeLibraries, useShapesByLibrary } from '@/hooks'
@@ -721,12 +721,8 @@ const ShapePreview = ({ type }: { type: ShapeType }) => {
           />
         )
       }
-      // Fallback to inline SVG component
-      const IconComponent = cloudIconComponents[type as CloudIconType]
-      if (IconComponent) {
-        return <IconComponent size={size} />
-      }
-      return null
+      // Fallback to lazy-loaded inline SVG component
+      return <LazyCloudIcon iconType={type as CloudIconType} size={size} />
     }
 
     default: {

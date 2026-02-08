@@ -58,6 +58,7 @@ export function parseMermaid(input: string): ParseResult {
   const lines = input
     .split('\n')
     .map((line) => line.trim())
+    .map((line) => line.replace(/;$/, '')) // Remove trailing semicolons
     .filter((line) => line && !line.startsWith('%%')) // Remove empty lines and comments
 
   // Detect graph direction
@@ -170,19 +171,22 @@ function parseNodeDefinition(text: string): MermaidNode | null {
   // ID[/label/] - parallelogram
   // ID[/label\] - trapezoid
 
+  // Allow node IDs to contain alphanumeric, underscore, and hyphen
+  const idPattern = '[\\w-]+'
+
   const patterns: Array<{ regex: RegExp; shape: ShapeType }> = [
-    { regex: /^(\w+)\s*\(\(([^)]+)\)\)$/, shape: 'circle' },
-    { regex: /^(\w+)\s*\{\{([^}]+)\}\}$/, shape: 'hexagon' },
-    { regex: /^(\w+)\s*\[\(([^)]+)\)\]$/, shape: 'cylinder' },
-    { regex: /^(\w+)\s*\(\[([^\]]+)\]\)$/, shape: 'rounded-rectangle' },
-    { regex: /^(\w+)\s*\[\[([^\]]+)\]\]$/, shape: 'rectangle' },
-    { regex: /^(\w+)\s*>([^\]]+)\]$/, shape: 'arrow' },
-    { regex: /^(\w+)\s*\[\/([^/]+)\/\]$/, shape: 'parallelogram' },
-    { regex: /^(\w+)\s*\[\/([^\\]+)\\\]$/, shape: 'trapezoid' },
-    { regex: /^(\w+)\s*\{([^}]+)\}$/, shape: 'diamond' },
-    { regex: /^(\w+)\s*\(([^)]+)\)$/, shape: 'rounded-rectangle' },
-    { regex: /^(\w+)\s*\[([^\]]+)\]$/, shape: 'rectangle' },
-    { regex: /^(\w+)$/, shape: 'rectangle' }, // Just ID, no shape
+    { regex: new RegExp(`^(${idPattern})\\s*\\(\\((.+)\\)\\)$`), shape: 'circle' },
+    { regex: new RegExp(`^(${idPattern})\\s*\\{\\{(.+)\\}\\}$`), shape: 'hexagon' },
+    { regex: new RegExp(`^(${idPattern})\\s*\\[\\((.+)\\)\\]$`), shape: 'cylinder' },
+    { regex: new RegExp(`^(${idPattern})\\s*\\(\\[(.+)\\]\\)$`), shape: 'rounded-rectangle' },
+    { regex: new RegExp(`^(${idPattern})\\s*\\[\\[(.+)\\]\\]$`), shape: 'rectangle' },
+    { regex: new RegExp(`^(${idPattern})\\s*>(.+)\\]$`), shape: 'arrow' },
+    { regex: new RegExp(`^(${idPattern})\\s*\\[/(.+)/\\]$`), shape: 'parallelogram' },
+    { regex: new RegExp(`^(${idPattern})\\s*\\[/(.+)\\\\\\]$`), shape: 'trapezoid' },
+    { regex: new RegExp(`^(${idPattern})\\s*\\{(.+)\\}$`), shape: 'diamond' },
+    { regex: new RegExp(`^(${idPattern})\\s*\\((.+)\\)$`), shape: 'rounded-rectangle' },
+    { regex: new RegExp(`^(${idPattern})\\s*\\[(.+)\\]$`), shape: 'rectangle' },
+    { regex: new RegExp(`^(${idPattern})$`), shape: 'rectangle' }, // Just ID, no shape
   ]
 
   for (const { regex, shape } of patterns) {
@@ -190,7 +194,7 @@ function parseNodeDefinition(text: string): MermaidNode | null {
     if (match && match[1]) {
       return {
         id: match[1],
-        label: match[2] || match[1],
+        label: (match[2] || match[1]).trim(),
         shape,
       }
     }

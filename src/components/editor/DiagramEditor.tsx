@@ -40,6 +40,7 @@ import { NodeLockIndicators } from './NodeLockIndicators'
 import { AIAssistantPanel } from './AIAssistantPanel'
 import { AIFloatingButton } from './AIFloatingButton'
 import { AIGenerateDialog } from './AIGenerateDialog'
+import { GroupBoundary } from './GroupBoundary'
 import { Button } from '@/components/ui'
 
 const defaultEdgeOptions = {
@@ -549,6 +550,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
             className="bg-supabase-bg-secondary border border-supabase-border rounded-lg"
           />
           <SmartGuides enabled={snapToGrid} />
+          <GroupBoundary nodes={nodes} />
           <CollaboratorCursors collaborators={collaborators} />
           <NodeLockIndicators locks={nodeLocks} />
         </ReactFlow>
