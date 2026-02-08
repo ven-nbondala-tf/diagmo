@@ -9,9 +9,13 @@ import { NodeContextMenu } from '../NodeContextMenu'
 
 type CustomNodeProps = NodeProps<DiagramNode & { position: { x: number; y: number } }>
 
-// Simple 4 cardinal connection points with explicit positioning
-// Position handles at the exact CENTER of each edge
-const getShapeConnectionPoints = (_type: ShapeType) => {
+// Simple 4 cardinal connection points with explicit inline positioning
+// Using inline styles to ensure handles are centered on each edge
+const getShapeConnectionPoints = (_type: ShapeType): Array<{
+  id: string
+  position: Position
+  style: React.CSSProperties
+}> => {
   return [
     {
       id: 'top',
@@ -21,12 +25,12 @@ const getShapeConnectionPoints = (_type: ShapeType) => {
     {
       id: 'right',
       position: Position.Right,
-      style: { right: 0, top: '50%', left: 'auto', transform: 'translate(50%, -50%)' }
+      style: { right: 0, left: 'auto', top: '50%', transform: 'translate(50%, -50%)' }
     },
     {
       id: 'bottom',
       position: Position.Bottom,
-      style: { left: '50%', bottom: 0, top: 'auto', transform: 'translate(-50%, 50%)' }
+      style: { left: '50%', top: 'auto', bottom: 0, transform: 'translate(-50%, 50%)' }
     },
     {
       id: 'left',
@@ -397,7 +401,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
         }}
       />
 
-      {/* Connection handles - positioned at center of each edge */}
+      {/* Connection handles - explicitly positioned at center of each edge */}
       {connectionPoints.map((point) => (
         <Handle
           key={point.id}

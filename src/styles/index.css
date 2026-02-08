@@ -447,7 +447,7 @@
   /* Will be shown via !opacity-100 class when connection in progress */
 }
 
-/* Custom handle style - Lucidchart periwinkle blue circles */
+/* Custom handle style - appearance only, let React Flow handle positioning */
 .react-flow__handle.custom-handle {
   width: 8px !important;
   height: 8px !important;
@@ -460,79 +460,16 @@
   z-index: 10 !important;
 }
 
-/* Ensure handles are positioned at the CENTER of each edge */
-/* Top handle - center horizontally */
-.react-flow__handle-top.custom-handle {
-  left: 50% !important;
-  top: 0 !important;
-  transform: translate(-50%, -50%) !important;
-}
-
-/* Right handle - center vertically */
-.react-flow__handle-right.custom-handle {
-  right: 0 !important;
-  top: 50% !important;
-  left: auto !important;
-  transform: translate(50%, -50%) !important;
-}
-
-/* Bottom handle - center horizontally */
-.react-flow__handle-bottom.custom-handle {
-  left: 50% !important;
-  bottom: 0 !important;
-  top: auto !important;
-  transform: translate(-50%, 50%) !important;
-}
-
-/* Left handle - center vertically */
-.react-flow__handle-left.custom-handle {
-  left: 0 !important;
-  top: 50% !important;
-  transform: translate(-50%, -50%) !important;
-}
-
-/* Handle hover - slightly larger and brighter (preserve position) */
-.react-flow__handle-top.custom-handle:hover {
+/* Handle hover - slightly larger and brighter */
+.react-flow__handle.custom-handle:hover {
   background-color: #818cf8 !important;
   border-color: #4f46e5 !important;
-  transform: translate(-50%, -50%) scale(1.15) !important;
-}
-.react-flow__handle-right.custom-handle:hover {
-  background-color: #818cf8 !important;
-  border-color: #4f46e5 !important;
-  transform: translate(50%, -50%) scale(1.15) !important;
-}
-.react-flow__handle-bottom.custom-handle:hover {
-  background-color: #818cf8 !important;
-  border-color: #4f46e5 !important;
-  transform: translate(-50%, 50%) scale(1.15) !important;
-}
-.react-flow__handle-left.custom-handle:hover {
-  background-color: #818cf8 !important;
-  border-color: #4f46e5 !important;
-  transform: translate(-50%, -50%) scale(1.15) !important;
 }
 
-/* Valid connection target - green highlight (preserve position) */
-.react-flow__handle-top.custom-handle.valid-target {
+/* Valid connection target - green highlight */
+.react-flow__handle.custom-handle.valid-target {
   background-color: #86efac !important;
   border-color: #22c55e !important;
-  transform: translate(-50%, -50%) scale(1.2) !important;
-}
-.react-flow__handle-right.custom-handle.valid-target {
-  background-color: #86efac !important;
-  border-color: #22c55e !important;
-  transform: translate(50%, -50%) scale(1.2) !important;
-}
-.react-flow__handle-bottom.custom-handle.valid-target {
-  background-color: #86efac !important;
-  border-color: #22c55e !important;
-  transform: translate(-50%, 50%) scale(1.2) !important;
-}
-.react-flow__handle-left.custom-handle.valid-target {
-  background-color: #86efac !important;
-  border-color: #22c55e !important;
-  transform: translate(-50%, -50%) scale(1.2) !important;
 }
 
 /* Active connection in progress */
