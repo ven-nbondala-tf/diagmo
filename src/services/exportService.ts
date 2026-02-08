@@ -232,6 +232,12 @@ export const exportService = {
     const bounds = getNodesBounds(nodes)
     const viewport = getViewportForBounds(bounds, width, height, 0.5, 2, padding)
 
+    // Detect current theme - check for dark class on html/body or use CSS variable
+    const isDarkMode = document.documentElement.classList.contains('dark') ||
+      document.body.classList.contains('dark') ||
+      window.matchMedia('(prefers-color-scheme: dark)').matches
+    const backgroundColor = isDarkMode ? '#1a1a1a' : '#ffffff'
+
     // Create a container for the thumbnail
     const container = document.createElement('div')
     container.style.position = 'fixed'
@@ -240,7 +246,7 @@ export const exportService = {
     container.style.width = `${width}px`
     container.style.height = `${height}px`
     container.style.overflow = 'hidden'
-    container.style.backgroundColor = '#ffffff'
+    container.style.backgroundColor = backgroundColor
 
     // Clone the element
     const clone = element.cloneNode(true) as HTMLElement
@@ -256,7 +262,7 @@ export const exportService = {
     try {
       const dataUrl = await toPng(container, {
         quality: 0.8,
-        backgroundColor: '#ffffff',
+        backgroundColor,
         width,
         height,
         pixelRatio: 1,
@@ -280,6 +286,204 @@ export const exportService = {
     document.body.removeChild(link)
     if (typeof data !== 'string') {
       URL.revokeObjectURL(link.href)
+    }
+  },
+
+  /**
+   * Export high-resolution PNG (4x or 8x pixel ratio)
+   */
+  async exportHighResPng(
+    viewportElement: HTMLElement,
+    nodes: DiagramNode[],
+    resolution: '2x' | '4x' | '8x' = '4x',
+    options?: Partial<ExportOptions>
+  ): Promise<string> {
+    if (nodes.length === 0) {
+      throw new Error('No nodes to export')
+    }
+
+    const pixelRatioMap = { '2x': 2, '4x': 4, '8x': 8 }
+    const pixelRatio = pixelRatioMap[resolution]
+
+    const padding = options?.padding ?? 50
+    const bounds = getNodesBounds(nodes)
+    const exportWidth = bounds.width + padding * 2
+    const exportHeight = bounds.height + padding * 2
+
+    const viewport = getViewportForBounds(
+      bounds,
+      exportWidth,
+      exportHeight,
+      0.5,
+      2,
+      padding
+    )
+
+    const container = document.createElement('div')
+    container.style.position = 'fixed'
+    container.style.left = '-99999px'
+    container.style.top = '0'
+    container.style.width = `${exportWidth}px`
+    container.style.height = `${exportHeight}px`
+    container.style.overflow = 'hidden'
+    container.style.backgroundColor = options?.backgroundColor || '#ffffff'
+
+    const clone = viewportElement.cloneNode(true) as HTMLElement
+    clone.style.position = 'absolute'
+    clone.style.left = '0'
+    clone.style.top = '0'
+    clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
+    clone.style.transformOrigin = 'top left'
+
+    container.appendChild(clone)
+    document.body.appendChild(container)
+
+    try {
+      const dataUrl = await toPng(container, {
+        quality: 1.0,
+        backgroundColor: options?.backgroundColor || '#ffffff',
+        width: exportWidth,
+        height: exportHeight,
+        pixelRatio,
+      })
+      return dataUrl
+    } finally {
+      document.body.removeChild(container)
+    }
+  },
+
+  /**
+   * Export PNG with transparent background
+   */
+  async exportTransparentPng(
+    viewportElement: HTMLElement,
+    nodes: DiagramNode[],
+    options?: Partial<ExportOptions>
+  ): Promise<string> {
+    if (nodes.length === 0) {
+      throw new Error('No nodes to export')
+    }
+
+    const padding = options?.padding ?? 50
+    const bounds = getNodesBounds(nodes)
+    const exportWidth = bounds.width + padding * 2
+    const exportHeight = bounds.height + padding * 2
+
+    const viewport = getViewportForBounds(
+      bounds,
+      exportWidth,
+      exportHeight,
+      0.5,
+      2,
+      padding
+    )
+
+    const container = document.createElement('div')
+    container.style.position = 'fixed'
+    container.style.left = '-99999px'
+    container.style.top = '0'
+    container.style.width = `${exportWidth}px`
+    container.style.height = `${exportHeight}px`
+    container.style.overflow = 'hidden'
+    // Transparent background
+    container.style.backgroundColor = 'transparent'
+
+    const clone = viewportElement.cloneNode(true) as HTMLElement
+    clone.style.position = 'absolute'
+    clone.style.left = '0'
+    clone.style.top = '0'
+    clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
+    clone.style.transformOrigin = 'top left'
+
+    container.appendChild(clone)
+    document.body.appendChild(container)
+
+    try {
+      const dataUrl = await toPng(container, {
+        quality: options?.quality || 0.95,
+        // No backgroundColor = transparent
+        width: exportWidth,
+        height: exportHeight,
+        pixelRatio: options?.quality === 1 ? 4 : 2,
+      })
+      return dataUrl
+    } finally {
+      document.body.removeChild(container)
+    }
+  },
+
+  /**
+   * Copy diagram to clipboard as PNG
+   */
+  async copyToClipboard(
+    viewportElement: HTMLElement,
+    nodes: DiagramNode[],
+    options?: Partial<ExportOptions>
+  ): Promise<boolean> {
+    try {
+      const dataUrl = await this.exportFullDiagramToPng(viewportElement, nodes, options)
+
+      // Convert data URL to blob
+      const response = await fetch(dataUrl)
+      const blob = await response.blob()
+
+      // Use Clipboard API
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'image/png': blob,
+        }),
+      ])
+
+      return true
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error)
+      return false
+    }
+  },
+
+  /**
+   * Copy diagram to clipboard as SVG (as text)
+   */
+  async copySvgToClipboard(
+    viewportElement: HTMLElement,
+    nodes: DiagramNode[],
+    options?: Partial<ExportOptions>
+  ): Promise<boolean> {
+    try {
+      const svgDataUrl = await this.exportFullDiagramToSvg(viewportElement, nodes, options)
+
+      // Decode the data URL to get SVG string
+      const svgString = decodeURIComponent(svgDataUrl.split(',')[1])
+
+      await navigator.clipboard.writeText(svgString)
+      return true
+    } catch (error) {
+      console.error('Failed to copy SVG to clipboard:', error)
+      return false
+    }
+  },
+
+  /**
+   * Get export dimensions preview
+   */
+  getExportDimensions(
+    nodes: DiagramNode[],
+    padding = 50,
+    pixelRatio = 2
+  ): { width: number; height: number; actualWidth: number; actualHeight: number } {
+    if (nodes.length === 0) {
+      return { width: 0, height: 0, actualWidth: 0, actualHeight: 0 }
+    }
+
+    const bounds = getNodesBounds(nodes)
+    const width = Math.ceil(bounds.width + padding * 2)
+    const height = Math.ceil(bounds.height + padding * 2)
+
+    return {
+      width,
+      height,
+      actualWidth: width * pixelRatio,
+      actualHeight: height * pixelRatio,
     }
   },
 }
