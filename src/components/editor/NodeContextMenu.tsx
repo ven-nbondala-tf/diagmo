@@ -220,7 +220,7 @@ export function NodeContextMenu({ children, nodeId, isLocked, isGrouped }: NodeC
 
   return (
     <>
-      <div className="w-full h-full" onContextMenu={handleContextMenu}>
+      <div className="contents" onContextMenu={handleContextMenu}>
         {children}
       </div>
       <ContextMenuPrimitive.Root onOpenChange={(open) => !open && closeMenu()}>

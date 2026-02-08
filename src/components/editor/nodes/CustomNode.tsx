@@ -40,8 +40,12 @@ const getShapeConnectionPoints = (_type: ShapeType): Array<{
   ]
 }
 
-export const CustomNode = memo(function CustomNode({ id, data, selected }: CustomNodeProps) {
+export const CustomNode = memo(function CustomNode({ id, data, selected, width, height }: CustomNodeProps) {
   const { label, type, style, locked, groupId } = data
+
+  // Get node dimensions - use measured or default
+  const nodeWidth = width || 64
+  const nodeHeight = height || 64
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(label)
   const [isHovered, setIsHovered] = useState(false)
@@ -351,11 +355,15 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
     <div
       ref={nodeRef}
       className={cn(
-        'w-full h-full relative',
+        'relative',
         // Add a subtle glow when being targeted for connection (only when hovered)
         isValidTarget && 'drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]',
         isRotating && 'cursor-grabbing'
       )}
+      style={{
+        width: nodeWidth,
+        height: nodeHeight,
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
