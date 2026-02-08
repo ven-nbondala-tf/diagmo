@@ -161,6 +161,12 @@ class CollaborationService {
       throw new Error('User must be authenticated to join collaboration')
     }
 
+    // Validate diagramId before proceeding
+    if (!diagramId) {
+      console.warn('[Collaboration] Cannot join - diagramId is null or undefined')
+      return
+    }
+
     console.log('[Collaboration] Joining diagram:', diagramId)
     this.diagramId = diagramId
     this.userId = user.id
@@ -384,8 +390,12 @@ class CollaborationService {
 
     // Untrack presence and unsubscribe
     if (this.channel) {
-      await this.channel.untrack()
-      await supabase.removeChannel(this.channel)
+      try {
+        await this.channel.untrack()
+        await supabase.removeChannel(this.channel)
+      } catch (error) {
+        console.warn('[Collaboration] Error cleaning up channel:', error)
+      }
       this.channel = null
     }
 

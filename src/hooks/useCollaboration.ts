@@ -52,7 +52,11 @@ export function useCollaboration({
 
   // Join collaboration session
   useEffect(() => {
-    if (!enabled || !diagramId) return
+    // Guard against null/undefined diagramId
+    if (!enabled || !diagramId || diagramId === 'null' || diagramId === 'undefined') {
+      console.log('[useCollaboration] Skipping join - invalid diagramId:', diagramId)
+      return
+    }
 
     isMountedRef.current = true
 
