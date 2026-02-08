@@ -271,7 +271,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           event.preventDefault()
           setViewport({
             x: currentViewport.x,
-            y: currentViewport.y + panAmount,
+            y: currentViewport.y - panAmount,
             zoom: currentViewport.zoom,
           })
           break
@@ -279,7 +279,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           event.preventDefault()
           setViewport({
             x: currentViewport.x,
-            y: currentViewport.y - panAmount,
+            y: currentViewport.y + panAmount,
             zoom: currentViewport.zoom,
           })
           break
