@@ -15,7 +15,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from '@/components/ui'
-import { SHAPE_CATEGORIES, SHAPE_LABELS, CLOUD_PROVIDER_CATEGORIES } from '@/constants'
+import { SHAPE_CATEGORIES, SHAPE_LABELS, CLOUD_PROVIDER_CATEGORIES, getOfficialIconPath } from '@/constants'
 import type { ShapeType, WebImageResult, CustomShape } from '@/types'
 import { Search, ChevronRight, ChevronLeft, Shapes, ImageIcon, Square, Diamond, Circle, Type, ArrowRight, StickyNote, FolderOpen, Settings, Table2 } from 'lucide-react'
 import { Button } from '@/components/ui'
@@ -707,6 +707,21 @@ const ShapePreview = ({ type }: { type: ShapeType }) => {
     case 'power-automate':
     case 'power-virtual-agents':
     case 'dynamics-365': {
+      // First check for official icon path
+      const officialPath = getOfficialIconPath(type)
+      if (officialPath) {
+        return (
+          <img
+            src={officialPath}
+            alt={type}
+            width={size}
+            height={size}
+            className="object-contain"
+            draggable={false}
+          />
+        )
+      }
+      // Fallback to inline SVG component
       const IconComponent = cloudIconComponents[type as CloudIconType]
       if (IconComponent) {
         return <IconComponent size={size} />
@@ -714,19 +729,35 @@ const ShapePreview = ({ type }: { type: ShapeType }) => {
       return null
     }
 
-    default:
+    default: {
+      // Check for official cloud icon first
+      const officialIconPath = getOfficialIconPath(type)
+      if (officialIconPath) {
+        return (
+          <img
+            src={officialIconPath}
+            alt={type}
+            width={size}
+            height={size}
+            className="object-contain"
+            draggable={false}
+          />
+        )
+      }
+      // Fallback to default rectangle
       return (
         <svg width={size} height={size} viewBox="0 0 32 32">
           <rect x="4" y="8" width="24" height="16" rx="2" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
         </svg>
       )
+    }
   }
 }
 
 
-// Helper to count total shapes in a cloud provider
-const countCloudProviderShapes = (subcategories: Record<string, { shapes: ShapeType[] }>) => {
-  return Object.values(subcategories).reduce((total, sub) => total + sub.shapes.length, 0)
+// Helper to count total shapes in a cloud provider (flat structure)
+const countCloudProviderShapes = (shapes: ShapeType[]) => {
+  return shapes.length
 }
 
 const collapsedShapes: { type: ShapeType; icon: React.ElementType; label: string }[] = [
@@ -748,7 +779,6 @@ export function ShapePanel() {
   // Start with empty array = all collapsed by default
   const [expandedCategories, setExpandedCategories] = useState<string[]>([])
   const [expandedCloudProviders, setExpandedCloudProviders] = useState<string[]>([])
-  const [expandedSubcategories, setExpandedSubcategories] = useState<string[]>([])
   const [libraryDialogOpen, setLibraryDialogOpen] = useState(false)
   const [expandedLibraries, setExpandedLibraries] = useState<string[]>([])
 
@@ -827,12 +857,12 @@ export function ShapePanel() {
     return filtered
   }, [searchQuery])
 
-  // Filter cloud provider categories based on search query
+  // Filter cloud provider categories based on search query (flat structure)
   const filteredCloudCategories = useMemo(() => {
     type CloudProvider = {
       label: string
       icon: string
-      subcategories: Record<string, { label: string; shapes: ShapeType[] }>
+      shapes: ShapeType[]
     }
 
     if (!searchQuery.trim()) {
@@ -843,26 +873,15 @@ export function ShapePanel() {
     const filtered: Record<string, CloudProvider> = {}
 
     for (const [providerKey, provider] of Object.entries(CLOUD_PROVIDER_CATEGORIES)) {
-      const filteredSubcategories: Record<string, { label: string; shapes: ShapeType[] }> = {}
+      const matchingShapes = provider.shapes.filter((shape: ShapeType) => {
+        const label = SHAPE_LABELS[shape] || shape
+        return label.toLowerCase().includes(query) || shape.toLowerCase().includes(query)
+      })
 
-      for (const [subKey, subcategory] of Object.entries(provider.subcategories)) {
-        const matchingShapes = subcategory.shapes.filter((shape: ShapeType) => {
-          const label = SHAPE_LABELS[shape] || shape
-          return label.toLowerCase().includes(query) || shape.toLowerCase().includes(query)
-        })
-
-        if (matchingShapes.length > 0) {
-          filteredSubcategories[subKey] = {
-            ...subcategory,
-            shapes: matchingShapes,
-          }
-        }
-      }
-
-      if (Object.keys(filteredSubcategories).length > 0) {
+      if (matchingShapes.length > 0) {
         filtered[providerKey] = {
           ...provider,
-          subcategories: filteredSubcategories,
+          shapes: matchingShapes,
         }
       }
     }
@@ -885,16 +904,6 @@ export function ShapePanel() {
     return expandedCloudProviders
   }, [searchQuery, filteredCloudCategories, expandedCloudProviders])
 
-  const effectiveSubExpanded = useMemo(() => {
-    if (searchQuery.trim()) {
-      const allSubs: string[] = []
-      for (const provider of Object.values(filteredCloudCategories)) {
-        allSubs.push(...Object.keys(provider.subcategories))
-      }
-      return allSubs
-    }
-    return expandedSubcategories
-  }, [searchQuery, filteredCloudCategories, expandedSubcategories])
 
   const renderShapeGrid = (shapes: ShapeType[]) => (
     <div className="grid grid-cols-3 gap-2 px-3">
@@ -1020,7 +1029,7 @@ export function ShapePanel() {
               ))}
             </Accordion>
 
-            {/* Cloud Provider Categories */}
+            {/* Cloud Provider Categories - Flat list */}
             {Object.keys(filteredCloudCategories).length > 0 && (
               <Accordion
                 type="multiple"
@@ -1034,35 +1043,12 @@ export function ShapePanel() {
                       <span className="flex items-center gap-2">
                         {provider.label}
                         <span className="text-xs text-muted-foreground">
-                          ({countCloudProviderShapes(provider.subcategories)})
+                          ({countCloudProviderShapes(provider.shapes)})
                         </span>
                       </span>
                     </AccordionTrigger>
-                    <AccordionContent className="pb-0">
-                      {/* Nested subcategories */}
-                      <Accordion
-                        type="multiple"
-                        value={effectiveSubExpanded}
-                        onValueChange={setExpandedSubcategories}
-                        className="w-full"
-                      >
-                        {Object.entries(provider.subcategories).map(([subKey, subcategory]) => (
-                          <AccordionItem key={subKey} value={subKey} className="border-0">
-                            <AccordionTrigger className="px-6 py-1.5 text-sm hover:no-underline hover:bg-accent/30">
-                              <span className="flex items-center gap-2">
-                                <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                                {subcategory.label}
-                                <span className="text-xs text-muted-foreground">
-                                  ({subcategory.shapes.length})
-                                </span>
-                              </span>
-                            </AccordionTrigger>
-                            <AccordionContent className="pb-2 pl-2">
-                              {renderShapeGrid(subcategory.shapes)}
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
+                    <AccordionContent className="pb-3">
+                      {renderShapeGrid(provider.shapes)}
                     </AccordionContent>
                   </AccordionItem>
                 ))}

@@ -3227,6 +3227,24 @@ export const GcpApiGatewayIcon: React.FC<IconProps> = ({ size = 32, className })
   </svg>
 )
 
+// GCP AI - Gemini
+export const GcpGeminiIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" className={className}>
+    <defs>
+      <linearGradient id="gcp-gemini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#4285F4"/>
+        <stop offset="25%" stopColor="#34A853"/>
+        <stop offset="50%" stopColor="#FBBC04"/>
+        <stop offset="75%" stopColor="#EA4335"/>
+        <stop offset="100%" stopColor="#4285F4"/>
+      </linearGradient>
+    </defs>
+    <circle cx="12" cy="12" r="11" fill="url(#gcp-gemini-grad)"/>
+    <path d="M12 4c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 14c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z" fill="#fff" opacity=".3"/>
+    <path d="M12 8l2 4 4 0-3 3 1 4-4-2-4 2 1-4-3-3 4 0z" fill="#fff"/>
+  </svg>
+)
+
 // ========== GENERIC CLOUD/DEVOPS ICONS ==========
 
 

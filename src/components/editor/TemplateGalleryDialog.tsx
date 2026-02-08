@@ -79,13 +79,51 @@ export function TemplateGalleryDialog({ open, onOpenChange }: TemplateGalleryDia
         return { ...node, id: newId }
       })
 
-      // Update edge source/target references
-      const newEdges = template.edges.map((edge) => ({
-        ...edge,
-        id: `${edge.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        source: idMap.get(edge.source) || edge.source,
-        target: idMap.get(edge.target) || edge.target,
-      }))
+      // Helper to determine best handles based on relative node positions
+      const getOptimalHandles = (sourceNode: typeof newNodes[0], targetNode: typeof newNodes[0]) => {
+        const dx = targetNode.position.x - sourceNode.position.x
+        const dy = targetNode.position.y - sourceNode.position.y
+
+        // Determine primary direction (horizontal or vertical)
+        if (Math.abs(dx) > Math.abs(dy)) {
+          // Horizontal flow
+          return dx > 0
+            ? { sourceHandle: 'right', targetHandle: 'left' }
+            : { sourceHandle: 'left', targetHandle: 'right' }
+        } else {
+          // Vertical flow
+          return dy > 0
+            ? { sourceHandle: 'bottom', targetHandle: 'top' }
+            : { sourceHandle: 'top', targetHandle: 'bottom' }
+        }
+      }
+
+      // Update edge source/target references with optimal handles
+      const newEdges = template.edges.map((edge) => {
+        const sourceNode = newNodes.find(n => n.id === (idMap.get(edge.source) || edge.source))
+        const targetNode = newNodes.find(n => n.id === (idMap.get(edge.target) || edge.target))
+
+        // Use template-specified handles or auto-calculate based on positions
+        let sourceHandle = edge.sourceHandle
+        let targetHandle = edge.targetHandle
+
+        if (!sourceHandle || !targetHandle) {
+          if (sourceNode && targetNode) {
+            const optimal = getOptimalHandles(sourceNode, targetNode)
+            sourceHandle = sourceHandle || optimal.sourceHandle
+            targetHandle = targetHandle || optimal.targetHandle
+          }
+        }
+
+        return {
+          ...edge,
+          id: `${edge.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          source: idMap.get(edge.source) || edge.source,
+          target: idMap.get(edge.target) || edge.target,
+          sourceHandle,
+          targetHandle,
+        }
+      })
 
       // Apply to editor
       setNodes(newNodes)

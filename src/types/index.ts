@@ -119,6 +119,144 @@ export interface DiagramTemplate {
   updatedAt: string
 }
 
+// =============================================
+// Architecture Template Types (Enhanced)
+// =============================================
+
+export type TemplateCategory =
+  // Cloud Providers
+  | 'aws'
+  | 'azure'
+  | 'gcp'
+  | 'multi-cloud'
+  // Use Cases
+  | 'web-app'
+  | 'data-analytics'
+  | 'iot'
+  | 'ai-ml'
+  | 'devops'
+  | 'security'
+  | 'networking'
+  | 'containers'
+  | 'serverless'
+  | 'migration'
+  // Industries
+  | 'fintech'
+  | 'healthcare'
+  | 'retail'
+  | 'gaming'
+  // General
+  | 'general'
+  | 'flowchart'
+  | 'uml'
+  | 'network'
+
+export type TemplateComplexity = 'beginner' | 'intermediate' | 'advanced'
+
+export interface TemplateVariable {
+  id: string
+  name: string
+  type: 'text' | 'select' | 'number'
+  defaultValue: string
+  options?: string[]
+  appliesTo: string[] // Node IDs that use this variable
+}
+
+export interface TemplateGroup {
+  id: string
+  name: string
+  type: 'vpc' | 'subnet' | 'region' | 'availability-zone' | 'resource-group' | 'container'
+  nodeIds: string[]
+  position?: { x: number; y: number }
+  size?: { width: number; height: number }
+  style?: {
+    backgroundColor?: string
+    borderColor?: string
+    borderStyle?: 'solid' | 'dashed'
+  }
+}
+
+export interface TemplateAnnotation {
+  id: string
+  text: string
+  position: { x: number; y: number }
+  style?: {
+    fontSize?: number
+    fontWeight?: 'normal' | 'bold'
+    color?: string
+    backgroundColor?: string
+  }
+}
+
+export interface TemplateNode {
+  id: string
+  type: ShapeType | string
+  position: { x: number; y: number }
+  data: {
+    label: string
+    type: ShapeType | string
+    style?: Partial<NodeStyle>
+    [key: string]: unknown
+  }
+  width?: number
+  height?: number
+}
+
+export interface TemplateEdge {
+  id: string
+  source: string
+  target: string
+  sourceHandle?: string
+  targetHandle?: string
+  label?: string
+  type?: string
+  style?: Partial<EdgeStyle>
+  data?: {
+    label?: string
+    style?: Partial<EdgeStyle>
+    [key: string]: unknown
+  }
+}
+
+export interface ArchitectureTemplate {
+  // Basic Info
+  id: string
+  name: string
+  description: string
+  categories: TemplateCategory[]
+
+  // Source & Attribution
+  source?: string // URL to official documentation
+  lastUpdated?: string // ISO date
+  version?: string // e.g., "2024.1"
+
+  // Complexity & Use Case
+  complexity: TemplateComplexity
+  estimatedCost?: string // e.g., "$500-$2000/month"
+  useCases?: string[] // e.g., ["high-availability", "low-latency"]
+
+  // Visual
+  thumbnail?: string // Base64 or URL to preview image
+  primaryColor?: string // For category styling
+  icon?: string // Icon name for display
+
+  // Diagram Content
+  nodes: TemplateNode[]
+  edges: TemplateEdge[]
+  groups?: TemplateGroup[]
+  annotations?: TemplateAnnotation[]
+
+  // Customization Options
+  variables?: TemplateVariable[]
+
+  // Metadata
+  tags: string[]
+  relatedTemplates?: string[] // IDs of similar templates
+
+  // For built-in templates
+  isBuiltIn?: boolean
+}
+
 export interface DiagramNode extends Node {
   data: {
     label: string
@@ -335,22 +473,26 @@ export type ShapeType =
   | 'aws-wavelength'
   | 'aws-local-zones'
   | 'aws-batch'
+  | 'aws-fargate'
+  | 'aws-app-runner'
+  | 'aws-auto-scaling'
   // AWS Containers
   | 'aws-ecs'
   | 'aws-eks'
-  | 'aws-fargate'
   | 'aws-ecr'
-  | 'aws-app-runner'
   // AWS Storage
   | 'aws-s3'
+  | 'aws-simple-storage-service'
   | 'aws-ebs'
   | 'aws-efs'
   | 'aws-fsx'
+  | 'aws-elastic-block-store'
   | 'aws-storage-gateway'
   | 'aws-backup'
   | 'aws-snow-family'
   // AWS Database
   | 'aws-rds'
+  | 'aws-aurora'
   | 'aws-dynamodb'
   | 'aws-elasticache'
   | 'aws-redshift'
@@ -364,25 +506,38 @@ export type ShapeType =
   | 'aws-vpc'
   | 'aws-cloudfront'
   | 'aws-route53'
+  | 'aws-route-53'
   | 'aws-api-gateway'
   | 'aws-direct-connect'
   | 'aws-global-accelerator'
   | 'aws-transit-gateway'
   | 'aws-privatelink'
   | 'aws-elb'
+  | 'aws-elastic-load-balancing'
+  | 'aws-nat-gateway'
+  | 'aws-internet-gateway'
+  | 'aws-client-vpn'
+  | 'aws-site-to-site-vpn'
+  | 'aws-cloud-wan'
   // AWS Security
   | 'aws-iam'
   | 'aws-cognito'
   | 'aws-secrets-manager'
   | 'aws-kms'
+  | 'aws-key-management-service'
   | 'aws-waf'
   | 'aws-shield'
   | 'aws-guardduty'
   | 'aws-inspector'
   | 'aws-macie'
   | 'aws-security-hub'
+  | 'aws-certificate-manager'
+  | 'aws-firewall-manager'
+  | 'aws-iam-identity-center'
   // AWS Analytics
   | 'aws-kinesis'
+  | 'aws-kinesis-data-streams'
+  | 'aws-data-firehose'
   | 'aws-athena'
   | 'aws-emr'
   | 'aws-glue'
@@ -390,9 +545,13 @@ export type ShapeType =
   | 'aws-quicksight'
   | 'aws-data-pipeline'
   | 'aws-msk'
+  | 'aws-managed-streaming-for-apache-kafka'
   | 'aws-opensearch'
+  | 'aws-opensearch-service'
+  | 'aws-datazone'
   // AWS ML/AI
   | 'aws-sagemaker'
+  | 'aws-sagemaker-ai'
   | 'aws-rekognition'
   | 'aws-comprehend'
   | 'aws-lex'
@@ -401,9 +560,15 @@ export type ShapeType =
   | 'aws-translate'
   | 'aws-textract'
   | 'aws-bedrock'
+  | 'aws-q'
+  | 'aws-personalize'
+  | 'aws-kendra'
+  | 'aws-forecast'
   // AWS Integration
   | 'aws-sns'
+  | 'aws-simple-notification-service'
   | 'aws-sqs'
+  | 'aws-simple-queue-service'
   | 'aws-eventbridge'
   | 'aws-step-functions'
   | 'aws-appsync'
@@ -414,9 +579,13 @@ export type ShapeType =
   | 'aws-codebuild'
   | 'aws-codedeploy'
   | 'aws-codepipeline'
+  | 'aws-codeartifact'
   | 'aws-cloud9'
   | 'aws-xray'
+  | 'aws-x-ray'
   | 'aws-cloudshell'
+  | 'aws-codecatalyst'
+  | 'aws-infrastructure-composer'
   // AWS Management
   | 'aws-cloudwatch'
   | 'aws-cloudtrail'
@@ -427,115 +596,231 @@ export type ShapeType =
   | 'aws-trusted-advisor'
   | 'aws-organizations'
   | 'aws-control-tower'
+  | 'aws-compute-optimizer'
   | 'aws-amplify'
+  | 'aws-clean-rooms'
+  | 'aws-verified-access'
+  // AWS Application Integration
+  | 'aws-connect'
+  | 'aws-pinpoint'
+  | 'aws-ses'
+  | 'aws-simple-email-service'
   // Azure Cloud icons - Core
   | 'azure-vm'
+  | 'azure-virtual-machine'
   | 'azure-storage'
+  | 'azure-storage-accounts'
   | 'azure-functions'
+  | 'azure-function-apps'
   | 'azure-sql'
+  | 'azure-sql-database'
   | 'azure-cosmos'
+  | 'azure-azure-cosmos-db'
   | 'azure-app-service'
+  | 'azure-app-services'
   | 'azure-aks'
+  | 'azure-kubernetes-services'
   | 'azure-cdn'
+  | 'azure-cdn-profiles'
   | 'azure-vnet'
+  | 'azure-virtual-networks'
   | 'azure-keyvault'
+  | 'azure-key-vaults'
   | 'azure-event-hub'
+  | 'azure-event-hubs'
   | 'azure-service-bus'
+  | 'azure-azure-service-bus'
   | 'azure-logic-apps'
   | 'azure-databricks'
+  | 'azure-azure-databricks'
   | 'azure-active-directory'
   | 'azure-container-registry'
+  | 'azure-container-registries'
   | 'azure-redis-cache'
+  | 'azure-cache-redis'
   | 'azure-app-gateway'
+  | 'azure-application-gateways'
   | 'azure-front-door'
+  | 'azure-front-door-and-cdn-profiles'
   | 'azure-monitor'
   // Azure - Analytics
   | 'azure-synapse'
+  | 'azure-azure-synapse-analytics'
   | 'azure-data-factory'
+  | 'azure-data-factories'
   | 'azure-stream-analytics'
+  | 'azure-stream-analytics-jobs'
   | 'azure-hdinsight'
+  | 'azure-hd-insight-clusters'
   | 'azure-data-lake'
   | 'azure-analysis-services'
   | 'azure-log-analytics'
+  | 'azure-log-analytics-workspaces'
   | 'azure-purview'
+  | 'azure-azure-data-explorer-clusters'
+  | 'azure-power-bi-embedded'
+  // Azure - Microsoft Fabric
+  | 'azure-fabric'
+  | 'azure-fabric-lakehouse'
+  | 'azure-fabric-warehouse'
+  | 'azure-fabric-eventhouse'
+  | 'azure-onelake'
+  | 'azure-fabric-pipeline'
+  | 'azure-power-bi'
+  | 'azure-fabric-spark'
+  | 'azure-fabric-dataflow'
   // Azure - Compute
   | 'azure-vm-scale-sets'
   | 'azure-batch'
+  | 'azure-batch-accounts'
   | 'azure-cloud-services'
+  | 'azure-cloud-services-extended-support-'
   | 'azure-service-fabric'
+  | 'azure-service-fabric-clusters'
+  | 'azure-spot-vm'
   // Azure - Containers
   | 'azure-container-instances'
   | 'azure-container-apps'
+  | 'azure-container-apps-environments'
   // Azure - Databases
   | 'azure-mysql'
+  | 'azure-azure-database-mysql-server'
   | 'azure-postgresql'
+  | 'azure-azure-database-postgresql-server'
   | 'azure-mariadb'
+  | 'azure-azure-database-mariadb-server'
   | 'azure-sql-managed-instance'
   | 'azure-table-storage'
+  | 'azure-table'
+  | 'azure-elastic-job-agents'
+  | 'azure-managed-database'
   // Azure - Networking
   | 'azure-load-balancer'
+  | 'azure-load-balancers'
   | 'azure-vpn-gateway'
+  | 'azure-virtual-network-gateways'
   | 'azure-expressroute'
+  | 'azure-expressroute-circuits'
   | 'azure-traffic-manager'
+  | 'azure-traffic-manager-profiles'
   | 'azure-dns'
+  | 'azure-dns-zones'
   | 'azure-private-link'
+  | 'azure-private-link-services'
+  | 'azure-private-endpoints'
   | 'azure-bastion'
+  | 'azure-bastions'
   | 'azure-nat-gateway'
+  | 'azure-nat'
+  | 'azure-firewalls'
+  | 'azure-network-security-groups'
+  | 'azure-azure-firewall-policy'
   // Azure - Security
   | 'azure-security-center'
+  | 'azure-microsoft-defender-for-cloud'
   | 'azure-sentinel'
+  | 'azure-azure-sentinel'
   | 'azure-ddos-protection'
+  | 'azure-ddos-protection-plans'
   | 'azure-firewall'
   | 'azure-defender'
+  | 'azure-multifactor-authentication'
   // Azure - AI + ML
   | 'azure-cognitive-services'
+  | 'azure-cognitive-search'
   | 'azure-machine-learning'
   | 'azure-bot-service'
+  | 'azure-bot-services'
   | 'azure-openai'
+  | 'azure-azure-openai'
+  | 'azure-ai-studio'
+  | 'azure-computer-vision'
+  | 'azure-face-apis'
+  | 'azure-speech-services'
+  | 'azure-language'
+  | 'azure-translator-text'
+  | 'azure-content-safety'
+  | 'azure-form-recognizers'
   // Azure - Integration
   | 'azure-api-management'
+  | 'azure-api-management-services'
   | 'azure-event-grid'
+  | 'azure-event-grid-domains'
+  | 'azure-event-grid-topics'
+  | 'azure-notification-hubs'
+  | 'azure-relays'
+  | 'azure-signalr'
   // Azure - Storage
   | 'azure-blob-storage'
+  | 'azure-blob-block'
+  | 'azure-blob-page'
   | 'azure-file-storage'
+  | 'azure-azure-fileshares'
   | 'azure-queue-storage'
+  | 'azure-storage-queue'
   | 'azure-data-lake-storage'
   | 'azure-netapp-files'
+  | 'azure-azure-netapp-files'
+  | 'azure-storage-sync-services'
+  | 'azure-azure-storage-mover'
   // Azure - Identity
   | 'azure-b2c'
   | 'azure-managed-identities'
   | 'azure-entra-id'
+  | 'azure-entra-domain-services'
+  | 'azure-entra-id-protection'
   // Azure - DevOps
   | 'azure-devops'
+  | 'azure-azure-devops'
   | 'azure-repos'
   | 'azure-pipelines'
   | 'azure-boards'
   | 'azure-test-plans'
   | 'azure-artifacts'
+  | 'azure-devtest-labs'
+  | 'azure-azure-deployment-environments'
+  | 'azure-managed-devops-pools'
   // Azure - Web
   | 'azure-static-web-apps'
-  | 'azure-signalr'
-  | 'azure-notification-hubs'
+  // Azure - Management
+  | 'azure-advisor'
+  | 'azure-policy'
+  | 'azure-cost-management'
+  | 'azure-management-groups'
+  | 'azure-subscriptions'
+  | 'azure-resource-groups'
+  | 'azure-automation-accounts'
+  | 'azure-azure-arc'
+  | 'azure-azure-backup-center'
   // GCP Compute
   | 'gcp-compute'
+  | 'gcp-compute-engine'
   | 'gcp-functions'
   | 'gcp-app-engine'
   | 'gcp-cloud-run'
   | 'gcp-gke'
   // GCP Storage
   | 'gcp-storage'
+  | 'gcp-cloud-storage'
   | 'gcp-persistent-disk'
   | 'gcp-filestore'
   | 'gcp-storage-transfer'
+  | 'gcp-hyperdisk'
   // GCP Database
   | 'gcp-cloud-sql'
   | 'gcp-firestore'
   | 'gcp-bigtable'
   | 'gcp-spanner'
+  | 'gcp-cloud-spanner'
   | 'gcp-memorystore'
   | 'gcp-alloydb'
+  | 'gcp-databases'
+  // GCP Containers & Kubernetes
+  | 'gcp-anthos'
+  | 'gcp-containers'
   // GCP Networking
   | 'gcp-vpc'
+  | 'gcp-networking'
   | 'gcp-load-balancing'
   | 'gcp-cloud-cdn'
   | 'gcp-cloud-dns'
@@ -548,8 +833,12 @@ export type ShapeType =
   | 'gcp-cloud-kms'
   | 'gcp-secret-manager'
   | 'gcp-security-command-center'
+  | 'gcp-security-identity'
+  | 'gcp-security-operations'
   | 'gcp-beyondcorp'
   | 'gcp-certificate-manager'
+  | 'gcp-mandiant'
+  | 'gcp-threat-intelligence'
   // GCP Analytics
   | 'gcp-bigquery'
   | 'gcp-dataflow'
@@ -558,8 +847,12 @@ export type ShapeType =
   | 'gcp-data-fusion'
   | 'gcp-looker'
   | 'gcp-dataform'
+  | 'gcp-data-analytics'
+  | 'gcp-business-intelligence'
   // GCP AI/ML
   | 'gcp-vertex-ai'
+  | 'gcp-ai-machine-learning'
+  | 'gcp-ai-hypercomputer'
   | 'gcp-vision-ai'
   | 'gcp-natural-language'
   | 'gcp-speech-to-text'
@@ -567,12 +860,15 @@ export type ShapeType =
   | 'gcp-document-ai'
   | 'gcp-recommendations-ai'
   | 'gcp-automl'
+  | 'gcp-gemini'
   // GCP Developer
   | 'gcp-cloud-build'
   | 'gcp-artifact-registry'
   | 'gcp-cloud-source-repos'
   | 'gcp-cloud-deploy'
   | 'gcp-cloud-workstations'
+  | 'gcp-developer-tools'
+  | 'gcp-devops'
   // GCP Management
   | 'gcp-cloud-monitoring'
   | 'gcp-cloud-logging'
@@ -580,12 +876,38 @@ export type ShapeType =
   | 'gcp-error-reporting'
   | 'gcp-cloud-debugger'
   | 'gcp-cloud-profiler'
+  | 'gcp-management-tools'
+  | 'gcp-observability'
+  | 'gcp-operations'
   // GCP Integration
   | 'gcp-cloud-tasks'
   | 'gcp-cloud-scheduler'
   | 'gcp-workflows'
   | 'gcp-eventarc'
   | 'gcp-api-gateway'
+  | 'gcp-apigee'
+  | 'gcp-integration-services'
+  // GCP Serverless
+  | 'gcp-serverless-computing'
+  // GCP Hybrid & Multi-cloud
+  | 'gcp-hybrid-multicloud'
+  | 'gcp-distributed-cloud'
+  // GCP Migration
+  | 'gcp-migration'
+  // GCP Marketplace
+  | 'gcp-marketplace'
+  // GCP Media
+  | 'gcp-media-services'
+  // GCP Maps
+  | 'gcp-maps-geospatial'
+  // GCP Collaboration
+  | 'gcp-collaboration'
+  // GCP Web & Mobile
+  | 'gcp-web-mobile'
+  // GCP Web3
+  | 'gcp-web3'
+  // GCP Mixed Reality
+  | 'gcp-mixed-reality'
   // Generic Cloud/DevOps
   | 'kubernetes'
   | 'docker'

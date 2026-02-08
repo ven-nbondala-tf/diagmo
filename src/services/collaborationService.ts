@@ -141,9 +141,9 @@ class CollaborationService {
     diagramId: string,
     callbacks: CollaborationCallbacks = {}
   ): Promise<void> {
-    // If already connected to this diagram, just update callbacks
-    if (this.channel && this.diagramId === diagramId && this.isSubscribed) {
-      console.log('[Collaboration] Already connected to this diagram, updating callbacks')
+    // If already connected or connecting to this diagram, just update callbacks
+    if (this.channel && this.diagramId === diagramId) {
+      console.log('[Collaboration] Already connected/connecting to this diagram, updating callbacks')
       this.callbacks = callbacks
       return
     }
@@ -299,6 +299,11 @@ class CollaborationService {
           this.callbacks.onConnectionStatusChange?.('disconnected')
           this.handleDisconnect()
         }
+      } else if (status === 'TIMED_OUT') {
+        console.error('[Collaboration] Channel subscription timed out')
+        this.isSubscribed = false
+        this.callbacks.onConnectionStatusChange?.('disconnected')
+        this.handleDisconnect()
       }
     })
 
@@ -453,6 +458,8 @@ class CollaborationService {
 
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.log('[Collaboration] Max reconnection attempts reached')
+      this.isReconnecting = false
+      this.callbacks.onConnectionStatusChange?.('disconnected')
       this.callbacks.onError?.(new Error('Max reconnection attempts reached. Please refresh the page.'))
       return
     }
@@ -489,6 +496,7 @@ class CollaborationService {
       if (this.reconnectAttempts < this.maxReconnectAttempts) {
         setTimeout(() => this.handleDisconnect(), 1000)
       } else {
+        this.callbacks.onConnectionStatusChange?.('disconnected')
         this.callbacks.onError?.(new Error('Max reconnection attempts reached. Please refresh the page.'))
       }
     }

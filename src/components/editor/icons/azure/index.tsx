@@ -228,7 +228,168 @@ export const AzureKeyVaultIcon: React.FC<IconProps> = ({ size = 32, className })
 )
 
 // ============================================================================
-// GCP ICONS - Google Cloud Platform official colors
+// Azure Microsoft Fabric Icons
 // ============================================================================
+
+export const AzureFabricIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" className={className}>
+    <defs>
+      <linearGradient id="azure-fabric-grad" x1="9" y1="1" x2="9" y2="17" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#50e6ff"/>
+        <stop offset="1" stopColor="#0078d4"/>
+      </linearGradient>
+    </defs>
+    <rect x="1" y="1" width="16" height="16" rx="2" fill="url(#azure-fabric-grad)"/>
+    <path d="M5 5h3v3H5zM10 5h3v3h-3zM5 10h3v3H5zM10 10h3v3h-3z" fill="#fff" opacity=".9"/>
+  </svg>
+)
+
+export const AzureFabricLakehouseIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" className={className}>
+    <defs>
+      <linearGradient id="azure-lakehouse-grad" x1="9" y1="2" x2="9" y2="16" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#50e6ff"/>
+        <stop offset="1" stopColor="#0078d4"/>
+      </linearGradient>
+    </defs>
+    <path d="M9 2L2 6v8l7 4 7-4V6L9 2z" fill="url(#azure-lakehouse-grad)"/>
+    <path d="M9 6L5 8v4l4 2 4-2V8L9 6z" fill="#fff" opacity=".3"/>
+    <path d="M9 8l-2 1v2l2 1 2-1V9L9 8z" fill="#fff"/>
+  </svg>
+)
+
+export const AzureFabricWarehouseIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" className={className}>
+    <defs>
+      <linearGradient id="azure-warehouse-grad" x1="9" y1="1" x2="9" y2="17" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#773adc"/>
+        <stop offset="1" stopColor="#552f99"/>
+      </linearGradient>
+    </defs>
+    <rect x="2" y="3" width="14" height="12" rx="1" fill="url(#azure-warehouse-grad)"/>
+    <rect x="4" y="5" width="10" height="2" rx=".5" fill="#fff" opacity=".9"/>
+    <rect x="4" y="8" width="10" height="2" rx=".5" fill="#fff" opacity=".7"/>
+    <rect x="4" y="11" width="10" height="2" rx=".5" fill="#fff" opacity=".5"/>
+  </svg>
+)
+
+export const AzureFabricEventhouseIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" className={className}>
+    <defs>
+      <linearGradient id="azure-eventhouse-grad" x1="9" y1="1" x2="9" y2="17" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#ffd70f"/>
+        <stop offset="1" stopColor="#fea11b"/>
+      </linearGradient>
+    </defs>
+    <path d="M9 1L1 5v8l8 4 8-4V5L9 1z" fill="url(#azure-eventhouse-grad)"/>
+    <path d="M9 5L4 7.5v5L9 15l5-2.5v-5L9 5z" fill="#fff" opacity=".3"/>
+    <circle cx="9" cy="10" r="2" fill="#fff"/>
+  </svg>
+)
+
+export const AzureOneLakeIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" className={className}>
+    <defs>
+      <linearGradient id="azure-onelake-grad" x1="9" y1="1" x2="9" y2="17" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#50e6ff"/>
+        <stop offset="0.5" stopColor="#0078d4"/>
+        <stop offset="1" stopColor="#005ba1"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="9" cy="5" rx="7" ry="3" fill="url(#azure-onelake-grad)"/>
+    <path d="M2 5v8c0 1.66 3.13 3 7 3s7-1.34 7-3V5c0 1.66-3.13 3-7 3S2 6.66 2 5z" fill="url(#azure-onelake-grad)"/>
+    <ellipse cx="9" cy="5" rx="5" ry="2" fill="#fff" opacity=".3"/>
+  </svg>
+)
+
+export const AzureFabricPipelineIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" className={className}>
+    <defs>
+      <linearGradient id="azure-pipeline-grad" x1="1" y1="9" x2="17" y2="9" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#0078d4"/>
+        <stop offset="1" stopColor="#50e6ff"/>
+      </linearGradient>
+    </defs>
+    <rect x="1" y="6" width="5" height="6" rx="1" fill="#0078d4"/>
+    <rect x="12" y="6" width="5" height="6" rx="1" fill="#50e6ff"/>
+    <path d="M6 9h6" stroke="url(#azure-pipeline-grad)" strokeWidth="2" fill="none"/>
+    <path d="M10 7l2 2-2 2" fill="none" stroke="#50e6ff" strokeWidth="1.5"/>
+  </svg>
+)
+
+export const AzurePowerBIIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" className={className}>
+    <defs>
+      <linearGradient id="azure-pbi-grad" x1="9" y1="1" x2="9" y2="17" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#f2c811"/>
+        <stop offset="1" stopColor="#e8a900"/>
+      </linearGradient>
+    </defs>
+    <rect x="2" y="2" width="14" height="14" rx="2" fill="url(#azure-pbi-grad)"/>
+    <rect x="4" y="10" width="2.5" height="4" rx=".5" fill="#000" opacity=".3"/>
+    <rect x="7.75" y="7" width="2.5" height="7" rx=".5" fill="#000" opacity=".5"/>
+    <rect x="11.5" y="4" width="2.5" height="10" rx=".5" fill="#000" opacity=".7"/>
+  </svg>
+)
+
+export const AzureFabricSparkIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" className={className}>
+    <defs>
+      <linearGradient id="azure-spark-grad" x1="9" y1="1" x2="9" y2="17" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#ff6b35"/>
+        <stop offset="1" stopColor="#e84118"/>
+      </linearGradient>
+    </defs>
+    <circle cx="9" cy="9" r="7" fill="url(#azure-spark-grad)"/>
+    <path d="M9 4L7 9l2 5 2-5-2-5z" fill="#fff" opacity=".9"/>
+    <path d="M4 9l5-2 5 2-5 2-5-2z" fill="#fff" opacity=".7"/>
+  </svg>
+)
+
+export const AzureFabricDataflowIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" className={className}>
+    <defs>
+      <linearGradient id="azure-dataflow-grad" x1="1" y1="9" x2="17" y2="9" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#0078d4"/>
+        <stop offset="1" stopColor="#50e6ff"/>
+      </linearGradient>
+    </defs>
+    <circle cx="3" cy="5" r="2" fill="#0078d4"/>
+    <circle cx="3" cy="13" r="2" fill="#0078d4"/>
+    <circle cx="9" cy="9" r="2.5" fill="#1490df"/>
+    <circle cx="15" cy="9" r="2" fill="#50e6ff"/>
+    <path d="M5 5h2M5 13h2M11.5 9h1.5" stroke="url(#azure-dataflow-grad)" strokeWidth="1.5" fill="none"/>
+  </svg>
+)
+
+export const AzureEntraIdIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" className={className}>
+    <defs>
+      <linearGradient id="azure-entra-grad" x1="9" y1="1" x2="9" y2="17" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#0078d4"/>
+        <stop offset="1" stopColor="#005ba1"/>
+      </linearGradient>
+    </defs>
+    <path d="M9 1L2 5v8l7 4 7-4V5L9 1z" fill="url(#azure-entra-grad)"/>
+    <circle cx="9" cy="7" r="2.5" fill="#fff"/>
+    <path d="M5 14c0-2.2 1.8-4 4-4s4 1.8 4 4" fill="#fff" opacity=".8"/>
+  </svg>
+)
+
+export const AzureOpenAIIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" className={className}>
+    <defs>
+      <linearGradient id="azure-openai-grad" x1="9" y1="1" x2="9" y2="17" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#50e6ff"/>
+        <stop offset="1" stopColor="#0078d4"/>
+      </linearGradient>
+    </defs>
+    <circle cx="9" cy="9" r="8" fill="url(#azure-openai-grad)"/>
+    <circle cx="9" cy="9" r="3" fill="#fff"/>
+    <circle cx="9" cy="9" r="1.5" fill="#0078d4"/>
+    <path d="M9 1v3M9 14v3M1 9h3M14 9h3M3 3l2 2M13 13l2 2M3 15l2-2M13 3l2 2" stroke="#fff" strokeWidth="1" opacity=".6"/>
+  </svg>
+)
+
 
 

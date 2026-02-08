@@ -138,12 +138,12 @@ export const diagramService = {
       .eq('user_id', user.id) // Only user's own diagrams for now
       .order('updated_at', { ascending: false })
 
-    // Filter by folder
+    // Filter by folder - only filter if a specific folder is selected
+    // When folderId is null, show ALL diagrams (including those in folders)
     if (folderId) {
       query = query.eq('folder_id', folderId)
-    } else {
-      query = query.is('folder_id', null)
     }
+    // When folderId is null, don't filter - show all diagrams
 
     const { data, error } = await query
 
@@ -160,10 +160,9 @@ export const diagramService = {
           .eq('user_id', user.id)
           .order('updated_at', { ascending: false })
 
+        // Only filter by folder if a specific folder is selected
         if (folderId) {
           retryQuery = retryQuery.eq('folder_id', folderId)
-        } else {
-          retryQuery = retryQuery.is('folder_id', null)
         }
 
         const { data: retryData, error: retryError } = await retryQuery

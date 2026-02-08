@@ -26,6 +26,7 @@ import { SearchBar } from '@/components/dashboard/SearchBar'
 import { TemplateGallery } from '@/components/dashboard/TemplateGallery'
 import { PendingInvitesBanner } from '@/components/dashboard/PendingInvitesBanner'
 import { DIAGRAM_TEMPLATES, type DiagramTemplate } from '@/constants/templates'
+import type { ArchitectureTemplate, DiagramNode, DiagramEdge } from '@/types'
 import { TemplateQuickCard } from '@/components/dashboard/TemplateQuickCard'
 import { Sidebar, TopBar } from '@/components/layout'
 import {
@@ -73,7 +74,8 @@ export function DashboardPage() {
   const { user } = useAuthStore()
   const { currentWorkspaceId } = useWorkspaceStore()
   const { recentDiagramIds, favoriteDiagramIds } = usePreferencesStore()
-  const [selectedFolderId] = useState<string | null>(null)
+  // Get folder ID from URL query parameter
+  const selectedFolderId = searchParams.get('folder')
   const [searchQuery, setSearchQuery] = useState('')
   const [showTemplateGallery, setShowTemplateGallery] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
@@ -162,12 +164,51 @@ export function DashboardPage() {
     return sortOrder === 'desc' ? sorted.reverse() : sorted
   }, [filteredDiagrams, sortBy, sortOrder])
 
-  const handleCreateDiagram = async (template?: DiagramTemplate) => {
+  const handleCreateDiagram = async (template?: DiagramTemplate | ArchitectureTemplate) => {
     try {
+      // Check if it's an architecture template (has 'categories' array)
+      const isArchitectureTemplate = template && 'categories' in template
+
+      // Convert architecture template nodes to diagram nodes format
+      let nodes: DiagramNode[] = []
+      let edges: DiagramEdge[] = []
+
+      if (template) {
+        if (isArchitectureTemplate) {
+          // Convert ArchitectureTemplate nodes: set type to 'custom', add width/height
+          nodes = (template as ArchitectureTemplate).nodes.map(node => ({
+            id: node.id,
+            type: 'custom', // React Flow node type must be 'custom'
+            position: node.position,
+            width: node.width || 80, // Default width for cloud icons
+            height: node.height || 80, // Default height for cloud icons
+            data: {
+              ...node.data,
+              type: node.data.type || node.type, // Shape type for rendering
+            },
+          })) as DiagramNode[]
+
+          // Convert edges
+          edges = (template as ArchitectureTemplate).edges.map(edge => ({
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            type: 'smoothstep',
+            data: edge.data || {},
+            ...(edge.sourceHandle && { sourceHandle: edge.sourceHandle }),
+            ...(edge.targetHandle && { targetHandle: edge.targetHandle }),
+          })) as DiagramEdge[]
+        } else {
+          // DiagramTemplate nodes are already in the correct format
+          nodes = (template as DiagramTemplate).nodes
+          edges = (template as DiagramTemplate).edges
+        }
+      }
+
       const newDiagram = await createDiagram.mutateAsync({
         name: template?.id === 'blank' ? 'Untitled Diagram' : template?.name || 'Untitled Diagram',
-        nodes: template?.nodes || [],
-        edges: template?.edges || [],
+        nodes,
+        edges,
         folderId: selectedFolderId || undefined,
         workspaceId: currentWorkspaceId || undefined,
       })

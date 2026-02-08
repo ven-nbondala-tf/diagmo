@@ -26,6 +26,9 @@ interface UserPreferences {
   defaultZoom: number
   showMinimap: boolean
   showGrid: boolean
+
+  // Editor preferences
+  autoSave: boolean
 }
 
 interface PreferencesActions {
@@ -58,6 +61,9 @@ interface PreferencesActions {
   setShowMinimap: (show: boolean) => void
   setShowGrid: (show: boolean) => void
 
+  // Editor preferences
+  setAutoSave: (autoSave: boolean) => void
+
   // Reset
   resetPreferences: () => void
 }
@@ -80,6 +86,7 @@ const defaultPreferences: UserPreferences = {
   defaultZoom: 1,
   showMinimap: true,
   showGrid: true,
+  autoSave: true,
 }
 
 export const usePreferencesStore = create<PreferencesStore>()(
@@ -148,6 +155,9 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setShowMinimap: (show) => set({ showMinimap: show }),
       setShowGrid: (show) => set({ showGrid: show }),
 
+      // Editor preferences
+      setAutoSave: (autoSave) => set({ autoSave }),
+
       // Reset
       resetPreferences: () => set(defaultPreferences),
     }),
@@ -168,6 +178,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
         defaultZoom: state.defaultZoom,
         showMinimap: state.showMinimap,
         showGrid: state.showGrid,
+        autoSave: state.autoSave,
       }),
     }
   )

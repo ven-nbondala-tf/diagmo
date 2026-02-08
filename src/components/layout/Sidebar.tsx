@@ -1,12 +1,16 @@
 import { useState } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useSearchParams } from 'react-router-dom'
 import { cn } from '@/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
+import { useFolders, useCreateFolder, useDeleteFolder } from '@/hooks'
 import { WorkspaceSettingsDialog } from '@/components/dashboard/WorkspaceSettingsDialog'
+import { CreateWorkspaceDialog } from '@/components/dashboard/CreateWorkspaceDialog'
 import {
   Home,
   FolderOpen,
+  Folder,
+  FolderPlus,
   Users,
   Star,
   Clock,
@@ -20,6 +24,10 @@ import {
   Search,
   PanelLeftClose,
   PanelLeft,
+  Trash2,
+  Loader2,
+  X,
+  Check,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -30,7 +38,9 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  Input,
 } from '@/components/ui'
+import { toast } from 'sonner'
 
 interface SidebarProps {
   collapsed?: boolean
@@ -40,11 +50,54 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: SidebarProps) {
   const location = useLocation()
-  const [expandedSections, setExpandedSections] = useState(['TEMPLATES'])
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [expandedSections, setExpandedSections] = useState(['TEMPLATES', 'FOLDERS'])
+  const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false)
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
   const { currentWorkspaceId, setCurrentWorkspace, setWorkspaceSettingsOpen } = useWorkspaceStore()
   const { data: workspaces = [] } = useWorkspaces()
+  const { data: folders = [], isLoading: foldersLoading } = useFolders()
+  const createFolder = useCreateFolder()
+  const deleteFolder = useDeleteFolder()
 
   const currentWorkspace = workspaces.find((w) => w.id === currentWorkspaceId)
+  const selectedFolderId = searchParams.get('folder')
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return
+    try {
+      await createFolder.mutateAsync({ name: newFolderName.trim() })
+      setNewFolderName('')
+      setIsCreatingFolder(false)
+      toast.success('Folder created')
+    } catch {
+      toast.error('Failed to create folder')
+    }
+  }
+
+  const handleDeleteFolder = async (folderId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (!confirm('Delete this folder? Diagrams in this folder will be moved to "All Diagrams".')) return
+    try {
+      await deleteFolder.mutateAsync(folderId)
+      if (selectedFolderId === folderId) {
+        setSearchParams({})
+      }
+      toast.success('Folder deleted')
+    } catch {
+      toast.error('Failed to delete folder')
+    }
+  }
+
+  const handleSelectFolder = (folderId: string | null) => {
+    if (folderId) {
+      setSearchParams({ folder: folderId })
+    } else {
+      setSearchParams({})
+    }
+  }
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) =>
@@ -77,7 +130,7 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
             <TooltipTrigger asChild>
               <button
                 onClick={() => onCollapse?.(true)}
-                className="p-1.5 rounded-md text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors"
+                className="p-1.5 rounded-md text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors cursor-pointer"
               >
                 <PanelLeftClose className="w-4 h-4" />
               </button>
@@ -90,7 +143,7 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
             <TooltipTrigger asChild>
               <button
                 onClick={() => onCollapse?.(false)}
-                className="p-1.5 rounded-md text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors"
+                className="p-1.5 rounded-md text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors cursor-pointer"
               >
                 <PanelLeft className="w-4 h-4" />
               </button>
@@ -105,7 +158,7 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
         <div className="p-3 border-b border-supabase-border">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-supabase-bg-secondary hover:bg-supabase-bg-tertiary border border-supabase-border text-sm transition-colors">
+              <button className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-supabase-bg-secondary hover:bg-supabase-bg-tertiary border border-supabase-border text-sm transition-colors cursor-pointer">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded bg-supabase-green-muted flex items-center justify-center">
                     <span className="text-supabase-green text-xs font-medium">
@@ -150,6 +203,14 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
                   {workspace.name}
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator className="bg-supabase-border" />
+              <DropdownMenuItem
+                onClick={() => setCreateWorkspaceOpen(true)}
+                className="text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Workspace
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -181,44 +242,168 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
             label="Dashboard"
             href="/dashboard"
             collapsed={collapsed}
-            active={location.pathname === '/dashboard' && !location.search}
+            active={location.pathname === '/dashboard' && !searchParams.get('view') && !searchParams.get('folder')}
           />
           <SidebarItem
             icon={FolderOpen}
             label="My Diagrams"
             href="/dashboard"
             collapsed={collapsed}
-            active={location.pathname === '/dashboard'}
+            active={false}
           />
           <SidebarItem
             icon={Users}
             label="Shared with Me"
             href="/dashboard?view=shared"
             collapsed={collapsed}
-            active={location.search.includes('view=shared')}
+            active={searchParams.get('view') === 'shared'}
           />
           <SidebarItem
             icon={Star}
             label="Favorites"
             href="/dashboard?view=favorites"
             collapsed={collapsed}
-            active={location.search.includes('view=favorites')}
+            active={searchParams.get('view') === 'favorites'}
           />
           <SidebarItem
             icon={Clock}
             label="Recent"
             href="/dashboard?view=recent"
             collapsed={collapsed}
-            active={location.search.includes('view=recent')}
+            active={searchParams.get('view') === 'recent'}
           />
         </div>
+
+        {/* Folders Section */}
+        {!collapsed && (
+          <div className="mt-6">
+            <div className="flex items-center justify-between px-3 py-1.5">
+              <button
+                onClick={() => toggleSection('FOLDERS')}
+                className="flex items-center gap-1 text-xs font-medium text-supabase-text-muted hover:text-supabase-text-secondary transition-colors cursor-pointer"
+              >
+                {expandedSections.includes('FOLDERS') ? (
+                  <ChevronDown className="w-3 h-3" />
+                ) : (
+                  <ChevronRight className="w-3 h-3" />
+                )}
+                <span>FOLDERS</span>
+              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setIsCreatingFolder(true)}
+                    className="p-1 rounded text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors"
+                  >
+                    <FolderPlus className="w-3.5 h-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Create folder</TooltipContent>
+              </Tooltip>
+            </div>
+            {expandedSections.includes('FOLDERS') && (
+              <div className="px-3 mt-1 space-y-1">
+                {/* Create folder input */}
+                {isCreatingFolder && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-supabase-bg-secondary rounded-md border border-supabase-border">
+                    <Folder className="w-4 h-4 text-supabase-text-muted flex-shrink-0" />
+                    <Input
+                      value={newFolderName}
+                      onChange={(e) => setNewFolderName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleCreateFolder()
+                        if (e.key === 'Escape') {
+                          setIsCreatingFolder(false)
+                          setNewFolderName('')
+                        }
+                      }}
+                      placeholder="Folder name"
+                      className="h-6 text-xs border-0 bg-transparent p-0 focus-visible:ring-0"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleCreateFolder}
+                      disabled={!newFolderName.trim() || createFolder.isPending}
+                      className="p-0.5 text-supabase-green hover:text-supabase-green-hover disabled:opacity-50"
+                    >
+                      {createFolder.isPending ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Check className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsCreatingFolder(false)
+                        setNewFolderName('')
+                      }}
+                      className="p-0.5 text-supabase-text-muted hover:text-supabase-text-primary"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* All Diagrams - only highlighted when no folder AND no special view */}
+                <button
+                  onClick={() => handleSelectFolder(null)}
+                  className={cn(
+                    'flex items-center gap-3 w-full px-2 py-1.5 rounded-md text-sm transition-all',
+                    !selectedFolderId && !searchParams.get('view')
+                      ? 'bg-black/10 dark:bg-white/10 text-supabase-text-primary'
+                      : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-black/5 dark:hover:bg-white/5'
+                  )}
+                >
+                  <FolderOpen className="w-4 h-4 flex-shrink-0" />
+                  <span className="flex-1 text-left truncate">All Diagrams</span>
+                </button>
+
+                {/* Folder list */}
+                {foldersLoading ? (
+                  <div className="flex items-center justify-center py-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-supabase-text-muted" />
+                  </div>
+                ) : folders.length === 0 ? (
+                  <p className="px-2 py-1.5 text-xs text-supabase-text-muted">No folders yet</p>
+                ) : (
+                  folders.map((folder) => (
+                    <div
+                      key={folder.id}
+                      className={cn(
+                        'group flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm transition-all',
+                        selectedFolderId === folder.id
+                          ? 'bg-black/10 dark:bg-white/10 text-supabase-text-primary'
+                          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-black/5 dark:hover:bg-white/5'
+                      )}
+                    >
+                      <button
+                        onClick={() => handleSelectFolder(folder.id)}
+                        className="flex items-center gap-3 flex-1 min-w-0"
+                      >
+                        <Folder className="w-4 h-4 flex-shrink-0" />
+                        <span className="flex-1 text-left truncate">{folder.name}</span>
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteFolder(folder.id, e)}
+                        className="p-0.5 opacity-0 group-hover:opacity-100 text-supabase-text-muted hover:text-red-500 transition-all"
+                        title="Delete folder"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Templates Section */}
         {!collapsed && (
           <div className="mt-6">
             <button
               onClick={() => toggleSection('TEMPLATES')}
-              className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium text-supabase-text-muted hover:text-supabase-text-secondary transition-colors"
+              className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium text-supabase-text-muted hover:text-supabase-text-secondary transition-colors cursor-pointer"
             >
               <span>TEMPLATES</span>
               {expandedSections.includes('TEMPLATES') ? (
@@ -229,11 +414,11 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
             </button>
             {expandedSections.includes('TEMPLATES') && (
               <div className="px-3 mt-1 space-y-1">
-                <SidebarItem icon={Cloud} label="AWS" href="/dashboard?template=aws" />
-                <SidebarItem icon={Cloud} label="Azure" href="/dashboard?template=azure" />
-                <SidebarItem icon={Cloud} label="GCP" href="/dashboard?template=gcp" />
-                <SidebarItem icon={GitBranch} label="Flowcharts" href="/dashboard?template=flowchart" />
-                <SidebarItem icon={Network} label="Network" href="/dashboard?template=network" />
+                <SidebarButton icon={Cloud} label="AWS" onClick={() => onNewDiagram?.()} />
+                <SidebarButton icon={Cloud} label="Azure" onClick={() => onNewDiagram?.()} />
+                <SidebarButton icon={Cloud} label="GCP" onClick={() => onNewDiagram?.()} />
+                <SidebarButton icon={GitBranch} label="Flowcharts" onClick={() => onNewDiagram?.()} />
+                <SidebarButton icon={Network} label="Network" onClick={() => onNewDiagram?.()} />
               </div>
             )}
           </div>
@@ -244,7 +429,7 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
           <div className="mt-6">
             <button
               onClick={() => toggleSection('WORKSPACE')}
-              className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium text-supabase-text-muted hover:text-supabase-text-secondary transition-colors"
+              className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium text-supabase-text-muted hover:text-supabase-text-secondary transition-colors cursor-pointer"
             >
               <span>WORKSPACE</span>
               {expandedSections.includes('WORKSPACE') ? (
@@ -282,7 +467,7 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
           className={cn(
             'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md',
             'bg-supabase-green hover:bg-supabase-green-hover text-supabase-bg font-medium text-sm',
-            'transition-colors'
+            'transition-colors cursor-pointer'
           )}
         >
           <Plus className="w-4 h-4" />
@@ -292,6 +477,12 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
 
       {/* Workspace Settings Dialog - rendered via store state */}
       <WorkspaceSettingsDialog />
+
+      {/* Create Workspace Dialog */}
+      <CreateWorkspaceDialog
+        open={createWorkspaceOpen}
+        onOpenChange={setCreateWorkspaceOpen}
+      />
     </aside>
   )
 }
@@ -313,10 +504,10 @@ function SidebarItem({ icon: Icon, label, href, collapsed, active, badge }: Side
           <NavLink
             to={href}
             className={cn(
-              'flex items-center justify-center p-2 rounded-md text-sm transition-colors cursor-pointer',
+              'flex items-center justify-center p-2 rounded-md text-sm transition-all cursor-pointer',
               active
-                ? 'bg-supabase-green-muted text-supabase-green'
-                : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'
+                ? 'bg-black/10 dark:bg-white/10 text-supabase-text-primary'
+                : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-black/5 dark:hover:bg-white/5'
             )}
           >
             <Icon className="w-4 h-4" />
@@ -331,10 +522,10 @@ function SidebarItem({ icon: Icon, label, href, collapsed, active, badge }: Side
     <NavLink
       to={href}
       className={cn(
-        'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors cursor-pointer',
+        'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all cursor-pointer',
         active
-          ? 'bg-supabase-green-muted text-supabase-green'
-          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'
+          ? 'bg-black/10 dark:bg-white/10 text-supabase-text-primary'
+          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-black/5 dark:hover:bg-white/5'
       )}
     >
       <Icon className="w-4 h-4 flex-shrink-0" />
@@ -363,10 +554,10 @@ function SidebarButton({ icon: Icon, label, onClick, disabled, tooltip }: Sideba
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors w-full text-left',
+        'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all w-full text-left',
         disabled
           ? 'text-supabase-text-muted cursor-not-allowed'
-          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary cursor-pointer'
+          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer'
       )}
     >
       <Icon className="w-4 h-4 flex-shrink-0" />

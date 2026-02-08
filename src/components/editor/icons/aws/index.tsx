@@ -191,4 +191,83 @@ export const AwsEksIcon: React.FC<IconProps> = ({ size = 32, className }) => (
   </svg>
 )
 
+// AWS AI/ML Icons
+export const AwsBedrockIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 256 256" className={className}>
+    <defs>
+      <linearGradient id="aws-bedrock-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#01A88D" />
+        <stop offset="100%" stopColor="#00D9B1" />
+      </linearGradient>
+    </defs>
+    <rect fill="url(#aws-bedrock-grad)" width="256" height="256" />
+    <path d="M128 48L48 88v80l80 40 80-40V88l-80-40zm0 16l60 30-60 30-60-30 60-30zm-64 46l56 28v48l-56-28v-48zm72 76v-48l56-28v48l-56 28z" fill="#FFFFFF"/>
+  </svg>
+)
+
+export const AwsQIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 256 256" className={className}>
+    <defs>
+      <linearGradient id="aws-q-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#7AA116" />
+        <stop offset="100%" stopColor="#A7CE39" />
+      </linearGradient>
+    </defs>
+    <rect fill="url(#aws-q-grad)" width="256" height="256" />
+    <circle cx="128" cy="110" r="50" fill="none" stroke="#FFFFFF" strokeWidth="14"/>
+    <path d="M158 140l35 35" stroke="#FFFFFF" strokeWidth="14" strokeLinecap="round"/>
+    <circle cx="128" cy="110" r="20" fill="#FFFFFF"/>
+  </svg>
+)
+
+// AWS Networking Additional Icons
+export const AwsNatGatewayIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 256 256" className={className}>
+    <defs>
+      <linearGradient id="aws-nat-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#4D27A8" />
+        <stop offset="100%" stopColor="#A166FF" />
+      </linearGradient>
+    </defs>
+    <rect fill="url(#aws-nat-grad)" width="256" height="256" />
+    <rect x="80" y="60" width="96" height="136" rx="8" fill="#FFFFFF"/>
+    <path d="M128 80v40M108 100l20 20 20-20" stroke="#4D27A8" strokeWidth="8" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+    <rect x="100" y="140" width="56" height="8" rx="2" fill="#4D27A8"/>
+    <rect x="100" y="156" width="56" height="8" rx="2" fill="#4D27A8"/>
+    <rect x="100" y="172" width="56" height="8" rx="2" fill="#4D27A8"/>
+  </svg>
+)
+
+export const AwsInternetGatewayIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 256 256" className={className}>
+    <defs>
+      <linearGradient id="aws-igw-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#4D27A8" />
+        <stop offset="100%" stopColor="#A166FF" />
+      </linearGradient>
+    </defs>
+    <rect fill="url(#aws-igw-grad)" width="256" height="256" />
+    <circle cx="128" cy="128" r="60" fill="none" stroke="#FFFFFF" strokeWidth="10"/>
+    <path d="M128 68v120M68 128h120" stroke="#FFFFFF" strokeWidth="10" strokeLinecap="round"/>
+    <circle cx="128" cy="128" r="25" fill="#FFFFFF"/>
+  </svg>
+)
+
+export const AwsElbIcon: React.FC<IconProps> = ({ size = 32, className }) => (
+  <svg width={size} height={size} viewBox="0 0 256 256" className={className}>
+    <defs>
+      <linearGradient id="aws-elb-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#4D27A8" />
+        <stop offset="100%" stopColor="#A166FF" />
+      </linearGradient>
+    </defs>
+    <rect fill="url(#aws-elb-grad)" width="256" height="256" />
+    <circle cx="128" cy="70" r="25" fill="#FFFFFF"/>
+    <circle cx="80" cy="186" r="25" fill="#FFFFFF"/>
+    <circle cx="176" cy="186" r="25" fill="#FFFFFF"/>
+    <path d="M128 95v30M128 125l-40 40M128 125l40 40" stroke="#FFFFFF" strokeWidth="8" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+
 

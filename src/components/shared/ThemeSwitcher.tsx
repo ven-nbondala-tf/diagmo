@@ -32,7 +32,7 @@ export function ThemeSwitcher({ className, showLabel = true }: ThemeSwitcherProp
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            'flex items-center gap-2 px-3 py-1.5 rounded-md text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors',
+            'flex items-center gap-2 px-3 py-1.5 rounded-md text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors cursor-pointer',
             className
           )}
         >

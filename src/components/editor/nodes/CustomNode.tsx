@@ -462,12 +462,11 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
               onChange={(e) => setEditText(e.target.value)}
               onBlur={handleSave}
               onKeyDown={handleKeyDown}
-              className="text-center border-b-2 border-blue-500 outline-none bg-transparent"
+              className="text-center border-b-2 border-blue-500 outline-none bg-transparent text-foreground"
               style={{
                 fontSize: baseStyle.fontSize,
                 fontWeight: baseStyle.fontWeight,
                 fontStyle: baseStyle.fontStyle,
-                color: baseStyle.color,
                 fontFamily: baseStyle.fontFamily,
                 textDecoration: baseStyle.textDecoration,
                 width: `${Math.max(editText.length * 8, 40)}px`,
@@ -476,9 +475,8 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
             />
           ) : (
             <div
-              className="cursor-text hover:bg-blue-50 px-1 py-0.5 rounded transition-colors"
+              className="cursor-text hover:bg-blue-50 dark:hover:bg-blue-900/30 px-1 py-0.5 rounded transition-colors text-foreground"
               style={{
-                color: baseStyle.color,
                 fontSize: baseStyle.fontSize,
                 fontFamily: baseStyle.fontFamily,
                 fontWeight: baseStyle.fontWeight,
