@@ -3,6 +3,30 @@ import { jsPDF } from 'jspdf'
 import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
 import type { ExportOptions, DiagramNode } from '@/types'
 
+/**
+ * Filter function to exclude UI elements from export
+ */
+function filterExportElements(node: HTMLElement | Node): boolean {
+  if (!(node instanceof Element)) return true
+
+  // Exclude React Flow UI elements
+  const excludeClasses = [
+    'react-flow__minimap',
+    'react-flow__controls',
+    'react-flow__background',
+    'react-flow__panel',
+    'react-flow__attribution',
+  ]
+
+  for (const cls of excludeClasses) {
+    if (node.classList?.contains(cls)) {
+      return false
+    }
+  }
+
+  return true
+}
+
 export const exportService = {
   async exportToPng(
     element: HTMLElement,
@@ -123,6 +147,13 @@ export const exportService = {
         width: exportWidth,
         height: exportHeight,
         pixelRatio: 2,
+        cacheBust: true, // Helps with loading external images
+        filter: filterExportElements,
+        style: {
+          // Ensure visibility
+          opacity: '1',
+          visibility: 'visible',
+        },
       })
       return dataUrl
     } finally {
@@ -183,6 +214,12 @@ export const exportService = {
         backgroundColor: options?.backgroundColor || '#ffffff',
         width: exportWidth,
         height: exportHeight,
+        cacheBust: true,
+        filter: filterExportElements,
+        style: {
+          opacity: '1',
+          visibility: 'visible',
+        },
       })
       return dataUrl
     } finally {
@@ -345,6 +382,8 @@ export const exportService = {
         width: exportWidth,
         height: exportHeight,
         pixelRatio,
+        cacheBust: true,
+        filter: filterExportElements,
       })
       return dataUrl
     } finally {
@@ -405,6 +444,8 @@ export const exportService = {
         width: exportWidth,
         height: exportHeight,
         pixelRatio: options?.quality === 1 ? 4 : 2,
+        cacheBust: true,
+        filter: filterExportElements,
       })
       return dataUrl
     } finally {

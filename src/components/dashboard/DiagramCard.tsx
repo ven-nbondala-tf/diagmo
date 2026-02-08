@@ -365,6 +365,25 @@ export function DiagramCard({ diagram, onClick, isShared, isTemplate }: DiagramC
 
   const isFav = isFavorite(diagram.id)
 
+  // Handle card click with explicit check
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent navigation if clicking on dropdown or dialogs
+    if ((e.target as HTMLElement).closest('[data-radix-collection-item]') ||
+        (e.target as HTMLElement).closest('[role="menu"]') ||
+        (e.target as HTMLElement).closest('[role="dialog"]')) {
+      return
+    }
+    onClick()
+  }
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onClick()
+    }
+  }
+
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation()
     toggleFavorite(diagram.id)
@@ -408,8 +427,12 @@ export function DiagramCard({ diagram, onClick, isShared, isTemplate }: DiagramC
   return (
     <>
       <div
-        className="group cursor-pointer rounded-lg border border-supabase-border bg-supabase-bg-secondary overflow-hidden transition-all duration-200 ease-out hover:shadow-lg hover:shadow-supabase-green/5 hover:border-supabase-border-strong hover:-translate-y-0.5"
-        onClick={onClick}
+        className="group cursor-pointer rounded-lg border border-supabase-border bg-supabase-bg-secondary overflow-hidden transition-all duration-200 ease-out hover:shadow-lg hover:shadow-supabase-green/5 hover:border-supabase-border-strong hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-supabase-green focus-visible:ring-offset-2"
+        onClick={handleCardClick}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-label={`Open diagram: ${diagram.name}`}
       >
         {/* Thumbnail Area */}
         <div className="relative aspect-[16/10] overflow-hidden bg-supabase-bg-tertiary">

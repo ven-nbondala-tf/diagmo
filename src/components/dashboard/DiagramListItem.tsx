@@ -38,6 +38,25 @@ export function DiagramListItem({ diagram, onClick, isShared, isTemplate }: Diag
   const moveDiagram = useMoveDiagramToFolder()
   const { data: folders } = useFolders()
 
+  // Handle card click with explicit check
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent navigation if clicking on dropdown or dialogs
+    if ((e.target as HTMLElement).closest('[data-radix-collection-item]') ||
+        (e.target as HTMLElement).closest('[role="menu"]') ||
+        (e.target as HTMLElement).closest('[role="dialog"]')) {
+      return
+    }
+    onClick()
+  }
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onClick()
+    }
+  }
+
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
     setShowDeleteDialog(true)
@@ -75,8 +94,12 @@ export function DiagramListItem({ diagram, onClick, isShared, isTemplate }: Diag
   return (
     <>
       <div
-        className="flex items-center gap-4 px-4 py-3 rounded-xl border bg-card cursor-pointer hover:bg-accent/50 hover:border-primary/20 transition-all group"
-        onClick={onClick}
+        className="flex items-center gap-4 px-4 py-3 rounded-xl border bg-card cursor-pointer hover:bg-accent/50 hover:border-primary/20 transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        onClick={handleCardClick}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-label={`Open diagram: ${diagram.name}`}
       >
         {/* Thumbnail */}
         <div className="w-20 h-12 rounded-lg border bg-muted flex-shrink-0 flex items-center justify-center overflow-hidden">
