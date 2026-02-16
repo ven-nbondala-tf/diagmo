@@ -60,6 +60,9 @@ export interface DBColumn {
   isNullable?: boolean
 }
 
+// Table style preset names
+export type TableStylePreset = 'default' | 'blue' | 'green' | 'orange' | 'purple' | 'gray' | 'dark'
+
 // Table shape data
 export interface TableData {
   rows: number
@@ -69,6 +72,13 @@ export interface TableData {
   headerCol: boolean // First column is header
   columnWidths?: number[]  // Width of each column in pixels
   rowHeights?: number[]    // Height of each row in pixels
+  // Styling options (Excel-like)
+  headerBgColor?: string      // Header background color
+  headerTextColor?: string    // Header text color
+  bandedRows?: boolean        // Alternate row colors
+  bandedCols?: boolean        // Alternate column colors
+  bandColor?: string          // Color for banded rows/cols
+  stylePreset?: TableStylePreset  // Predefined style preset
 }
 
 // Layer type for organizing shapes
@@ -257,6 +267,20 @@ export interface ArchitectureTemplate {
   isBuiltIn?: boolean
 }
 
+// Group styling options
+export interface GroupStyle {
+  borderStyle?: 'solid' | 'dashed' | 'dotted' | 'none'
+  borderColor?: string
+  borderWidth?: number
+  borderOpacity?: number
+  backgroundColor?: string
+  backgroundOpacity?: number
+  borderRadius?: number
+  showLabel?: boolean
+  labelText?: string
+  padding?: number
+}
+
 export interface DiagramNode extends Node {
   data: {
     label: string
@@ -264,6 +288,7 @@ export interface DiagramNode extends Node {
     style?: NodeStyle
     locked?: boolean
     groupId?: string
+    groupStyle?: GroupStyle  // Style for the group (stored on any node in the group)
     // Web image specific properties
     imageUrl?: string
     thumbnailUrl?: string
@@ -295,6 +320,8 @@ export interface DiagramNode extends Node {
     customShapeId?: string
     customShapeName?: string
     customShapeSvg?: string
+    // Hide connection handles (for emoji reactions, etc.)
+    hideHandles?: boolean
   }
 }
 
@@ -426,6 +453,7 @@ export type ShapeType =
   | 'cloud'
   | 'callout'
   | 'note'
+  | 'sticky-note'
   | 'text'
   | 'table'
   | 'junction'
@@ -1002,6 +1030,7 @@ export interface DiagramPage {
   pageOrder: number
   nodes: DiagramNode[]
   edges: DiagramEdge[]
+  drawingStrokes?: DrawingStroke[]
   createdAt: string
   updatedAt: string
 }
@@ -1101,6 +1130,8 @@ export interface CollaboratorPresence {
   viewportZoom: number
   color: string
   lastSeen: string
+  // Drawing mode indicator
+  isDrawing?: boolean
   // Joined from profiles table
   user?: {
     fullName: string | null
@@ -1176,4 +1207,52 @@ export interface WorkspaceMember {
   // Joined from profiles
   userName?: string
   userAvatar?: string
+}
+
+// =============================================
+// Whiteboard/Drawing Types
+// =============================================
+
+export type DrawingTool = 'select' | 'pen' | 'highlighter' | 'eraser' | 'laser' | 'arrow' | 'line' | 'rectangle' | 'ellipse' | 'text'
+
+export interface DrawingPoint {
+  x: number
+  y: number
+  pressure?: number
+}
+
+export interface DrawingStroke {
+  id: string
+  type: DrawingTool
+  points: DrawingPoint[]
+  color: string
+  width: number
+  opacity: number
+  timestamp: number
+  userId?: string
+  // For shapes
+  shapeData?: {
+    startX: number
+    startY: number
+    endX: number
+    endY: number
+    text?: string
+    filled?: boolean
+  }
+  selected?: boolean
+}
+
+export interface PenPreset {
+  id: string
+  name: string
+  tool: 'pen' | 'highlighter'
+  color: string
+  width: number
+}
+
+export interface WhiteboardLayer {
+  id: string
+  strokes: DrawingStroke[]
+  visible: boolean
+  locked: boolean
 }

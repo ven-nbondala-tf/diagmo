@@ -46,7 +46,7 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
   const [showGridSettings, setShowGridSettings] = useState(false)
   const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false)
   const [showTemplateGallery, setShowTemplateGallery] = useState(false)
-  const { fitView, zoomIn, zoomOut } = useReactFlow()
+  const { fitView, zoomIn, zoomOut, getViewport } = useReactFlow()
 
   // Store actions
   const nodes = useEditorStore((state) => state.nodes)
@@ -73,6 +73,7 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
   const lockNodes = useEditorStore((state) => state.lockNodes)
   const unlockNodes = useEditorStore((state) => state.unlockNodes)
   const togglePresentationMode = useEditorStore((state) => state.togglePresentationMode)
+  const addNode = useEditorStore((state) => state.addNode)
 
   const hasSelection = selectedNodes.length > 0
   const hasMultipleSelection = selectedNodes.length >= 2
@@ -86,6 +87,19 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
   const handleDuplicate = () => {
     copyNodes()
     pasteNodes()
+  }
+
+  // Insert shape at viewport center
+  const handleInsertShape = (shapeType: string) => {
+    // Get viewport center using React Flow's getViewport
+    const { x, y, zoom } = getViewport()
+    // Calculate center of viewport in flow coordinates
+    // Assuming viewport is roughly 800x600, adjust to flow coordinates
+    const viewportWidth = window.innerWidth - 300 // Account for panels
+    const viewportHeight = window.innerHeight - 100 // Account for header
+    const centerX = (-x + viewportWidth / 2) / zoom
+    const centerY = (-y + viewportHeight / 2) / zoom
+    addNode(shapeType, { x: centerX, y: centerY })
   }
 
   return (
@@ -190,6 +204,53 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
             <MenubarItem onClick={handleSelectAll}>
               Select All
               <MenubarShortcut>Ctrl+A</MenubarShortcut>
+            </MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+
+        {/* INSERT MENU */}
+        <MenubarMenu>
+          <MenubarTrigger className="font-normal text-sm px-2 text-supabase-text-secondary hover:text-supabase-text-primary data-[state=open]:bg-supabase-bg-tertiary data-[state=open]:text-supabase-text-primary">Insert</MenubarTrigger>
+          <MenubarContent>
+            <MenubarItem onClick={() => handleInsertShape('table')}>
+              Table
+            </MenubarItem>
+            <MenubarSeparator />
+            <MenubarSub>
+              <MenubarSubTrigger>Shape</MenubarSubTrigger>
+              <MenubarSubContent>
+                <MenubarItem onClick={() => handleInsertShape('rectangle')}>Rectangle</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('rounded-rectangle')}>Rounded Rectangle</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('circle')}>Circle</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('ellipse')}>Ellipse</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('diamond')}>Diamond</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('triangle')}>Triangle</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('hexagon')}>Hexagon</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('star')}>Star</MenubarItem>
+              </MenubarSubContent>
+            </MenubarSub>
+            <MenubarSub>
+              <MenubarSubTrigger>Flowchart</MenubarSubTrigger>
+              <MenubarSubContent>
+                <MenubarItem onClick={() => handleInsertShape('process')}>Process</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('decision')}>Decision</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('terminator')}>Terminator</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('data')}>Data</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('document')}>Document</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('predefined-process')}>Predefined Process</MenubarItem>
+              </MenubarSubContent>
+            </MenubarSub>
+            <MenubarSub>
+              <MenubarSubTrigger>Text & Notes</MenubarSubTrigger>
+              <MenubarSubContent>
+                <MenubarItem onClick={() => handleInsertShape('text')}>Text</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('sticky-note')}>Sticky Note</MenubarItem>
+                <MenubarItem onClick={() => handleInsertShape('callout')}>Callout</MenubarItem>
+              </MenubarSubContent>
+            </MenubarSub>
+            <MenubarSeparator />
+            <MenubarItem onClick={() => handleInsertShape('image')}>
+              Image
             </MenubarItem>
           </MenubarContent>
         </MenubarMenu>

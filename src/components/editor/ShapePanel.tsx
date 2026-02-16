@@ -1,5 +1,6 @@
 import { useCallback, useState, useMemo } from 'react'
 import { useEditorStore } from '@/stores/editorStore'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import {
   Accordion,
   AccordionContent,
@@ -11,10 +12,9 @@ import {
   TooltipTrigger,
   Input,
   Tabs,
-  TabsList,
-  TabsTrigger,
   TabsContent,
 } from '@/components/ui'
+import { cn } from '@/utils/cn'
 import { SHAPE_CATEGORIES, SHAPE_LABELS, CLOUD_PROVIDER_CATEGORIES, getOfficialIconPath } from '@/constants'
 import type { ShapeType, WebImageResult, CustomShape } from '@/types'
 import { Search, ChevronRight, ChevronLeft, Shapes, ImageIcon, Square, Diamond, Circle, Type, ArrowRight, StickyNote, FolderOpen, Settings, Table2 } from 'lucide-react'
@@ -165,6 +165,16 @@ const ShapePreview = ({ type }: { type: ShapeType }) => {
         <svg width={size} height={size} viewBox="0 0 32 32">
           <path d="M4,4 L22,4 L28,10 L28,28 L4,28 Z" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
           <path d="M22,4 L22,10 L28,10" fill="none" stroke={stroke} strokeWidth={strokeWidth} />
+        </svg>
+      )
+
+    case 'table':
+      return (
+        <svg width={size} height={size} viewBox="0 0 32 32">
+          <rect x="4" y="4" width="24" height="24" rx="2" fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+          <line x1="4" y1="12" x2="28" y2="12" stroke={stroke} strokeWidth={strokeWidth} />
+          <line x1="4" y1="20" x2="28" y2="20" stroke={stroke} strokeWidth={strokeWidth} />
+          <line x1="14" y1="4" x2="14" y2="28" stroke={stroke} strokeWidth={strokeWidth} />
         </svg>
       )
 
@@ -770,6 +780,8 @@ export function ShapePanel() {
   const addNode = useEditorStore((state) => state.addNode)
   const shapePanelCollapsed = useEditorStore((state) => state.shapePanelCollapsed)
   const toggleShapePanel = useEditorStore((state) => state.toggleShapePanel)
+  const secondaryAccentColor = usePreferencesStore((state) => state.secondaryAccentColor)
+  const secondaryAccentTextColor = usePreferencesStore((state) => state.secondaryAccentTextColor)
   const [mainTab, setMainTab] = useState<'shapes' | 'images' | 'libraries'>('shapes')
   const [searchQuery, setSearchQuery] = useState('')
   // Start with empty array = all collapsed by default
@@ -928,7 +940,7 @@ export function ShapePanel() {
 
   if (shapePanelCollapsed) {
     return (
-      <div className="w-12 border-r border-supabase-border bg-supabase-bg flex flex-col h-full items-center py-2 gap-1">
+      <div className="w-12 flex-shrink-0 border-r border-supabase-border bg-supabase-bg flex flex-col h-full items-center py-2 gap-1">
         <Button variant="ghost" size="icon" className="h-8 w-8 mb-2 text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary" onClick={toggleShapePanel} title="Expand Library (Ctrl+B)">
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -952,7 +964,7 @@ export function ShapePanel() {
   }
 
   return (
-    <div className="w-64 border-r border-supabase-border bg-supabase-bg flex flex-col h-full overflow-hidden">
+    <div className="w-64 flex-shrink-0 border-r border-supabase-border bg-supabase-bg flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-supabase-border flex items-center justify-between">
         <div>
@@ -967,20 +979,47 @@ export function ShapePanel() {
       {/* Main tabs: Shapes | Web Images | Libraries */}
       <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'shapes' | 'images' | 'libraries')} className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="px-3 pt-2 border-b border-supabase-border pb-2 shrink-0">
-          <TabsList className="w-full grid grid-cols-3 h-9 bg-supabase-bg-tertiary">
-            <TabsTrigger value="shapes" className="text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">
+          <div className="w-full grid grid-cols-3 h-9 bg-supabase-bg-tertiary rounded-lg p-1 gap-1">
+            <button
+              onClick={() => setMainTab('shapes')}
+              className={cn(
+                'flex items-center justify-center text-xs rounded-md transition-all',
+                mainTab === 'shapes'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={mainTab === 'shapes' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
               <Shapes className="w-3.5 h-3.5 mr-1.5" />
               Shapes
-            </TabsTrigger>
-            <TabsTrigger value="images" className="text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">
+            </button>
+            <button
+              onClick={() => setMainTab('images')}
+              className={cn(
+                'flex items-center justify-center text-xs rounded-md transition-all',
+                mainTab === 'images'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={mainTab === 'images' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
               <ImageIcon className="w-3.5 h-3.5 mr-1.5" />
               Images
-            </TabsTrigger>
-            <TabsTrigger value="libraries" className="text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">
+            </button>
+            <button
+              onClick={() => setMainTab('libraries')}
+              className={cn(
+                'flex items-center justify-center text-xs rounded-md transition-all',
+                mainTab === 'libraries'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={mainTab === 'libraries' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
               <FolderOpen className="w-3.5 h-3.5 mr-1.5" />
               Custom
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
         </div>
 
         {/* Shapes Tab Content */}

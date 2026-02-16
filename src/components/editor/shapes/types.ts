@@ -23,6 +23,7 @@ export interface BaseStyleValues {
 }
 
 export interface ShapeRenderProps {
+  nodeId: string
   label: string
   style: NodeStyle | undefined
   baseStyle: BaseStyleValues

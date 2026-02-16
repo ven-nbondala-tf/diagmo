@@ -9,7 +9,7 @@ import {
   MarkerType,
 } from '@xyflow/react'
 import { nanoid } from 'nanoid'
-import type { DiagramNode, DiagramEdge, ShapeType, NodeStyle, EdgeStyle, HistoryEntry, Layer, ConditionalRule } from '@/types'
+import type { DiagramNode, DiagramEdge, ShapeType, NodeStyle, EdgeStyle, HistoryEntry, Layer, ConditionalRule, GroupStyle, DrawingTool, DrawingStroke, PenPreset } from '@/types'
 import { DEFAULT_NODE_STYLE, MAX_HISTORY_LENGTH, SHAPE_LABELS } from '@/constants'
 
 type AlignType = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom'
@@ -51,6 +51,18 @@ interface EditorState {
   // AI Assistant
   aiPanelOpen: boolean
   aiDialogOpen: boolean
+  // Whiteboard/Drawing
+  drawingMode: boolean
+  drawingTool: DrawingTool
+  drawingColor: string
+  drawingWidth: number
+  drawingStrokes: DrawingStroke[]
+  drawingLayerVisible: boolean
+  penPresets: PenPreset[]
+  activePenPresetId: string | null
+  selectedStrokeIds: string[]
+  // Current page ID for collaboration filtering
+  currentPageId: string | null
 }
 
 interface EditorActions {
@@ -87,6 +99,7 @@ interface EditorActions {
   distributeNodes: (type: DistributeType) => void
   groupNodes: () => void
   ungroupNodes: () => void
+  updateGroupStyle: (groupId: string, style: Partial<GroupStyle>) => void
   lockNodes: () => void
   unlockNodes: () => void
   toggleLockNodes: () => void
@@ -142,6 +155,29 @@ interface EditorActions {
   updateConditionalRule: (id: string, updates: Partial<ConditionalRule>) => void
   deleteConditionalRule: (id: string) => void
   reorderConditionalRules: (ruleIds: string[]) => void
+  // Whiteboard/Drawing actions
+  setDrawingMode: (mode: boolean) => void
+  toggleDrawingMode: () => void
+  setDrawingTool: (tool: DrawingTool) => void
+  setDrawingColor: (color: string) => void
+  setDrawingWidth: (width: number) => void
+  addDrawingStroke: (stroke: DrawingStroke) => void
+  removeDrawingStroke: (id: string) => void
+  clearDrawingStrokes: () => void
+  undoDrawingStroke: () => void
+  setDrawingStrokes: (strokes: DrawingStroke[]) => void
+  setCurrentPageId: (pageId: string | null) => void
+  toggleDrawingLayerVisible: () => void
+  setDrawingLayerVisible: (visible: boolean) => void
+  // Pen presets
+  addPenPreset: (preset: Omit<PenPreset, 'id'>) => void
+  updatePenPreset: (id: string, updates: Partial<PenPreset>) => void
+  deletePenPreset: (id: string) => void
+  selectPenPreset: (id: string) => void
+  // Stroke selection
+  selectStrokes: (ids: string[]) => void
+  deleteSelectedStrokes: () => void
+  moveSelectedStrokes: (dx: number, dy: number) => void
 }
 
 type EditorStore = EditorState & EditorActions
@@ -191,6 +227,28 @@ const initialState: EditorState = {
   // AI Assistant
   aiPanelOpen: false,
   aiDialogOpen: false,
+  // Whiteboard/Drawing
+  drawingMode: false,
+  drawingTool: 'pen' as DrawingTool,
+  drawingColor: '#1e293b', // Match default pen-black preset
+  drawingWidth: 2, // Match default pen-black preset
+  drawingStrokes: [],
+  drawingLayerVisible: true,
+  penPresets: [
+    // Pens (fine tip) - MS Whiteboard style colors
+    { id: 'pen-black', name: 'Black Pen', tool: 'pen', color: '#1e293b', width: 2 },
+    { id: 'pen-red', name: 'Red Pen', tool: 'pen', color: '#ef4444', width: 2 },
+    { id: 'pen-green', name: 'Green Pen', tool: 'pen', color: '#22c55e', width: 2 },
+    { id: 'pen-blue', name: 'Blue Pen', tool: 'pen', color: '#3b82f6', width: 2 },
+    // Highlighters (wide, transparent) - MS Whiteboard style colors
+    { id: 'hl-yellow', name: 'Yellow Highlighter', tool: 'highlighter', color: '#fde047', width: 16 },
+    { id: 'hl-pink', name: 'Pink Highlighter', tool: 'highlighter', color: '#f472b6', width: 16 },
+    { id: 'hl-purple', name: 'Purple Highlighter', tool: 'highlighter', color: '#a78bfa', width: 16 },
+    { id: 'hl-cyan', name: 'Cyan Highlighter', tool: 'highlighter', color: '#22d3ee', width: 16 },
+  ],
+  activePenPresetId: 'pen-black',
+  selectedStrokeIds: [],
+  currentPageId: null,
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -373,6 +431,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   },
 
   updateNodeStyle: (id, style) => {
+    get().pushHistory()
     set({
       nodes: get().nodes.map((node) =>
         node.id === id
@@ -716,13 +775,30 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     get().pushHistory()
 
     const groupId = nanoid()
+    // Default group style
+    const defaultGroupStyle: GroupStyle = {
+      borderStyle: 'dashed',
+      borderColor: undefined, // Will use auto-generated color
+      borderWidth: 2,
+      borderOpacity: 0.4,
+      backgroundColor: undefined, // Will use auto-generated color
+      backgroundOpacity: 0.05,
+      borderRadius: 8,
+      showLabel: true,
+      labelText: 'Group',
+      padding: 12,
+    }
+
     const newNodes = nodes.map((node) => {
       if (!selectedNodes.includes(node.id)) return node
+      // Add groupStyle to the first node in the group
+      const isFirstInGroup = selectedNodes.indexOf(node.id) === 0
       return {
         ...node,
         data: {
           ...node.data,
           groupId,
+          ...(isFirstInGroup ? { groupStyle: defaultGroupStyle } : {}),
         },
       }
     })
@@ -739,7 +815,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
     const newNodes = nodes.map((node) => {
       if (!selectedNodes.includes(node.id)) return node
-      const { groupId, ...restData } = node.data
+      const { groupId, groupStyle, ...restData } = node.data
       return {
         ...node,
         data: restData as DiagramNode['data'],
@@ -747,6 +823,38 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     })
 
     set({ nodes: newNodes, isDirty: true })
+  },
+
+  // Update group style for all nodes in a group
+  updateGroupStyle: (groupId: string, styleUpdate: Partial<GroupStyle>) => {
+    const { nodes } = get()
+
+    // Find the first node in the group that has groupStyle
+    const nodesInGroup = nodes.filter(n => n.data.groupId === groupId)
+    if (nodesInGroup.length === 0) return
+
+    // Find node with existing groupStyle or use first node
+    const styleNode = nodesInGroup.find(n => n.data.groupStyle) || nodesInGroup[0]
+    if (!styleNode) return
+
+    const currentStyle = styleNode.data.groupStyle || {}
+    const newStyle = { ...currentStyle, ...styleUpdate }
+
+    set({
+      nodes: nodes.map((node) => {
+        if (node.id === styleNode.id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              groupStyle: newStyle,
+            },
+          }
+        }
+        return node
+      }),
+      isDirty: true,
+    })
   },
 
   // Lock selected nodes
@@ -1240,6 +1348,119 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
     set({ conditionalRules: reorderedRules, isDirty: true })
   },
+
+  // =============================================
+  // Whiteboard/Drawing Actions
+  // =============================================
+
+  setDrawingMode: (mode) => set({ drawingMode: mode }),
+
+  toggleDrawingMode: () => set((state) => {
+    const isEntering = !state.drawingMode
+    if (isEntering) {
+      // When entering drawing mode, apply the active pen preset
+      const activePreset = state.penPresets.find(p => p.id === state.activePenPresetId)
+      if (activePreset) {
+        return {
+          drawingMode: true,
+          drawingTool: activePreset.tool,
+          drawingColor: activePreset.color,
+          drawingWidth: activePreset.width,
+        }
+      }
+      return {
+        drawingMode: true,
+        drawingTool: 'pen',
+      }
+    }
+    return { drawingMode: false }
+  }),
+
+  setDrawingTool: (tool) => set({ drawingTool: tool }),
+
+  setDrawingColor: (color) => set({ drawingColor: color }),
+
+  setDrawingWidth: (width) => set({ drawingWidth: width }),
+
+  addDrawingStroke: (stroke) => set((state) => ({
+    drawingStrokes: [...state.drawingStrokes, stroke],
+    isDirty: true,
+  })),
+
+  removeDrawingStroke: (id) => set((state) => ({
+    drawingStrokes: state.drawingStrokes.filter((s) => s.id !== id),
+    isDirty: true,
+  })),
+
+  clearDrawingStrokes: () => set({ drawingStrokes: [], isDirty: true }),
+
+  undoDrawingStroke: () => set((state) => ({
+    drawingStrokes: state.drawingStrokes.slice(0, -1),
+    isDirty: true,
+  })),
+
+  setDrawingStrokes: (strokes) => set({ drawingStrokes: strokes }),
+
+  setCurrentPageId: (pageId) => set({ currentPageId: pageId }),
+
+  toggleDrawingLayerVisible: () => set((state) => ({
+    drawingLayerVisible: !state.drawingLayerVisible,
+  })),
+
+  setDrawingLayerVisible: (visible) => set({ drawingLayerVisible: visible }),
+
+  // Pen presets
+  addPenPreset: (preset) => set((state) => ({
+    penPresets: [...state.penPresets, { ...preset, id: nanoid() }],
+  })),
+
+  updatePenPreset: (id, updates) => set((state) => ({
+    penPresets: state.penPresets.map((p) => p.id === id ? { ...p, ...updates } : p),
+  })),
+
+  deletePenPreset: (id) => set((state) => ({
+    penPresets: state.penPresets.filter((p) => p.id !== id),
+    activePenPresetId: state.activePenPresetId === id ? null : state.activePenPresetId,
+  })),
+
+  selectPenPreset: (id) => set((state) => {
+    const preset = state.penPresets.find((p) => p.id === id)
+    if (!preset) return state
+    return {
+      activePenPresetId: id,
+      drawingTool: preset.tool,
+      drawingColor: preset.color,
+      drawingWidth: preset.width,
+    }
+  }),
+
+  // Stroke selection
+  selectStrokes: (ids) => set({ selectedStrokeIds: ids }),
+
+  deleteSelectedStrokes: () => set((state) => ({
+    drawingStrokes: state.drawingStrokes.filter((s) => !state.selectedStrokeIds.includes(s.id)),
+    selectedStrokeIds: [],
+    isDirty: true,
+  })),
+
+  moveSelectedStrokes: (dx, dy) => set((state) => ({
+    drawingStrokes: state.drawingStrokes.map((stroke) => {
+      if (!state.selectedStrokeIds.includes(stroke.id)) return stroke
+      return {
+        ...stroke,
+        points: stroke.points.map((p) => ({ ...p, x: p.x + dx, y: p.y + dy })),
+        shapeData: stroke.shapeData ? {
+          ...stroke.shapeData,
+          startX: stroke.shapeData.startX + dx,
+          startY: stroke.shapeData.startY + dy,
+          endX: stroke.shapeData.endX + dx,
+          endY: stroke.shapeData.endY + dy,
+        } : undefined,
+      }
+    }),
+    isDirty: true,
+  })),
+
 }))
 
 function getDefaultLabel(type: ShapeType): string {
@@ -1292,6 +1513,11 @@ function getDefaultDimensions(type: ShapeType): { width: number; height: number 
   // Text shape - smaller
   if (type === 'text') {
     return { width: 80, height: 30 }
+  }
+
+  // Table shape - 3x3 default with 100px columns and 32px rows
+  if (type === 'table') {
+    return { width: 300, height: 96 }
   }
 
   // All other shapes

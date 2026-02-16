@@ -3,6 +3,7 @@ import { Handle, Position, NodeResizer, useConnection, type NodeProps } from '@x
 import type { DiagramNode, ShapeType } from '@/types'
 import { cn } from '@/utils'
 import { useEditorStore } from '@/stores/editorStore'
+import { collaborationService } from '@/services/collaborationService'
 import { Lock, Group, RotateCw } from 'lucide-react'
 import { getShapeRenderer, renderCloudIconOrDefault, type ShapeRenderProps } from '../shapes'
 import { NodeContextMenu } from '../NodeContextMenu'
@@ -69,7 +70,7 @@ const getShapeConnectionPoints = (_type: ShapeType): Array<{
 }
 
 export const CustomNode = memo(function CustomNode({ id, data, selected, width, height }: CustomNodeProps) {
-  const { label, type, style, locked, groupId } = data
+  const { label, type, style, locked, groupId, hideHandles } = data
 
   // Get node dimensions - use measured or default
   const nodeWidth = width || 64
@@ -79,6 +80,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
   const [isHovered, setIsHovered] = useState(false)
   const [isRotating, setIsRotating] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const nodeRef = useRef<HTMLDivElement>(null)
   const updateNode = useEditorStore((state) => state.updateNode)
   const updateNodeStyle = useEditorStore((state) => state.updateNodeStyle)
@@ -129,8 +131,8 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
   // Only highlight if: connection in progress, we're not the source, AND mouse is hovering THIS node
   const isValidTarget = connection.inProgress && connection.fromNode?.id !== id && isHovered
 
-  // Show handles when: selected, hovered, OR being connected to
-  const showHandles = selected || isHovered || connection.inProgress
+  // Show handles when: selected, hovered, OR being connected to (unless hideHandles is true)
+  const showHandles = !hideHandles && (selected || isHovered || connection.inProgress)
 
   // Get shape-specific connection points
   const connectionPoints = useMemo(() => getShapeConnectionPoints(type), [type])
@@ -216,6 +218,15 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
   }
 
   const hasComplexBackground = style?.gradientEnabled || style?.patternEnabled
+
+  // Compute the actual text color - use explicit textColor if set, otherwise get from CSS variable
+  const getTextColor = () => {
+    if (style?.textColor) return style.textColor
+    // Get computed value of CSS variable for reliable rendering
+    const computed = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim()
+    return computed || '#ededed'
+  }
+
   const baseStyle = {
     backgroundColor: hasComplexBackground ? undefined : (style?.backgroundColor || '#ffffff'),
     background: hasComplexBackground ? getBackground() : undefined,
@@ -224,7 +235,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
     borderWidth: style?.borderWidth || 1,
     borderStyle: style?.borderStyle || 'solid',
     borderRadius: style?.borderRadius || 8,
-    color: style?.textColor || '#1f2937',
+    color: getTextColor(),
     fontSize: style?.fontSize || defaultFontSize,
     fontFamily: style?.fontFamily || 'Inter',
     fontWeight: style?.fontWeight || 'normal',
@@ -291,21 +302,66 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
     setIsEditing(true)
   }, [locked, label])
 
-  // Focus input when editing starts
+  // Focus input/textarea when editing starts
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus()
-      inputRef.current.select()
+    if (isEditing) {
+      if (type === 'sticky-note' && textareaRef.current) {
+        textareaRef.current.focus()
+        textareaRef.current.select()
+      } else if (inputRef.current) {
+        inputRef.current.focus()
+        inputRef.current.select()
+      }
     }
-  }, [isEditing])
+  }, [isEditing, type])
 
   // Handle saving the text
   const handleSave = useCallback(() => {
     if (editText.trim() !== label) {
-      updateNode(id, { label: editText.trim() || label })
+      const newLabel = editText.trim() || label
+      updateNode(id, { label: newLabel })
+
+      // Broadcast the update to collaborators
+      if (collaborationService.isConnected()) {
+        console.log('[CustomNode] Broadcasting label update:', id, newLabel)
+        collaborationService.broadcastOperation('node-update', id, {
+          data: { label: newLabel }
+        })
+      }
     }
     setIsEditing(false)
   }, [editText, label, id, updateNode])
+
+  // Broadcast text changes in real-time while typing (debounced)
+  const broadcastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    // Only broadcast while editing and if text changed from original
+    if (!isEditing || editText === label) return
+
+    // Clear previous timeout
+    if (broadcastTimeoutRef.current) {
+      clearTimeout(broadcastTimeoutRef.current)
+    }
+
+    // Debounce broadcast by 150ms for smooth real-time sync
+    broadcastTimeoutRef.current = setTimeout(() => {
+      // Update local state immediately
+      updateNode(id, { label: editText })
+
+      // Broadcast to collaborators
+      if (collaborationService.isConnected()) {
+        collaborationService.broadcastOperation('node-update', id, {
+          data: { label: editText }
+        })
+      }
+    }, 150)
+
+    return () => {
+      if (broadcastTimeoutRef.current) {
+        clearTimeout(broadcastTimeoutRef.current)
+      }
+    }
+  }, [editText, isEditing, id, label, updateNode])
 
   // Handle keyboard events
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -359,6 +415,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
     }
 
     const props: ShapeRenderProps = {
+      nodeId: id,
       label,
       style,
       baseStyle,
@@ -437,24 +494,8 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
         }}
       />
 
-      {/* Connection handles - render BOTH source and target for each position */}
-      {/* This ensures edges can connect properly using sourceHandle/targetHandle */}
-      {connectionPoints.map((point) => (
-        <Handle
-          key={`${point.id}-source`}
-          id={point.id}
-          type="source"
-          position={point.position}
-          style={point.style}
-          className={cn(
-            'custom-handle',
-            !showHandles && '!opacity-0',
-            showHandles && '!opacity-100',
-            isValidTarget && 'valid-target'
-          )}
-          isConnectable={!locked}
-        />
-      ))}
+      {/* Connection handles - render target handles FIRST, then source handles */}
+      {/* This ensures source handles are on top for proper drag initiation */}
       {connectionPoints.map((point) => (
         <Handle
           key={`${point.id}-target`}
@@ -471,6 +512,21 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
           isConnectable={!locked}
         />
       ))}
+      {connectionPoints.map((point) => (
+        <Handle
+          key={`${point.id}-source`}
+          id={point.id}
+          type="source"
+          position={point.position}
+          style={point.style}
+          className={cn(
+            'custom-handle',
+            !showHandles && '!opacity-0',
+            showHandles && '!opacity-100'
+          )}
+          isConnectable={!locked}
+        />
+      ))}
 
       {/* Shape content */}
       <div
@@ -482,20 +538,49 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
         {/* Inline text editor overlay - only for non-icon shapes */}
         {isEditing && !isCloudIcon && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/90 z-10">
-            <input
-              ref={inputRef}
-              type="text"
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              onBlur={handleSave}
-              onKeyDown={handleKeyDown}
-              className="w-[90%] px-2 py-1 text-center border border-primary rounded outline-none"
-              style={{
-                fontSize: baseStyle.fontSize,
-                fontWeight: baseStyle.fontWeight,
-                color: baseStyle.color,
-              }}
-            />
+            {type === 'sticky-note' ? (
+              <textarea
+                ref={textareaRef}
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onBlur={handleSave}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setEditText(label)
+                    setIsEditing(false)
+                  }
+                  // Allow Enter for new lines in sticky notes
+                  if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault()
+                    handleSave()
+                  }
+                }}
+                className="w-[95%] h-[90%] px-3 py-2 text-left border border-primary rounded outline-none resize-none"
+                style={{
+                  fontSize: baseStyle.fontSize,
+                  fontWeight: baseStyle.fontWeight,
+                  color: '#1f2937',
+                  backgroundColor: style?.backgroundColor || '#fef08a',
+                  lineHeight: 1.4,
+                }}
+                placeholder="Type your note here..."
+              />
+            ) : (
+              <input
+                ref={inputRef}
+                type="text"
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onBlur={handleSave}
+                onKeyDown={handleKeyDown}
+                className="w-[90%] px-2 py-1 text-center border border-primary rounded outline-none"
+                style={{
+                  fontSize: baseStyle.fontSize,
+                  fontWeight: baseStyle.fontWeight,
+                  color: baseStyle.color,
+                }}
+              />
+            )}
           </div>
         )}
 
@@ -553,6 +638,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
                 fontStyle: baseStyle.fontStyle,
                 textDecoration: baseStyle.textDecoration,
                 lineHeight: '1.3',
+                ...(style?.textColor ? { color: style.textColor } : {}),
               }}
               onDoubleClick={handleDoubleClick}
             >
