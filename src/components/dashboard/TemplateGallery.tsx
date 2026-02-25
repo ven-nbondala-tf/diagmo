@@ -227,6 +227,7 @@ const BasicTemplatePreview = ({ template }: { template: DiagramTemplate }) => {
 const ArchitectureTemplatePreview = ({ template }: { template: ArchitectureTemplate }) => {
   const nodeCount = template.nodes.length
   const edgeCount = template.edges.length
+  const hasThumbnail = template.thumbnailUrl && template.thumbnailUrl.startsWith('http')
 
   const previewNodes = template.nodes.slice(0, 12).map((node, i) => {
     const maxX = Math.max(...template.nodes.map(n => n.position.x + 100), 1)
@@ -243,6 +244,47 @@ const ArchitectureTemplatePreview = ({ template }: { template: ArchitectureTempl
                        providerCategory === 'gcp' ? '#4285F4' :
                        '#8B5CF6'
 
+  // If we have a thumbnail URL from cloud provider, show it
+  if (hasThumbnail) {
+    return (
+      <div className="w-full h-32 bg-white rounded border border-supabase-border relative overflow-hidden group">
+        <img
+          src={template.thumbnailUrl}
+          alt={template.name}
+          className="w-full h-full object-contain p-2"
+          loading="lazy"
+          onError={(e) => {
+            // Hide image on error, show fallback
+            (e.target as HTMLImageElement).style.display = 'none'
+          }}
+        />
+        {/* Provider badge */}
+        {providerCategory && (
+          <div
+            className="absolute top-1 left-1 text-[10px] px-1.5 py-0.5 rounded font-medium text-white"
+            style={{ backgroundColor: previewColor }}
+          >
+            {providerCategory.toUpperCase()}
+          </div>
+        )}
+        {/* Popularity indicator */}
+        {template.useCount && template.useCount > 0 && (
+          <div className="absolute top-1 right-1 text-[10px] text-supabase-text-muted bg-supabase-bg-primary/80 px-1.5 py-0.5 rounded flex items-center gap-1">
+            <TrendingUp className="h-3 w-3" />
+            {template.useCount}
+          </div>
+        )}
+        {/* Source indicator */}
+        {template.source && (
+          <div className="absolute bottom-1 right-1 text-[10px] text-supabase-text-muted bg-supabase-bg-primary/80 px-1.5 py-0.5 rounded">
+            Reference
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Fallback: render node/edge preview
   return (
     <div className="w-full h-28 bg-gradient-to-br from-supabase-bg-secondary to-supabase-bg-tertiary rounded border border-supabase-border relative overflow-hidden group">
       <svg className="absolute inset-0 w-full h-full">

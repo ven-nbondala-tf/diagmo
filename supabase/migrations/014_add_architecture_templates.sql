@@ -106,7 +106,12 @@ CREATE POLICY "Users can view own templates"
 -- Authenticated users can create templates
 CREATE POLICY "Users can create templates"
   ON architecture_templates FOR INSERT
-  WITH CHECK (auth.uid() IS NOT NULL AND created_by = auth.uid());
+  WITH CHECK (auth.uid() IS NOT NULL AND (created_by = auth.uid() OR created_by IS NULL));
+
+-- Allow inserting built-in templates (created_by is NULL)
+CREATE POLICY "Allow built-in template inserts"
+  ON architecture_templates FOR INSERT
+  WITH CHECK (is_built_in = true AND created_by IS NULL);
 
 -- Users can update their own templates
 CREATE POLICY "Users can update own templates"

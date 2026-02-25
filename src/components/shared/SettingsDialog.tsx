@@ -8,6 +8,10 @@ import {
   getTemplateStats,
   getLocalTemplateCount,
 } from '@/services/templateImporter'
+import {
+  importArchitectureMetadata,
+  getArchitectureCounts,
+} from '@/services/architectureScraper'
 import { clearTemplatesCache } from '@/hooks/useArchitectureTemplates'
 import {
   Dialog,
@@ -59,6 +63,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   // Admin template import state
   const [isImporting, setIsImporting] = useState(false)
+  const [isImportingMetadata, setIsImportingMetadata] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
   const [templateStats, setTemplateStats] = useState<{
     total: number
@@ -66,6 +71,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     byComplexity: Record<string, number>
   } | null>(null)
   const localCount = getLocalTemplateCount()
+  const archCounts = getArchitectureCounts()
   const {
     autoSave,
     setAutoSave,
@@ -150,6 +156,27 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       setTemplateStats(stats)
     } catch (error) {
       console.error('Failed to get stats:', error)
+    }
+  }, [])
+
+  const handleImportMetadata = useCallback(async () => {
+    setIsImportingMetadata(true)
+    try {
+      const result = await importArchitectureMetadata()
+      if (result.success) {
+        toast.success(`Imported ${result.imported} architectures (${result.skipped} skipped)`)
+        clearTemplatesCache()
+      } else {
+        toast.error(`Import completed with ${result.errors.length} errors`)
+        console.error('Import errors:', result.errors)
+      }
+      const stats = await getTemplateStats()
+      setTemplateStats(stats)
+    } catch (error) {
+      toast.error('Failed to import architecture metadata')
+      console.error('Import error:', error)
+    } finally {
+      setIsImportingMetadata(false)
     }
   }, [])
 
@@ -453,9 +480,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
               {/* Local Templates */}
               <div className="p-4 rounded-lg bg-supabase-bg-tertiary border border-supabase-border">
-                <h4 className="font-medium text-supabase-text-primary mb-2">Local Templates Available</h4>
-                <p className="text-sm text-supabase-text-muted">
-                  Azure templates ready to import: <strong className="text-supabase-text-primary">{localCount.azure}</strong>
+                <h4 className="font-medium text-supabase-text-primary mb-2">Templates Available to Import</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm text-supabase-text-muted">
+                  <div>Editable Templates: <strong className="text-supabase-text-primary">{localCount.azure}</strong></div>
+                  <div>Azure Architectures: <strong className="text-blue-400">{archCounts.azure}</strong></div>
+                  <div>AWS Architectures: <strong className="text-orange-400">{archCounts.aws}</strong></div>
+                  <div>GCP Architectures: <strong className="text-red-400">{archCounts.gcp}</strong></div>
+                </div>
+                <p className="text-xs text-supabase-text-muted mt-2">
+                  Total: <strong>{archCounts.total + localCount.azure}</strong> templates across all providers
                 </p>
               </div>
 
@@ -501,13 +534,22 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
               {/* Actions */}
               <div className="flex flex-col gap-3">
-                <Button onClick={handleImportTemplates} disabled={isImporting} className="w-full">
+                <Button onClick={handleImportMetadata} disabled={isImportingMetadata} className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500 hover:from-blue-600 hover:via-purple-600 hover:to-orange-600">
+                  {isImportingMetadata ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-2" />
+                  )}
+                  Import All Cloud Architectures ({archCounts.total})
+                </Button>
+
+                <Button onClick={handleImportTemplates} disabled={isImporting} variant="outline" className="w-full">
                   {isImporting ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Upload className="w-4 h-4 mr-2" />
                   )}
-                  Import Azure Templates ({localCount.azure})
+                  Import Editable Templates ({localCount.azure})
                 </Button>
 
                 <Button
