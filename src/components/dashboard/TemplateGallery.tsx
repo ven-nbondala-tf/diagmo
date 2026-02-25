@@ -1,10 +1,7 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { usePreferencesStore } from '@/stores/preferencesStore'
 import { DIAGRAM_TEMPLATES, TEMPLATE_CATEGORIES, type DiagramTemplate } from '@/constants/templates'
-import {
-  ARCHITECTURE_TEMPLATES,
-  ARCHITECTURE_TEMPLATE_CATEGORIES,
-} from '@/constants/architectureTemplates'
+import { useArchitectureTemplates } from '@/hooks/useArchitectureTemplates'
 import type { ArchitectureTemplate, TemplateCategory } from '@/types'
 import { TemplateVariablesDialog } from './TemplateVariablesDialog'
 import {
@@ -19,6 +16,7 @@ import {
   Tabs,
   TabsContent,
   Badge,
+  Skeleton,
 } from '@/components/ui'
 import { cn } from '@/utils'
 import {
@@ -37,6 +35,17 @@ import {
   Brain,
   Container,
   Globe,
+  Loader2,
+  Star,
+  TrendingUp,
+  Layers,
+  ArrowRight,
+  Building,
+  Heart,
+  DollarSign,
+  ShoppingCart,
+  Gamepad2,
+  RefreshCw,
 } from 'lucide-react'
 
 interface TemplateGalleryProps {
@@ -72,6 +81,20 @@ const getCategoryIcon = (category: string) => {
       return <Container className="h-4 w-4" />
     case 'serverless':
       return <Zap className="h-4 w-4" />
+    case 'hybrid':
+      return <Layers className="h-4 w-4" />
+    case 'migration':
+      return <ArrowRight className="h-4 w-4" />
+    case 'sap':
+      return <Building className="h-4 w-4" />
+    case 'healthcare':
+      return <Heart className="h-4 w-4" />
+    case 'financial':
+      return <DollarSign className="h-4 w-4" />
+    case 'retail':
+      return <ShoppingCart className="h-4 w-4" />
+    case 'gaming':
+      return <Gamepad2 className="h-4 w-4" />
     case 'uml':
       return <Box className="h-4 w-4" />
     case 'flowchart':
@@ -110,6 +133,35 @@ const getProviderColor = (category: TemplateCategory) => {
       return ''
   }
 }
+
+// Provider categories
+const PROVIDER_CATEGORIES: Array<{ id: TemplateCategory | 'all'; label: string }> = [
+  { id: 'all', label: 'All Providers' },
+  { id: 'aws', label: 'AWS Architecture' },
+  { id: 'azure', label: 'Azure Architecture' },
+  { id: 'gcp', label: 'Google Cloud' },
+  { id: 'multi-cloud', label: 'Multi-Cloud' },
+]
+
+// Use case categories
+const USE_CASE_CATEGORIES: Array<{ id: TemplateCategory; label: string }> = [
+  { id: 'web-app', label: 'Web Applications' },
+  { id: 'data-analytics', label: 'Data & Analytics' },
+  { id: 'iot', label: 'IoT Solutions' },
+  { id: 'ai-ml', label: 'AI & Machine Learning' },
+  { id: 'devops', label: 'DevOps & CI/CD' },
+  { id: 'security', label: 'Security & Identity' },
+  { id: 'networking', label: 'Networking' },
+  { id: 'containers', label: 'Containers & K8s' },
+  { id: 'serverless', label: 'Serverless' },
+  { id: 'hybrid', label: 'Hybrid Cloud' },
+  { id: 'migration', label: 'Migration' },
+  { id: 'sap', label: 'SAP Workloads' },
+  { id: 'healthcare', label: 'Healthcare' },
+  { id: 'financial', label: 'Financial Services' },
+  { id: 'retail', label: 'Retail' },
+  { id: 'gaming', label: 'Gaming' },
+]
 
 const BasicTemplatePreview = ({ template }: { template: DiagramTemplate }) => {
   const nodeCount = template.nodes.length
@@ -192,7 +244,7 @@ const ArchitectureTemplatePreview = ({ template }: { template: ArchitectureTempl
                        '#8B5CF6'
 
   return (
-    <div className="w-full h-28 bg-gradient-to-br from-supabase-bg-secondary to-supabase-bg-tertiary rounded border border-supabase-border relative overflow-hidden">
+    <div className="w-full h-28 bg-gradient-to-br from-supabase-bg-secondary to-supabase-bg-tertiary rounded border border-supabase-border relative overflow-hidden group">
       <svg className="absolute inset-0 w-full h-full">
         {template.edges.slice(0, 15).map((edge, i) => {
           const sourceNode = previewNodes.find((_, idx) => template.nodes[idx]?.id === edge.source)
@@ -227,18 +279,41 @@ const ArchitectureTemplatePreview = ({ template }: { template: ArchitectureTempl
       <div className="absolute bottom-1 right-1 text-[10px] text-supabase-text-muted bg-supabase-bg-primary/80 px-1.5 py-0.5 rounded">
         {nodeCount} nodes, {edgeCount} edges
       </div>
+      {/* Popularity indicator */}
+      {template.useCount && template.useCount > 0 && (
+        <div className="absolute top-1 right-1 text-[10px] text-supabase-text-muted bg-supabase-bg-primary/80 px-1.5 py-0.5 rounded flex items-center gap-1">
+          <TrendingUp className="h-3 w-3" />
+          {template.useCount}
+        </div>
+      )}
     </div>
   )
 }
+
+// Template card skeleton for loading state
+const TemplateCardSkeleton = () => (
+  <div className="p-3 rounded-lg bg-supabase-bg-secondary">
+    <Skeleton className="w-full h-28 rounded" />
+    <div className="mt-3 space-y-2">
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-3 w-full" />
+      <div className="flex gap-1">
+        <Skeleton className="h-5 w-14" />
+        <Skeleton className="h-5 w-16" />
+      </div>
+    </div>
+  </div>
+)
 
 export function TemplateGallery({
   open,
   onOpenChange,
   onSelectTemplate,
-  isLoading
+  isLoading: externalLoading
 }: TemplateGalleryProps) {
   const secondaryAccentColor = usePreferencesStore((state) => state.secondaryAccentColor)
   const secondaryAccentTextColor = usePreferencesStore((state) => state.secondaryAccentTextColor)
+
   const [activeTab, setActiveTab] = useState<'basic' | 'architecture'>('architecture')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedArchCategory, setSelectedArchCategory] = useState<TemplateCategory | 'all'>('all')
@@ -247,6 +322,23 @@ export function TemplateGallery({
   const [selectedTemplate, setSelectedTemplate] = useState<DiagramTemplate | ArchitectureTemplate | null>(null)
   const [showVariablesDialog, setShowVariablesDialog] = useState(false)
   const [templateForVariables, setTemplateForVariables] = useState<ArchitectureTemplate | null>(null)
+
+  // Fetch architecture templates from Supabase (with fallback to local)
+  const {
+    templates: archTemplates,
+    isLoading: archLoading,
+    error: archError,
+    refetch: refetchTemplates,
+    templateCounts,
+  } = useArchitectureTemplates()
+
+  // Reset selection when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedTemplate(null)
+      setSearchQuery('')
+    }
+  }, [open])
 
   // Filter basic templates
   const filteredBasicTemplates = useMemo(() => {
@@ -269,7 +361,7 @@ export function TemplateGallery({
 
   // Filter architecture templates
   const filteredArchTemplates = useMemo(() => {
-    let templates = ARCHITECTURE_TEMPLATES
+    let templates = archTemplates
 
     if (selectedArchCategory !== 'all') {
       templates = templates.filter(t => t.categories.includes(selectedArchCategory))
@@ -289,7 +381,7 @@ export function TemplateGallery({
     }
 
     return templates
-  }, [selectedArchCategory, selectedComplexity, searchQuery])
+  }, [archTemplates, selectedArchCategory, selectedComplexity, searchQuery])
 
   const handleSelect = useCallback(() => {
     if (selectedTemplate) {
@@ -313,7 +405,6 @@ export function TemplateGallery({
         if (affectingVariables.length > 0) {
           let newLabel = node.data.label
           affectingVariables.forEach(v => {
-            // Replace variable placeholder in label if present
             const value = variables[v.id] || v.defaultValue
             newLabel = newLabel.replace(`{{${v.id}}}`, value)
           })
@@ -337,9 +428,12 @@ export function TemplateGallery({
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[700px] flex flex-col">
+      <DialogContent className="max-w-5xl h-[720px] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Create New Diagram</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Create New Diagram
+            {archLoading && <Loader2 className="h-4 w-4 animate-spin text-supabase-text-muted" />}
+          </DialogTitle>
           <DialogDescription>
             Choose from pre-built cloud architecture templates or start with a basic diagram
           </DialogDescription>
@@ -349,7 +443,7 @@ export function TemplateGallery({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-supabase-text-muted" />
           <Input
-            placeholder="Search templates..."
+            placeholder="Search templates by name, description, or tags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 pr-9"
@@ -377,7 +471,7 @@ export function TemplateGallery({
               style={activeTab === 'architecture' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
             >
               <Cloud className="h-4 w-4" />
-              Cloud Architecture ({filteredArchTemplates.length})
+              Cloud Architecture ({archLoading ? '...' : archTemplates.length})
             </button>
             <button
               onClick={() => setActiveTab('basic')}
@@ -399,84 +493,123 @@ export function TemplateGallery({
             {/* Category sidebar */}
             <ScrollArea className="w-52 flex-shrink-0">
               <div className="space-y-4 pr-2">
-              {/* Provider filter */}
-              <div>
-                <h4 className="text-xs font-semibold text-supabase-text-muted uppercase mb-2">Provider</h4>
-                <nav className="space-y-1">
-                  <button
-                    onClick={() => setSelectedArchCategory('all')}
-                    className={cn(
-                      'w-full text-left px-3 py-2 rounded-md text-sm transition-colors cursor-pointer',
-                      'hover:bg-supabase-bg-tertiary hover:text-supabase-text-primary',
-                      selectedArchCategory === 'all' && 'bg-supabase-bg-tertiary text-supabase-text-primary font-medium'
-                    )}
-                  >
-                    All Providers
-                  </button>
-                  {ARCHITECTURE_TEMPLATE_CATEGORIES.slice(0, 4).map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedArchCategory(category.id)}
-                      className={cn(
-                        'w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 cursor-pointer',
-                        'hover:bg-supabase-bg-tertiary hover:text-supabase-text-primary',
-                        selectedArchCategory === category.id && 'bg-supabase-bg-tertiary text-supabase-text-primary font-medium'
-                      )}
-                    >
-                      {getCategoryIcon(category.id)}
-                      {category.label}
-                    </button>
-                  ))}
-                </nav>
-              </div>
-
-              {/* Use Case filter */}
-              <div>
-                <h4 className="text-xs font-semibold text-supabase-text-muted uppercase mb-2">Use Case</h4>
-                <nav className="space-y-1">
-                  {ARCHITECTURE_TEMPLATE_CATEGORIES.slice(4).map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedArchCategory(category.id)}
-                      className={cn(
-                        'w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 cursor-pointer',
-                        'hover:bg-supabase-bg-tertiary hover:text-supabase-text-primary',
-                        selectedArchCategory === category.id && 'bg-supabase-bg-tertiary text-supabase-text-primary font-medium'
-                      )}
-                    >
-                      {getCategoryIcon(category.id)}
-                      {category.label}
-                    </button>
-                  ))}
-                </nav>
-              </div>
-
-              {/* Complexity filter */}
-              <div>
-                <h4 className="text-xs font-semibold text-supabase-text-muted uppercase mb-2">Complexity</h4>
-                <div className="flex flex-wrap gap-1">
-                  {['all', 'beginner', 'intermediate', 'advanced'].map((level) => (
-                    <button
-                      key={level}
-                      onClick={() => setSelectedComplexity(level)}
-                      className={cn(
-                        'px-2 py-1 text-xs rounded-md border transition-colors cursor-pointer',
-                        selectedComplexity === level
-                          ? 'bg-supabase-green text-white border-supabase-green'
-                          : 'bg-supabase-bg-tertiary border-supabase-border hover:border-supabase-border-strong'
-                      )}
-                    >
-                      {level === 'all' ? 'All' : level.charAt(0).toUpperCase() + level.slice(1)}
-                    </button>
-                  ))}
+                {/* Provider filter */}
+                <div>
+                  <h4 className="text-xs font-semibold text-supabase-text-muted uppercase mb-2">Provider</h4>
+                  <nav className="space-y-1">
+                    {PROVIDER_CATEGORIES.map((category) => {
+                      const count = category.id === 'all'
+                        ? archTemplates.length
+                        : templateCounts[category.id] || 0
+                      return (
+                        <button
+                          key={category.id}
+                          onClick={() => setSelectedArchCategory(category.id)}
+                          className={cn(
+                            'w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center justify-between cursor-pointer',
+                            'hover:bg-supabase-bg-tertiary hover:text-supabase-text-primary',
+                            selectedArchCategory === category.id && 'bg-supabase-bg-tertiary text-supabase-text-primary font-medium'
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            {category.id !== 'all' && getCategoryIcon(category.id)}
+                            {category.label}
+                          </span>
+                          {count > 0 && (
+                            <span className="text-xs text-supabase-text-muted bg-supabase-bg-secondary px-1.5 rounded">
+                              {count}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </nav>
                 </div>
-              </div>
+
+                {/* Use Case filter */}
+                <div>
+                  <h4 className="text-xs font-semibold text-supabase-text-muted uppercase mb-2">Use Case</h4>
+                  <nav className="space-y-1">
+                    {USE_CASE_CATEGORIES.map((category) => {
+                      const count = templateCounts[category.id] || 0
+                      if (count === 0 && selectedArchCategory !== category.id) return null
+                      return (
+                        <button
+                          key={category.id}
+                          onClick={() => setSelectedArchCategory(category.id)}
+                          className={cn(
+                            'w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center justify-between cursor-pointer',
+                            'hover:bg-supabase-bg-tertiary hover:text-supabase-text-primary',
+                            selectedArchCategory === category.id && 'bg-supabase-bg-tertiary text-supabase-text-primary font-medium'
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            {getCategoryIcon(category.id)}
+                            {category.label}
+                          </span>
+                          {count > 0 && (
+                            <span className="text-xs text-supabase-text-muted bg-supabase-bg-secondary px-1.5 rounded">
+                              {count}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </nav>
+                </div>
+
+                {/* Complexity filter */}
+                <div>
+                  <h4 className="text-xs font-semibold text-supabase-text-muted uppercase mb-2">Complexity</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {['all', 'beginner', 'intermediate', 'advanced'].map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => setSelectedComplexity(level)}
+                        className={cn(
+                          'px-2 py-1 text-xs rounded-md border transition-colors cursor-pointer',
+                          selectedComplexity === level
+                            ? 'bg-supabase-green text-white border-supabase-green'
+                            : 'bg-supabase-bg-tertiary border-supabase-border hover:border-supabase-border-strong'
+                        )}
+                      >
+                        {level === 'all' ? 'All' : level.charAt(0).toUpperCase() + level.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Refresh button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => refetchTemplates()}
+                  className="w-full justify-center gap-2 text-xs"
+                  disabled={archLoading}
+                >
+                  <RefreshCw className={cn("h-3 w-3", archLoading && "animate-spin")} />
+                  Refresh Templates
+                </Button>
               </div>
             </ScrollArea>
 
             {/* Architecture Templates grid */}
             <ScrollArea className="flex-1 -mr-4 pr-4">
-              {filteredArchTemplates.length === 0 ? (
+              {archError ? (
+                <div className="flex flex-col items-center justify-center h-48 text-supabase-text-muted">
+                  <X className="h-12 w-12 mb-2 opacity-50 text-red-500" />
+                  <p>Failed to load templates</p>
+                  <Button variant="outline" size="sm" onClick={() => refetchTemplates()} className="mt-2">
+                    Try Again
+                  </Button>
+                </div>
+              ) : archLoading ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <TemplateCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : filteredArchTemplates.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-supabase-text-muted">
                   <Search className="h-12 w-12 mb-2 opacity-50" />
                   <p>No templates found</p>
@@ -504,6 +637,12 @@ export function TemplateGallery({
                             <h3 className="font-medium text-sm text-supabase-text-primary line-clamp-1">
                               {template.name}
                             </h3>
+                            {template.rating && template.rating > 0 && (
+                              <span className="flex items-center gap-0.5 text-yellow-500 text-xs">
+                                <Star className="h-3 w-3 fill-current" />
+                                {template.rating.toFixed(1)}
+                              </span>
+                            )}
                           </div>
                           <p className="text-xs text-supabase-text-muted line-clamp-2">
                             {template.description}
@@ -604,11 +743,11 @@ export function TemplateGallery({
             </Button>
             <Button
               onClick={handleSelect}
-              disabled={!selectedTemplate || isLoading}
+              disabled={!selectedTemplate || externalLoading}
               className="hover:opacity-90"
               style={{ backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor }}
             >
-              {isLoading ? 'Creating...' : 'Create Diagram'}
+              {externalLoading ? 'Creating...' : 'Create Diagram'}
             </Button>
           </div>
         </div>
@@ -622,7 +761,7 @@ export function TemplateGallery({
         onOpenChange={setShowVariablesDialog}
         template={templateForVariables}
         onConfirm={handleVariablesConfirm}
-        isLoading={isLoading}
+        isLoading={externalLoading}
       />
     )}
     </>
