@@ -42,7 +42,7 @@ export function AIFloatingButton({
   }, [])
 
   return (
-    <div className={cn('fixed bottom-24 right-6 z-40 flex flex-col items-end gap-2', className)}>
+    <div className={cn('absolute bottom-24 right-6 z-40 flex flex-col items-end gap-2', className)}>
       {/* Quick Actions */}
       {isExpanded && (
         <div className="flex flex-col gap-2 animate-in slide-in-from-bottom-2 fade-in duration-200">

@@ -39,6 +39,42 @@ function NoteShape(props: ShapeRenderProps) {
   )
 }
 
+// Sticky note shape - simple rectangle with subtle shadow and better text editing support
+function StickyNoteShape({ label, style, shapeClass }: ShapeRenderProps) {
+  // Get colors - ensure backgroundColor is set explicitly, not inherited from parent
+  const bgColor = style?.backgroundColor || '#fef08a'
+  const textColor = style?.textColor || '#1f2937'
+  const fontSize = style?.fontSize || 14
+  const textAlign = style?.textAlign || 'left'
+  const verticalAlign = style?.verticalAlign || 'top'
+
+  return (
+    <div
+      className={cn(shapeClass, 'p-3')}
+      style={{
+        // Set background explicitly to avoid any CSS inheritance issues
+        backgroundColor: bgColor,
+        background: bgColor, // Also set background shorthand to override any inherited values
+        borderRadius: style?.borderRadius ?? 2,
+        borderWidth: 0,
+        borderColor: 'transparent',
+        boxShadow: '2px 4px 12px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.1)',
+        color: textColor,
+        fontSize,
+        fontFamily: style?.fontFamily || 'Inter, system-ui, sans-serif',
+        fontWeight: style?.fontWeight || 'normal',
+        textAlign: textAlign as 'left' | 'center' | 'right',
+        alignItems: verticalAlign === 'top' ? 'flex-start' : verticalAlign === 'bottom' ? 'flex-end' : 'center',
+        lineHeight: 1.4,
+        wordBreak: 'break-word',
+        whiteSpace: 'pre-wrap',
+      }}
+    >
+      {label || 'Double-click to edit'}
+    </div>
+  )
+}
+
 function DocumentShape(props: ShapeRenderProps) {
   return (
     <SVGPathShape path="M 5,5 L 95,5 L 95,80 Q 72,95 50,80 Q 28,65 5,80 Z" renderProps={props}>
@@ -140,6 +176,7 @@ function SummingJunctionShape({ label, locked: _locked, baseStyle, shapeClass, g
 registerShapes(['parallelogram', 'data'], ParallelogramShape)
 registerShape('callout', CalloutShape)
 registerShapes(['note', 'uml-note'], NoteShape)
+registerShape('sticky-note', StickyNoteShape)
 registerShape('document', DocumentShape)
 registerShape('multi-document', MultiDocumentShape)
 registerShape('predefined-process', PredefinedProcessShape)

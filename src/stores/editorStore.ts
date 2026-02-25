@@ -39,6 +39,10 @@ interface EditorState {
   layersPanelOpen: boolean
   // Version history
   versionHistoryPanelOpen: boolean
+  // Validation
+  validationPanelOpen: boolean
+  // Analytics
+  analyticsPanelOpen: boolean
   // Presentation mode
   presentationModeOpen: boolean
   // Comments
@@ -63,6 +67,15 @@ interface EditorState {
   selectedStrokeIds: string[]
   // Current page ID for collaboration filtering
   currentPageId: string | null
+  // Air Canvas (hand gesture drawing)
+  airCanvasEnabled: boolean
+  airCanvasCalibrated: boolean
+  handPosition: { x: number; y: number } | null
+  isHandDrawing: boolean
+  // Text editing state (for floating toolbar)
+  editingNodeId: string | null
+  // Keyboard navigation focus
+  focusedNodeId: string | null
 }
 
 interface EditorActions {
@@ -133,6 +146,12 @@ interface EditorActions {
   setLayers: (layers: Layer[]) => void
   // Version history
   toggleVersionHistoryPanel: () => void
+  // Validation
+  toggleValidationPanel: () => void
+  setValidationPanelOpen: (open: boolean) => void
+  // Analytics
+  toggleAnalyticsPanel: () => void
+  setAnalyticsPanelOpen: (open: boolean) => void
   // Presentation mode
   togglePresentationMode: () => void
   setPresentationModeOpen: (open: boolean) => void
@@ -178,6 +197,15 @@ interface EditorActions {
   selectStrokes: (ids: string[]) => void
   deleteSelectedStrokes: () => void
   moveSelectedStrokes: (dx: number, dy: number) => void
+  // Air Canvas actions
+  toggleAirCanvas: () => void
+  setAirCanvasCalibrated: (calibrated: boolean) => void
+  setHandPosition: (position: { x: number; y: number } | null) => void
+  setIsHandDrawing: (drawing: boolean) => void
+  // Text editing
+  setEditingNodeId: (id: string | null) => void
+  // Keyboard navigation
+  setFocusedNodeId: (id: string | null) => void
 }
 
 type EditorStore = EditorState & EditorActions
@@ -215,6 +243,10 @@ const initialState: EditorState = {
   layersPanelOpen: false,
   // Version history
   versionHistoryPanelOpen: false,
+  // Validation
+  validationPanelOpen: false,
+  // Analytics
+  analyticsPanelOpen: false,
   // Presentation mode
   presentationModeOpen: false,
   // Comments
@@ -249,6 +281,15 @@ const initialState: EditorState = {
   activePenPresetId: 'pen-black',
   selectedStrokeIds: [],
   currentPageId: null,
+  // Air Canvas
+  airCanvasEnabled: false,
+  airCanvasCalibrated: false,
+  handPosition: null,
+  isHandDrawing: false,
+  // Text editing
+  editingNodeId: null,
+  // Keyboard navigation
+  focusedNodeId: null,
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -669,7 +710,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
       const width = node.measured?.width || 150
       const height = node.measured?.height || 50
-      let newPosition = { ...node.position }
+      const newPosition = { ...node.position }
 
       switch (type) {
         case 'left':
@@ -946,12 +987,41 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     set({ commandPaletteOpen: open })
   },
 
-  importDiagram: (nodes, edges) => {
+  importDiagram: (newNodes, newEdges) => {
     get().pushHistory()
+    const { nodes: existingNodes, edges: existingEdges } = get()
+
+    // Calculate offset to avoid overlapping with existing nodes
+    let offsetX = 0
+    let offsetY = 0
+
+    if (existingNodes.length > 0) {
+      // Find the rightmost and bottommost points of existing nodes
+      const maxX = Math.max(...existingNodes.map(n => n.position.x + (n.style?.width as number || 150)))
+      const minY = Math.min(...existingNodes.map(n => n.position.y))
+
+      // Also find the bounds of new nodes
+      const newMinX = Math.min(...newNodes.map(n => n.position.x))
+      const newMinY = Math.min(...newNodes.map(n => n.position.y))
+
+      // Position new nodes to the right of existing ones with some gap
+      offsetX = maxX - newMinX + 100
+      offsetY = minY - newMinY // Align top
+    }
+
+    // Apply offset to new nodes
+    const offsetNodes = newNodes.map(node => ({
+      ...node,
+      position: {
+        x: node.position.x + offsetX,
+        y: node.position.y + offsetY,
+      },
+    }))
+
     set({
-      nodes,
-      edges,
-      selectedNodes: [],
+      nodes: [...existingNodes, ...offsetNodes],
+      edges: [...existingEdges, ...newEdges],
+      selectedNodes: offsetNodes.map(n => n.id),
       selectedEdges: [],
       isDirty: true,
     })
@@ -1007,7 +1077,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   // Bring selected nodes one layer forward
   bringForward: (ids) => {
     const { nodes } = get()
-    let newNodes = [...nodes]
+    const newNodes = [...nodes]
     for (const id of ids) {
       const idx = newNodes.findIndex((n) => n.id === id)
       if (idx === -1) continue
@@ -1025,7 +1095,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   // Send selected nodes one layer backward
   sendBackward: (ids) => {
     const { nodes } = get()
-    let newNodes = [...nodes]
+    const newNodes = [...nodes]
     for (const id of ids) {
       const idx = newNodes.findIndex((n) => n.id === id)
       if (idx === -1) continue
@@ -1181,6 +1251,22 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   toggleVersionHistoryPanel: () => {
     set((state) => ({ versionHistoryPanelOpen: !state.versionHistoryPanelOpen }))
+  },
+
+  toggleValidationPanel: () => {
+    set((state) => ({ validationPanelOpen: !state.validationPanelOpen }))
+  },
+
+  setValidationPanelOpen: (open) => {
+    set({ validationPanelOpen: open })
+  },
+
+  toggleAnalyticsPanel: () => {
+    set((state) => ({ analyticsPanelOpen: !state.analyticsPanelOpen }))
+  },
+
+  setAnalyticsPanelOpen: (open) => {
+    set({ analyticsPanelOpen: open })
   },
 
   togglePresentationMode: () => {
@@ -1460,6 +1546,29 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     }),
     isDirty: true,
   })),
+
+  // Air Canvas actions
+  toggleAirCanvas: () => set((state) => ({
+    airCanvasEnabled: !state.airCanvasEnabled,
+    // Reset state when disabling
+    ...(state.airCanvasEnabled ? {
+      airCanvasCalibrated: false,
+      handPosition: null,
+      isHandDrawing: false,
+    } : {}),
+  })),
+
+  setAirCanvasCalibrated: (calibrated) => set({ airCanvasCalibrated: calibrated }),
+
+  setHandPosition: (position) => set({ handPosition: position }),
+
+  setIsHandDrawing: (drawing) => set({ isHandDrawing: drawing }),
+
+  // Text editing
+  setEditingNodeId: (id) => set({ editingNodeId: id }),
+
+  // Keyboard navigation
+  setFocusedNodeId: (id) => set({ focusedNodeId: id }),
 
 }))
 

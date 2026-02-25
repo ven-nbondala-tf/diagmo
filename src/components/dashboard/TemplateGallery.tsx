@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { DIAGRAM_TEMPLATES, TEMPLATE_CATEGORIES, type DiagramTemplate } from '@/constants/templates'
 import {
   ARCHITECTURE_TEMPLATES,
@@ -17,8 +18,6 @@ import {
   Input,
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
   Badge,
 } from '@/components/ui'
 import { cn } from '@/utils'
@@ -238,6 +237,8 @@ export function TemplateGallery({
   onSelectTemplate,
   isLoading
 }: TemplateGalleryProps) {
+  const secondaryAccentColor = usePreferencesStore((state) => state.secondaryAccentColor)
+  const secondaryAccentTextColor = usePreferencesStore((state) => state.secondaryAccentTextColor)
   const [activeTab, setActiveTab] = useState<'basic' | 'architecture'>('architecture')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedArchCategory, setSelectedArchCategory] = useState<TemplateCategory | 'all'>('all')
@@ -364,16 +365,34 @@ export function TemplateGallery({
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'basic' | 'architecture')} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="architecture" className="gap-2">
+          <div className="grid w-full grid-cols-2 bg-supabase-bg-tertiary rounded-lg p-1 gap-1">
+            <button
+              onClick={() => setActiveTab('architecture')}
+              className={cn(
+                'flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm transition-all',
+                activeTab === 'architecture'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'architecture' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
               <Cloud className="h-4 w-4" />
               Cloud Architecture ({filteredArchTemplates.length})
-            </TabsTrigger>
-            <TabsTrigger value="basic" className="gap-2">
+            </button>
+            <button
+              onClick={() => setActiveTab('basic')}
+              className={cn(
+                'flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm transition-all',
+                activeTab === 'basic'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'basic' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
               <FileText className="h-4 w-4" />
               Basic Templates ({filteredBasicTemplates.length})
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
 
           {/* Architecture Templates Tab */}
           <TabsContent value="architecture" className="flex-1 flex gap-4 min-h-0 mt-4 overflow-hidden">
@@ -586,6 +605,8 @@ export function TemplateGallery({
             <Button
               onClick={handleSelect}
               disabled={!selectedTemplate || isLoading}
+              className="hover:opacity-90"
+              style={{ backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor }}
             >
               {isLoading ? 'Creating...' : 'Create Diagram'}
             </Button>

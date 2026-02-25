@@ -1,5 +1,7 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import {
+  ContextMenu,
+  ContextMenuTrigger,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
@@ -7,10 +9,16 @@ import {
   ContextMenuSubContent,
   ContextMenuSubTrigger,
   ContextMenuShortcut,
+  ContextMenuLabel,
 } from '@/components/ui/context-menu'
-import * as ContextMenuPrimitive from '@radix-ui/react-context-menu'
 import { useEditorStore } from '@/stores/editorStore'
 import type { ShapeType } from '@/types'
+import {
+  smartContextService,
+  type SmartSuggestion,
+} from '@/services/smartContextService'
+import { MarkerType, type Edge } from '@xyflow/react'
+import { nanoid } from 'nanoid'
 import {
   Copy,
   Clipboard,
@@ -32,6 +40,20 @@ import {
   Square,
   Hexagon,
   ArrowRight,
+  ArrowLeft,
+  GitBranchPlus,
+  GitBranch,
+  Cloud,
+  AlignLeft,
+  AlignCenterHorizontal,
+  AlignRight,
+  AlignStartVertical,
+  AlignCenterVertical,
+  AlignEndVertical,
+  Columns,
+  Rows,
+  Link,
+  Sparkles,
 } from 'lucide-react'
 
 // Quick morph shape options organized by category
@@ -83,6 +105,25 @@ const MORPH_SHAPES: { label: string; icon: React.ElementType; shapes: { type: Sh
   },
 ]
 
+// Icon mapping for smart suggestions
+const SUGGESTION_ICONS: Record<string, React.ElementType> = {
+  GitBranchPlus,
+  GitBranch,
+  ArrowRight,
+  ArrowLeft,
+  Cloud,
+  AlignLeft,
+  AlignCenterHorizontal,
+  AlignRight,
+  AlignStartVertical,
+  AlignCenterVertical,
+  AlignEndVertical,
+  Columns,
+  Rows,
+  Link,
+  Group,
+}
+
 interface NodeContextMenuProps {
   children: React.ReactNode
   nodeId: string
@@ -104,11 +145,161 @@ export function NodeContextMenu({ children, nodeId, isLocked, isGrouped }: NodeC
   const sendBackward = useEditorStore((state) => state.sendBackward)
   const sendToBack = useEditorStore((state) => state.sendToBack)
   const morphShape = useEditorStore((state) => state.morphShape)
+  const addNode = useEditorStore((state) => state.addNode)
+  const alignNodes = useEditorStore((state) => state.alignNodes)
+  const distributeNodes = useEditorStore((state) => state.distributeNodes)
   const nodes = useEditorStore((state) => state.nodes)
+  const edges = useEditorStore((state) => state.edges)
+  const selectedNodes = useEditorStore((state) => state.selectedNodes)
 
   // Get current node type to show current selection
   const currentNode = nodes.find((n) => n.id === nodeId)
   const currentType = currentNode?.data.type
+
+  // Get smart suggestions based on selection
+  const smartSuggestions = useMemo(() => {
+    // Get all selected nodes
+    const selectedNodeObjects = nodes.filter(n => selectedNodes.includes(n.id))
+
+    // If multiple nodes are selected, show multi-node suggestions
+    if (selectedNodeObjects.length > 1) {
+      return smartContextService.getMultiNodeSuggestions(selectedNodeObjects)
+    }
+
+    // If single node, show single-node suggestions
+    if (currentNode) {
+      return smartContextService.getSingleNodeSuggestions(currentNode)
+    }
+
+    return []
+  }, [currentNode, nodes, selectedNodes])
+
+  // Handle smart suggestion execution
+  const handleSmartSuggestion = useCallback((suggestion: SmartSuggestion) => {
+    if (!currentNode) return
+
+    switch (suggestion.action) {
+      case 'add-node':
+      case 'add-branch': {
+        const position = suggestion.data?.position || 'right'
+        const nodeType = suggestion.data?.nodeType || 'process'
+        const newPosition = smartContextService.calculateNewNodePosition(currentNode, position)
+        const handles = smartContextService.getHandlesForPosition(position)
+
+        // Create the new node
+        addNode(nodeType, newPosition)
+
+        // Get the newly created node (it will be the last one added)
+        const newNodes = useEditorStore.getState().nodes
+        const newNode = newNodes[newNodes.length - 1]
+
+        if (newNode) {
+          // Create the edge connection
+          const newEdge = {
+            id: nanoid(),
+            source: currentNode.id,
+            target: newNode.id,
+            sourceHandle: handles.sourceHandle,
+            targetHandle: handles.targetHandle,
+            type: 'labeled',
+            data: suggestion.data?.edgeLabel ? { label: suggestion.data.edgeLabel } : undefined,
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              width: 8,
+              height: 8,
+              color: '#64748b',
+            },
+            style: {
+              strokeWidth: 1.5,
+              stroke: '#64748b',
+            },
+          }
+
+          useEditorStore.getState().pushHistory()
+          useEditorStore.setState((state) => ({
+            edges: [...state.edges, newEdge],
+            isDirty: true,
+          }))
+        }
+        break
+      }
+
+      case 'align': {
+        const alignType = suggestion.data?.alignType
+        if (alignType) {
+          alignNodes(alignType)
+        }
+        break
+      }
+
+      case 'distribute': {
+        const distributeType = suggestion.data?.distributeType
+        if (distributeType) {
+          distributeNodes(distributeType)
+        }
+        break
+      }
+
+      case 'connect-sequence': {
+        // Get selected nodes sorted by x position (left to right)
+        const selectedNodeObjects = nodes
+          .filter(n => selectedNodes.includes(n.id))
+          .sort((a, b) => a.position.x - b.position.x)
+
+        if (selectedNodeObjects.length < 2) return
+
+        useEditorStore.getState().pushHistory()
+
+        // Create edges between consecutive nodes
+        const newEdges: Edge[] = []
+        for (let i = 0; i < selectedNodeObjects.length - 1; i++) {
+          const sourceNode = selectedNodeObjects[i]
+          const targetNode = selectedNodeObjects[i + 1]
+
+          if (!sourceNode || !targetNode) continue
+
+          // Check if edge already exists
+          const edgeExists = edges.some(
+            e => (e.source === sourceNode.id && e.target === targetNode.id)
+          )
+
+          if (!edgeExists) {
+            newEdges.push({
+              id: nanoid(),
+              source: sourceNode.id,
+              target: targetNode.id,
+              sourceHandle: 'right',
+              targetHandle: 'left',
+              type: 'labeled',
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                width: 8,
+                height: 8,
+                color: '#64748b',
+              },
+              style: {
+                strokeWidth: 1.5,
+                stroke: '#64748b',
+              },
+            })
+          }
+        }
+
+        if (newEdges.length > 0) {
+          useEditorStore.setState((state) => ({
+            edges: [...state.edges, ...newEdges],
+            isDirty: true,
+          }))
+        }
+        break
+      }
+
+      case 'group': {
+        groupNodes()
+        break
+      }
+    }
+  }, [currentNode, nodes, edges, selectedNodes, addNode, alignNodes, distributeNodes, groupNodes])
 
   // Ensure this node is selected before performing actions
   const ensureSelected = useCallback(() => {
@@ -206,29 +397,59 @@ export function NodeContextMenu({ children, nodeId, isLocked, isGrouped }: NodeC
     currentType !== 'custom-shape' &&
     currentType !== 'web-image'
 
-  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
-
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setContextMenuPos({ x: e.clientX, y: e.clientY })
-  }, [])
-
-  const closeMenu = useCallback(() => {
-    setContextMenuPos(null)
-  }, [])
-
   return (
-    <>
-      <div style={{ width: '100%', height: '100%' }} onContextMenu={handleContextMenu}>
-        {children}
-      </div>
-      <ContextMenuPrimitive.Root onOpenChange={(open) => !open && closeMenu()}>
-        <ContextMenuPrimitive.Portal>
-          <ContextMenuContent
-            className="w-56"
-            style={contextMenuPos ? { position: 'fixed', left: contextMenuPos.x, top: contextMenuPos.y } : undefined}
-          >
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div style={{ width: '100%', height: '100%' }}>
+          {children}
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-64">
+        {/* Smart Suggestions */}
+        {smartSuggestions.length > 0 && (
+          <>
+            <ContextMenuLabel className="flex items-center gap-2 text-xs text-primary font-medium">
+              <Sparkles className="w-3 h-3" />
+              Smart Actions
+            </ContextMenuLabel>
+            {smartSuggestions.slice(0, 4).map((suggestion) => {
+              const IconComponent = SUGGESTION_ICONS[suggestion.icon] || ArrowRight
+              return (
+                <ContextMenuItem
+                  key={suggestion.id}
+                  onClick={() => handleSmartSuggestion(suggestion)}
+                >
+                  <IconComponent className="w-4 h-4 mr-2 text-primary" />
+                  <span className="flex-1">{suggestion.label}</span>
+                </ContextMenuItem>
+              )
+            })}
+            {smartSuggestions.length > 4 && (
+              <ContextMenuSub>
+                <ContextMenuSubTrigger>
+                  <Sparkles className="w-4 h-4 mr-2 text-primary" />
+                  More Actions ({smartSuggestions.length - 4})
+                </ContextMenuSubTrigger>
+                <ContextMenuSubContent className="w-56">
+                  {smartSuggestions.slice(4).map((suggestion) => {
+                    const IconComponent = SUGGESTION_ICONS[suggestion.icon] || ArrowRight
+                    return (
+                      <ContextMenuItem
+                        key={suggestion.id}
+                        onClick={() => handleSmartSuggestion(suggestion)}
+                      >
+                        <IconComponent className="w-4 h-4 mr-2 text-primary" />
+                        <span className="flex-1">{suggestion.label}</span>
+                      </ContextMenuItem>
+                    )
+                  })}
+                </ContextMenuSubContent>
+              </ContextMenuSub>
+            )}
+            <ContextMenuSeparator />
+          </>
+        )}
+
         {/* Edit Actions */}
         <ContextMenuItem onClick={handleCut}>
           <Copy className="w-4 h-4 mr-2" />
@@ -376,9 +597,7 @@ export function NodeContextMenu({ children, nodeId, isLocked, isGrouped }: NodeC
           Delete
           <ContextMenuShortcut>Del</ContextMenuShortcut>
         </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenuPrimitive.Portal>
-      </ContextMenuPrimitive.Root>
-    </>
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }

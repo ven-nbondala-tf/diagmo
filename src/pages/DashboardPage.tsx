@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { useDiagramsByFolder, useCreateDiagram, useSharedDiagrams, useWorkspaces } from '@/hooks'
+import { useDiagramsByFolder, useCreateDiagram, useSharedDiagrams, useWorkspaces, useSharedUsersForDiagrams } from '@/hooks'
 import type { Diagram } from '@/types'
 import {
   Button,
@@ -20,10 +20,11 @@ import {
 } from '@/components/ui'
 import { DiagramCard } from '@/components/dashboard/DiagramCard'
 import { DiagramCardSkeleton } from '@/components/dashboard/DiagramCardSkeleton'
-import { DiagramListItem } from '@/components/dashboard/DiagramListItem'
+import { DiagramListItem, DiagramListHeader } from '@/components/dashboard/DiagramListItem'
 import { DiagramListItemSkeleton } from '@/components/dashboard/DiagramListItemSkeleton'
 import { SearchBar } from '@/components/dashboard/SearchBar'
 import { TemplateGallery } from '@/components/dashboard/TemplateGallery'
+import { MarketplacePanel } from '@/components/dashboard/MarketplacePanel'
 import { PendingInvitesBanner } from '@/components/dashboard/PendingInvitesBanner'
 import { DIAGRAM_TEMPLATES, type DiagramTemplate } from '@/constants/templates'
 import type { ArchitectureTemplate, DiagramNode, DiagramEdge } from '@/types'
@@ -43,6 +44,7 @@ import {
   Share2,
   UsersIcon,
   Sparkles,
+  Store,
 } from 'lucide-react'
 
 type ViewMode = 'grid' | 'list'
@@ -78,6 +80,7 @@ export function DashboardPage() {
   const selectedFolderId = searchParams.get('folder')
   const [searchQuery, setSearchQuery] = useState('')
   const [showTemplateGallery, setShowTemplateGallery] = useState(false)
+  const [showMarketplace, setShowMarketplace] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [sortBy, setSortBy] = useState<SortBy>('updated')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
@@ -96,6 +99,14 @@ export function DashboardPage() {
   const { data: ownDiagrams, isLoading: isLoadingOwn, error: errorOwn } = useDiagramsByFolder(selectedFolderId, currentWorkspaceId)
   const { data: sharedDiagramsData, isLoading: isLoadingShared, error: errorShared } = useSharedDiagrams()
   const createDiagram = useCreateDiagram()
+
+  // Get diagram IDs for fetching shared users
+  const diagramIds = useMemo(() => {
+    return ownDiagrams?.map(d => d.id) || []
+  }, [ownDiagrams])
+
+  // Fetch shared users for all diagrams
+  const { data: sharedUsersMap = {} } = useSharedUsersForDiagrams(diagramIds)
 
   // Convert shared diagrams to the same format as own diagrams
   const sharedDiagrams: Diagram[] = useMemo(() => {
@@ -329,11 +340,17 @@ export function DashboardPage() {
                 value={teamMembersCount || '-'}
                 icon={UsersIcon}
               />
-              <StatCard
-                title="Templates Used"
-                value={DIAGRAM_TEMPLATES.length}
-                icon={Sparkles}
-              />
+              <button
+                onClick={() => setShowMarketplace(true)}
+                className="p-4 rounded-lg bg-supabase-bg-secondary border border-supabase-border hover:border-supabase-green/50 hover:bg-supabase-bg-tertiary transition-colors text-left cursor-pointer"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-supabase-text-muted">Marketplace</p>
+                  <Store className="w-4 h-4 text-supabase-green" />
+                </div>
+                <p className="text-2xl font-semibold text-supabase-text-primary">Browse</p>
+                <p className="text-xs text-supabase-green mt-1">Community templates</p>
+              </button>
             </div>
 
             {/* Page Header */}
@@ -465,7 +482,7 @@ export function DashboardPage() {
               </Card>
             ) : sortedDiagrams.length > 0 ? (
               viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                   {sortedDiagrams.map((diagram) => (
                     <DiagramCard
                       key={diagram.id}
@@ -476,15 +493,19 @@ export function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {sortedDiagrams.map((diagram) => (
-                    <DiagramListItem
-                      key={diagram.id}
-                      diagram={diagram}
-                      onClick={() => navigate(`/editor/${diagram.id}`)}
-                      isShared={showShared}
-                    />
-                  ))}
+                <div className="rounded-lg border border-supabase-border overflow-hidden">
+                  <DiagramListHeader />
+                  <div>
+                    {sortedDiagrams.map((diagram) => (
+                      <DiagramListItem
+                        key={diagram.id}
+                        diagram={diagram}
+                        onClick={() => navigate(`/editor/${diagram.id}`)}
+                        isShared={showShared}
+                        sharedUsers={sharedUsersMap[diagram.id] || []}
+                      />
+                    ))}
+                  </div>
                 </div>
               )
             ) : searchQuery ? (
@@ -537,6 +558,12 @@ export function DashboardPage() {
         onOpenChange={setShowTemplateGallery}
         onSelectTemplate={handleCreateDiagram}
         isLoading={createDiagram.isPending}
+      />
+
+      {/* Marketplace Panel */}
+      <MarketplacePanel
+        open={showMarketplace}
+        onOpenChange={setShowMarketplace}
       />
     </div>
   )

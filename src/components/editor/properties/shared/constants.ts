@@ -3,7 +3,7 @@ export const TEXT_SECTIONS = ['text']
 export const LAYOUT_SECTIONS = ['size', 'arrange', 'group']
 export const DATA_SECTIONS = ['table-structure', 'table-appearance', 'table-banding', 'table-data', 'uml-class', 'database']
 export const SHAPE_SECTIONS = [...STYLE_SECTIONS, ...TEXT_SECTIONS, ...LAYOUT_SECTIONS, ...DATA_SECTIONS]
-export const EDGE_SECTIONS = ['routing', 'waypoints', 'line-style', 'arrows', 'line-label', 'animation']
+export const EDGE_SECTIONS = ['routing', 'line-style', 'arrows', 'line-label', 'animation']
 
 export const FONT_FAMILIES = [
   { value: 'Inter', label: 'Inter' },

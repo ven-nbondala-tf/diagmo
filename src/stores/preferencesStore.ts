@@ -2,6 +2,12 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 interface UserPreferences {
+  // Accent colors
+  primaryAccentColor: string  // Page tabs, primary buttons
+  primaryAccentTextColor: string  // Text color on primary accent
+  secondaryAccentColor: string  // Panel tabs, Share button
+  secondaryAccentTextColor: string  // Text color on secondary accent
+
   // Grid settings
   gridEnabled: boolean
   snapToGrid: boolean
@@ -32,6 +38,12 @@ interface UserPreferences {
 }
 
 interface PreferencesActions {
+  // Accent colors
+  setPrimaryAccentColor: (color: string) => void
+  setPrimaryAccentTextColor: (color: string) => void
+  setSecondaryAccentColor: (color: string) => void
+  setSecondaryAccentTextColor: (color: string) => void
+
   // Grid settings
   setGridEnabled: (enabled: boolean) => void
   setSnapToGrid: (snap: boolean) => void
@@ -73,6 +85,10 @@ type PreferencesStore = UserPreferences & PreferencesActions
 const MAX_RECENT_ITEMS = 10
 
 const defaultPreferences: UserPreferences = {
+  primaryAccentColor: '#3ECF8E',  // Supabase green
+  primaryAccentTextColor: '#1c1c1c',  // Dark text
+  secondaryAccentColor: '#8B5CF6',  // Purple
+  secondaryAccentTextColor: '#ffffff',  // White text
   gridEnabled: true,
   snapToGrid: false,
   gridSize: 10,
@@ -93,6 +109,12 @@ export const usePreferencesStore = create<PreferencesStore>()(
   persist(
     (set, get) => ({
       ...defaultPreferences,
+
+      // Accent colors
+      setPrimaryAccentColor: (color) => set({ primaryAccentColor: color }),
+      setPrimaryAccentTextColor: (color) => set({ primaryAccentTextColor: color }),
+      setSecondaryAccentColor: (color) => set({ secondaryAccentColor: color }),
+      setSecondaryAccentTextColor: (color) => set({ secondaryAccentTextColor: color }),
 
       // Grid settings
       setGridEnabled: (enabled) => set({ gridEnabled: enabled }),
@@ -165,6 +187,10 @@ export const usePreferencesStore = create<PreferencesStore>()(
       name: 'diagmo-preferences',
       version: 1,
       partialize: (state) => ({
+        primaryAccentColor: state.primaryAccentColor,
+        primaryAccentTextColor: state.primaryAccentTextColor,
+        secondaryAccentColor: state.secondaryAccentColor,
+        secondaryAccentTextColor: state.secondaryAccentTextColor,
         gridEnabled: state.gridEnabled,
         snapToGrid: state.snapToGrid,
         gridSize: state.gridSize,

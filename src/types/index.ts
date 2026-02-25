@@ -22,6 +22,9 @@ export interface Profile {
   updatedAt: string
 }
 
+// Diagram status type
+export type DiagramStatus = 'draft' | 'internal' | 'pending_review' | 'approved'
+
 // Diagram types
 export interface Diagram {
   id: string
@@ -34,6 +37,7 @@ export interface Diagram {
   edges: DiagramEdge[]
   layers?: Layer[]
   thumbnail?: string
+  status?: DiagramStatus
   createdAt: string
   updatedAt: string
 }
@@ -325,20 +329,11 @@ export interface DiagramNode extends Node {
   }
 }
 
-// Waypoint for edge routing - absolute position on canvas
-export interface EdgeWaypoint {
-  id: string
-  x: number
-  y: number
-}
-
 export interface DiagramEdge extends Edge {
   data?: {
     label?: string
     style?: EdgeStyle
     labelPosition?: 'on-line' | 'outside'
-    waypointOffset?: { x: number; y: number }  // Legacy single waypoint (deprecated)
-    waypoints?: EdgeWaypoint[]  // Multiple waypoints for custom routing
   }
 }
 

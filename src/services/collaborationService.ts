@@ -91,6 +91,37 @@ interface PresenceState {
   userName: string
   draggingNodeId?: string
   draggingPosition?: { x: number; y: number }
+  isDrawing?: boolean
+}
+
+// Page change payload for multi-page sync
+interface PageChangePayload {
+  userId: string
+  pageId: string
+  pageName: string
+}
+
+// Drawing stroke change payload for whiteboard sync
+interface DrawingStrokePayload {
+  userId: string
+  pageId: string
+  strokes: unknown[]
+  action: 'add' | 'update' | 'clear'
+}
+
+// Viewport change payload for follow mode
+interface ViewportChangePayload {
+  userId: string
+  userName: string
+  viewport: { x: number; y: number; zoom: number }
+}
+
+// Spotlight payload for drawing attention to elements
+interface SpotlightPayload {
+  userId: string
+  userName: string
+  nodeId: string | null
+  action: 'spotlight' | 'clear'
 }
 
 interface CollaborationCallbacks {
@@ -101,6 +132,10 @@ interface CollaborationCallbacks {
   onOperation?: (operation: SyncOperation) => void
   onNodeLock?: (lock: NodeLock) => void
   onNodeUnlock?: (nodeId: string, userId: string) => void
+  onPageChange?: (payload: PageChangePayload) => void
+  onDrawingStrokeChange?: (payload: DrawingStrokePayload) => void
+  onViewportChange?: (payload: ViewportChangePayload) => void
+  onSpotlight?: (payload: SpotlightPayload) => void
   onError?: (error: Error) => void
   onConnectionStatusChange?: (status: 'connected' | 'disconnected' | 'reconnecting') => void
 }
@@ -129,6 +164,7 @@ class CollaborationService {
   private lastViewportX: number | null = null
   private lastViewportY: number | null = null
   private lastViewportZoom: number = 1
+  private lastIsDrawing: boolean = false
 
   // Node locking state
   private locks: Map<string, NodeLock> = new Map()
@@ -203,11 +239,17 @@ class CollaborationService {
       this.presenceId = presence.id
     }
 
-    // Create realtime channel with Presence
+    // Create realtime channel with Presence and Broadcast
     this.channel = supabase.channel(`diagram:${diagramId}`, {
       config: {
         presence: {
           key: user.id,
+        },
+        broadcast: {
+          // Don't send broadcasts back to self (we filter by userId anyway)
+          self: false,
+          // Don't wait for server acknowledgment (faster)
+          ack: false,
         },
       },
     })
@@ -215,8 +257,17 @@ class CollaborationService {
     // Track presence sync for collaborator list
     this.channel.on('presence', { event: 'sync' }, () => {
       const state = this.channel?.presenceState() || {}
-      console.log('[Collaboration] Presence sync:', state)
+      console.log('[Collaboration] Presence sync - userId:', this.userId, 'state:', Object.keys(state))
       this.updateCollaboratorsFromPresence(state)
+    })
+
+    // Log when presence join/leave happens
+    this.channel.on('presence', { event: 'join' }, ({ key, newPresences }) => {
+      console.log('[Collaboration] User joined:', key, 'presences:', newPresences?.length)
+    })
+
+    this.channel.on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+      console.log('[Collaboration] User left:', key, 'presences:', leftPresences?.length)
     })
 
     // Listen for broadcast messages (for node drags and full sync)
@@ -274,10 +325,38 @@ class CollaborationService {
         this.locks.delete(nodeId)
         this.callbacks.onNodeUnlock?.(nodeId, userId)
       })
+      // Page change listener for multi-page collaboration
+      .on('broadcast', { event: 'page-change' }, (payload) => {
+        const data = payload.payload as PageChangePayload
+        if (!data || data.userId === this.userId) return
+        console.log('[Collaboration] Received page-change:', data.pageId)
+        this.callbacks.onPageChange?.(data)
+      })
+      // Drawing stroke listener for whiteboard collaboration
+      .on('broadcast', { event: 'drawing-strokes' }, (payload) => {
+        const data = payload.payload as DrawingStrokePayload
+        if (!data || data.userId === this.userId) return
+        console.log('[Collaboration] Received drawing-strokes:', data.action, 'for page', data.pageId)
+        this.callbacks.onDrawingStrokeChange?.(data)
+      })
+      // Viewport change listener for follow mode
+      .on('broadcast', { event: 'viewport-change' }, (payload) => {
+        const data = payload.payload as ViewportChangePayload
+        if (!data || data.userId === this.userId) return
+        console.log('[Collaboration] Received viewport-change from:', data.userName)
+        this.callbacks.onViewportChange?.(data)
+      })
+      // Spotlight listener for drawing attention to elements
+      .on('broadcast', { event: 'spotlight' }, (payload) => {
+        const data = payload.payload as SpotlightPayload
+        if (!data || data.userId === this.userId) return
+        console.log('[Collaboration] Received spotlight:', data.action, 'node:', data.nodeId)
+        this.callbacks.onSpotlight?.(data)
+      })
 
     // Subscribe and track own presence
     await this.channel.subscribe(async (status, err) => {
-      console.log('[Collaboration] Channel status:', status, err)
+      console.log('[Collaboration] Channel status:', status, 'userId:', this.userId, 'error:', err)
       if (status === 'SUBSCRIBED') {
         this.isSubscribed = true
         this.reconnectAttempts = 0 // Reset on successful connection
@@ -288,14 +367,18 @@ class CollaborationService {
         this.callbacks.onConnectionStatusChange?.('connected')
 
         // Track this user's presence
-        await this.channel?.track({
-          visitorId: this.userId,
-          cursorX: null,
-          cursorY: null,
-          color: this.userColor,
-          userName: this.userName,
-        })
-        console.log('[Collaboration] Presence tracked, channel ready for broadcast')
+        try {
+          await this.channel?.track({
+            visitorId: this.userId,
+            cursorX: null,
+            cursorY: null,
+            color: this.userColor,
+            userName: this.userName,
+          })
+          console.log('[Collaboration] Presence tracked for user:', this.userName, '- channel ready for broadcast')
+        } catch (trackErr) {
+          console.error('[Collaboration] Failed to track presence:', trackErr)
+        }
       } else if (status === 'CHANNEL_ERROR') {
         console.error('[Collaboration] Channel error:', err)
         this.isSubscribed = false
@@ -354,6 +437,7 @@ class CollaborationService {
         viewportZoom: 1,
         color: presence.color || '#3b82f6',
         lastSeen: new Date().toISOString(),
+        isDrawing: presence.isDrawing || false,
         user: {
           fullName: presence.userName || null,
           avatarUrl: null,
@@ -420,21 +504,29 @@ class CollaborationService {
   /**
    * Update cursor position (via Presence only - no DB writes for scalability)
    */
-  async updateCursor(x: number | null, y: number | null): Promise<void> {
-    if (!this.channel || !this.userId || !this.isSubscribed) return
+  async updateCursor(x: number | null, y: number | null, isDrawing?: boolean): Promise<void> {
+    if (!this.channel || !this.userId) return
 
     // Store last known position for heartbeat persistence
     this.lastCursorX = x
     this.lastCursorY = y
+    if (isDrawing !== undefined) {
+      this.lastIsDrawing = isDrawing
+    }
 
     // Only use WebSocket for real-time cursor updates - no DB writes
-    await this.channel.track({
-      visitorId: this.userId,
-      cursorX: x,
-      cursorY: y,
-      color: this.userColor,
-      userName: this.userName,
-    })
+    try {
+      await this.channel.track({
+        visitorId: this.userId,
+        cursorX: x,
+        cursorY: y,
+        color: this.userColor,
+        userName: this.userName,
+        isDrawing: this.lastIsDrawing,
+      })
+    } catch (err) {
+      // Silently ignore cursor update errors - they happen frequently during reconnection
+    }
   }
 
   /**
@@ -527,27 +619,27 @@ class CollaborationService {
    * Broadcast diagram changes to other collaborators
    */
   async broadcastDiagramChange(nodes: unknown[], edges: unknown[]): Promise<void> {
-    if (!this.channel || !this.userId || !this.isSubscribed) {
-      console.log('[Collaboration] Cannot broadcast - channel not ready:', {
-        hasChannel: !!this.channel,
-        hasUserId: !!this.userId,
-        isSubscribed: this.isSubscribed,
-      })
+    if (!this.channel || !this.userId) {
+      console.log('[Collaboration] Cannot broadcast diagram - no channel or userId')
       return
     }
 
-    console.log('[Collaboration] Broadcasting diagram-update via WebSocket')
-    const result = await this.channel.send({
-      type: 'broadcast',
-      event: 'diagram-update',
-      payload: {
-        userId: this.userId,
-        nodes,
-        edges,
-        updatedAt: new Date().toISOString(),
-      },
-    })
-    console.log('[Collaboration] Broadcast result:', result)
+    console.log('[Collaboration] Broadcasting diagram-update via WebSocket, subscribed:', this.isSubscribed)
+    try {
+      const result = await this.channel.send({
+        type: 'broadcast',
+        event: 'diagram-update',
+        payload: {
+          userId: this.userId,
+          nodes,
+          edges,
+          updatedAt: new Date().toISOString(),
+        },
+      })
+      console.log('[Collaboration] Diagram broadcast result:', result)
+    } catch (err) {
+      console.error('[Collaboration] Failed to broadcast diagram:', err)
+    }
   }
 
   /**
@@ -571,35 +663,43 @@ class CollaborationService {
    * Broadcast node position change (for dragging)
    */
   async broadcastNodeDrag(nodeId: string, position: { x: number; y: number }): Promise<void> {
-    if (!this.channel || !this.userId || !this.isSubscribed) {
+    if (!this.channel || !this.userId) {
       return // Silently skip if not ready (this is called frequently during drag)
     }
 
-    await this.channel.send({
-      type: 'broadcast',
-      event: 'node-drag',
-      payload: {
-        userId: this.userId,
-        nodeId,
-        position,
-      },
-    })
+    try {
+      await this.channel.send({
+        type: 'broadcast',
+        event: 'node-drag',
+        payload: {
+          userId: this.userId,
+          nodeId,
+          position,
+        },
+      })
+    } catch {
+      // Silently ignore drag broadcast errors
+    }
   }
 
   /**
    * Broadcast multiple nodes position change (for multi-select drag)
    */
   async broadcastNodesDrag(nodes: Array<{ id: string; position: { x: number; y: number } }>): Promise<void> {
-    if (!this.channel || !this.userId || !this.isSubscribed) return
+    if (!this.channel || !this.userId) return
 
-    await this.channel.send({
-      type: 'broadcast',
-      event: 'nodes-drag',
-      payload: {
-        userId: this.userId,
-        nodes,
-      },
-    })
+    try {
+      await this.channel.send({
+        type: 'broadcast',
+        event: 'nodes-drag',
+        payload: {
+          userId: this.userId,
+          nodes,
+        },
+      })
+    } catch {
+      // Silently ignore drag broadcast errors
+    }
   }
 
   /**
@@ -633,6 +733,57 @@ class CollaborationService {
   }
 
   // ============================================================================
+  // PAGE AND WHITEBOARD SYNC
+  // ============================================================================
+
+  /**
+   * Broadcast page change to other collaborators
+   */
+  async broadcastPageChange(pageId: string, pageName: string): Promise<void> {
+    if (!this.channel || !this.userId) return
+
+    await this.channel.send({
+      type: 'broadcast',
+      event: 'page-change',
+      payload: {
+        userId: this.userId,
+        pageId,
+        pageName,
+      },
+    })
+  }
+
+  /**
+   * Broadcast drawing stroke changes for whiteboard collaboration
+   */
+  async broadcastDrawingStrokes(
+    pageId: string,
+    strokes: unknown[],
+    action: 'add' | 'update' | 'clear' = 'update'
+  ): Promise<void> {
+    if (!this.channel || !this.userId) {
+      console.log('[Collaboration] Cannot broadcast strokes - no channel or userId')
+      return
+    }
+
+    try {
+      const result = await this.channel.send({
+        type: 'broadcast',
+        event: 'drawing-strokes',
+        payload: {
+          userId: this.userId,
+          pageId,
+          strokes,
+          action,
+        },
+      })
+      console.log('[Collaboration] Strokes broadcast result:', result, 'count:', strokes.length)
+    } catch (err) {
+      console.error('[Collaboration] Failed to broadcast strokes:', err)
+    }
+  }
+
+  // ============================================================================
   // OPERATION-BASED SYNC
   // ============================================================================
 
@@ -645,8 +796,18 @@ class CollaborationService {
     targetId: string,
     data?: Record<string, unknown>
   ): Promise<void> {
-    if (!this.channel || !this.userId || !this.isSubscribed) return
+    console.log('[Collaboration] broadcastOperation called:', type, targetId, {
+      hasChannel: !!this.channel,
+      hasUserId: !!this.userId,
+      isSubscribed: this.isSubscribed,
+    })
 
+    if (!this.channel || !this.userId) {
+      console.log('[Collaboration] Cannot broadcast - no channel or userId')
+      return
+    }
+
+    // Try to send even if not subscribed - channel might still work
     const operation: SyncOperation = {
       id: `${this.userId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       type,
@@ -657,11 +818,16 @@ class CollaborationService {
       userName: this.userName || undefined,
     }
 
-    await this.channel.send({
-      type: 'broadcast',
-      event: 'operation',
-      payload: { operation },
-    })
+    try {
+      const result = await this.channel.send({
+        type: 'broadcast',
+        event: 'operation',
+        payload: { operation },
+      })
+      console.log('[Collaboration] Operation broadcast result:', result, type, targetId)
+    } catch (err) {
+      console.error('[Collaboration] Failed to broadcast operation:', err)
+    }
   }
 
   // ============================================================================
@@ -689,7 +855,7 @@ class CollaborationService {
    * Returns true if lock was acquired, false if node is already locked by another user
    */
   async acquireLock(nodeId: string): Promise<boolean> {
-    if (!this.channel || !this.userId || !this.isSubscribed) return false
+    if (!this.channel || !this.userId) return false
 
     // Check if already locked by another user
     const existingLock = this.locks.get(nodeId)
@@ -731,7 +897,7 @@ class CollaborationService {
    * Release a lock on a node
    */
   async releaseLock(nodeId: string): Promise<void> {
-    if (!this.channel || !this.userId || !this.isSubscribed) return
+    if (!this.channel || !this.userId) return
 
     const lock = this.locks.get(nodeId)
     if (!lock || lock.userId !== this.userId) return // Can only release own locks
@@ -809,6 +975,82 @@ class CollaborationService {
 
   getUserColor(): string | null {
     return this.userColor
+  }
+
+  // ============================================================================
+  // FOLLOW MODE AND SPOTLIGHT
+  // ============================================================================
+
+  /**
+   * Broadcast viewport change for follow mode
+   * Called when user's viewport changes (pan/zoom) and should be sent to followers
+   */
+  async broadcastViewportChange(viewport: { x: number; y: number; zoom: number }): Promise<void> {
+    if (!this.channel || !this.userId) return
+
+    // Store for heartbeat persistence
+    this.lastViewportX = viewport.x
+    this.lastViewportY = viewport.y
+    this.lastViewportZoom = viewport.zoom
+
+    try {
+      await this.channel.send({
+        type: 'broadcast',
+        event: 'viewport-change',
+        payload: {
+          userId: this.userId,
+          userName: this.userName || 'Unknown',
+          viewport,
+        },
+      })
+    } catch (err) {
+      // Silently ignore viewport broadcast errors
+    }
+  }
+
+  /**
+   * Spotlight an element to draw collaborators' attention
+   */
+  async spotlightElement(nodeId: string): Promise<void> {
+    if (!this.channel || !this.userId) return
+
+    console.log('[Collaboration] Broadcasting spotlight for node:', nodeId)
+    try {
+      await this.channel.send({
+        type: 'broadcast',
+        event: 'spotlight',
+        payload: {
+          userId: this.userId,
+          userName: this.userName || 'Unknown',
+          nodeId,
+          action: 'spotlight',
+        },
+      })
+    } catch (err) {
+      console.error('[Collaboration] Failed to broadcast spotlight:', err)
+    }
+  }
+
+  /**
+   * Clear spotlight
+   */
+  async clearSpotlight(): Promise<void> {
+    if (!this.channel || !this.userId) return
+
+    try {
+      await this.channel.send({
+        type: 'broadcast',
+        event: 'spotlight',
+        payload: {
+          userId: this.userId,
+          userName: this.userName || 'Unknown',
+          nodeId: null,
+          action: 'clear',
+        },
+      })
+    } catch (err) {
+      // Silently ignore clear errors
+    }
   }
 }
 

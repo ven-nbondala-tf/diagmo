@@ -28,7 +28,9 @@ export function PageTabs({ diagramId }: PageTabsProps) {
 
   const nodes = useEditorStore((state) => state.nodes)
   const edges = useEditorStore((state) => state.edges)
+  const drawingStrokes = useEditorStore((state) => state.drawingStrokes)
   const loadDiagram = useEditorStore((state) => state.loadDiagram)
+  const setDrawingStrokes = useEditorStore((state) => state.setDrawingStrokes)
   const setDirty = useEditorStore((state) => state.setDirty)
 
   // Fetch pages
@@ -39,7 +41,12 @@ export function PageTabs({ diagramId }: PageTabsProps) {
         setPages(data)
         // If no pages exist, we're on the "main" diagram (backward compatible)
         if (data.length > 0 && !currentPageId) {
-          setCurrentPageId(data[0]?.id || null)
+          const firstPage = data[0]
+          setCurrentPageId(firstPage?.id || null)
+          // Also load drawing strokes for the first page
+          if (firstPage?.drawingStrokes) {
+            setDrawingStrokes(firstPage.drawingStrokes)
+          }
         }
       } catch (err) {
         console.error('Failed to load pages:', err)
@@ -48,7 +55,7 @@ export function PageTabs({ diagramId }: PageTabsProps) {
       }
     }
     fetchPages()
-  }, [diagramId])
+  }, [diagramId, setDrawingStrokes])
 
   // Focus input when editing
   useEffect(() => {
@@ -58,11 +65,11 @@ export function PageTabs({ diagramId }: PageTabsProps) {
     }
   }, [editingPageId])
 
-  // Save current page before switching
+  // Save current page before switching (including drawing strokes)
   const saveCurrentPage = async () => {
     if (!currentPageId) return
     try {
-      await pageService.updatePageContent(currentPageId, nodes, edges)
+      await pageService.updatePageContent(currentPageId, nodes, edges, drawingStrokes)
     } catch (err) {
       console.error('Failed to save page:', err)
     }
@@ -72,13 +79,14 @@ export function PageTabs({ diagramId }: PageTabsProps) {
   const handlePageClick = async (pageId: string) => {
     if (pageId === currentPageId) return
 
-    // Save current page first
+    // Save current page first (including drawing strokes)
     await saveCurrentPage()
 
-    // Load the new page
+    // Load the new page (including drawing strokes)
     const page = pages.find((p) => p.id === pageId)
     if (page) {
       loadDiagram(page.nodes, page.edges)
+      setDrawingStrokes(page.drawingStrokes || [])
       setCurrentPageId(pageId)
     }
   }
@@ -86,7 +94,7 @@ export function PageTabs({ diagramId }: PageTabsProps) {
   // Add a new page
   const handleAddPage = async () => {
     try {
-      // Save current page first
+      // Save current page first (including drawing strokes)
       await saveCurrentPage()
 
       const nextOrder = pages.length
@@ -97,8 +105,9 @@ export function PageTabs({ diagramId }: PageTabsProps) {
       )
       setPages([...pages, newPage])
 
-      // Switch to the new page
+      // Switch to the new page (clear everything including drawing strokes)
       loadDiagram([], [])
+      setDrawingStrokes([])
       setCurrentPageId(newPage.id)
       setDirty(true)
       toast.success('Page created')
@@ -158,9 +167,10 @@ export function PageTabs({ diagramId }: PageTabsProps) {
       const newPages = pages.filter((p) => p.id !== pageId)
       setPages(newPages)
 
-      // If we deleted the current page, switch to another
+      // If we deleted the current page, switch to another (including drawing strokes)
       if (pageId === currentPageId && newPages[0]) {
         loadDiagram(newPages[0].nodes, newPages[0].edges)
+        setDrawingStrokes(newPages[0].drawingStrokes || [])
         setCurrentPageId(newPages[0].id)
       }
       toast.success('Page deleted')

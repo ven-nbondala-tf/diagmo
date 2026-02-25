@@ -78,7 +78,7 @@ interface ExportDialogProps {
   diagramName: string
   nodes: DiagramNode[]
   edges: unknown[]
-  viewportElement: HTMLElement | null
+  reactFlowWrapper: HTMLElement | null  // The .react-flow wrapper element
   onExport?: (format: ExportFormat) => void
 }
 
@@ -88,7 +88,7 @@ export function ExportDialog({
   diagramName,
   nodes,
   edges,
-  viewportElement,
+  reactFlowWrapper,
   onExport,
 }: ExportDialogProps) {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('png')
@@ -110,7 +110,7 @@ export function ExportDialog({
   }, [])
 
   const handleExport = useCallback(async () => {
-    if (!viewportElement || nodes.length === 0) return
+    if (!reactFlowWrapper || nodes.length === 0) return
 
     setIsExporting(true)
     try {
@@ -120,7 +120,7 @@ export function ExportDialog({
       switch (selectedFormat) {
         case 'png': {
           const dataUrl = await exportService.exportFullDiagramToPng(
-            viewportElement,
+            reactFlowWrapper,
             nodes,
             { backgroundColor }
           )
@@ -129,7 +129,7 @@ export function ExportDialog({
         }
         case 'png-hd': {
           const dataUrl = await exportService.exportHighResPng(
-            viewportElement,
+            reactFlowWrapper,
             nodes,
             resolution,
             { backgroundColor }
@@ -139,7 +139,7 @@ export function ExportDialog({
         }
         case 'png-transparent': {
           const dataUrl = await exportService.exportTransparentPng(
-            viewportElement,
+            reactFlowWrapper,
             nodes
           )
           exportService.downloadFile(dataUrl, `${filename}_transparent.png`)
@@ -147,7 +147,7 @@ export function ExportDialog({
         }
         case 'svg': {
           const dataUrl = await exportService.exportFullDiagramToSvg(
-            viewportElement,
+            reactFlowWrapper,
             nodes,
             { backgroundColor }
           )
@@ -156,7 +156,7 @@ export function ExportDialog({
         }
         case 'pdf': {
           const blob = await exportService.exportFullDiagramToPdf(
-            viewportElement,
+            reactFlowWrapper,
             nodes,
             { backgroundColor }
           )
@@ -179,7 +179,7 @@ export function ExportDialog({
       setIsExporting(false)
     }
   }, [
-    viewportElement,
+    reactFlowWrapper,
     nodes,
     edges,
     selectedFormat,
@@ -192,12 +192,12 @@ export function ExportDialog({
   ])
 
   const handleCopyToClipboard = useCallback(async () => {
-    if (!viewportElement || nodes.length === 0) return
+    if (!reactFlowWrapper || nodes.length === 0) return
 
     setIsExporting(true)
     try {
       const success = await exportService.copyToClipboard(
-        viewportElement,
+        reactFlowWrapper,
         nodes,
         { backgroundColor: getBackgroundColor() }
       )
@@ -210,7 +210,7 @@ export function ExportDialog({
     } finally {
       setIsExporting(false)
     }
-  }, [viewportElement, nodes, getBackgroundColor])
+  }, [reactFlowWrapper, nodes, getBackgroundColor])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

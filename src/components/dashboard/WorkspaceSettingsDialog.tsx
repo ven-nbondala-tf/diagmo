@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useAuthStore } from '@/stores/authStore'
 import {
@@ -26,8 +27,6 @@ import {
   Label,
   Textarea,
   Tabs,
-  TabsList,
-  TabsTrigger,
   TabsContent,
   Select,
   SelectContent,
@@ -75,6 +74,9 @@ const roleDescriptions: Record<WorkspaceRole, string> = {
 
 export function WorkspaceSettingsDialog() {
   const { user } = useAuthStore()
+  const secondaryAccentColor = usePreferencesStore((state) => state.secondaryAccentColor)
+  const secondaryAccentTextColor = usePreferencesStore((state) => state.secondaryAccentTextColor)
+  const [activeTab, setActiveTab] = useState<'members' | 'settings'>('members')
   const {
     workspaceSettingsOpen,
     selectedWorkspaceId,
@@ -99,7 +101,6 @@ export function WorkspaceSettingsDialog() {
   const [description, setDescription] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<WorkspaceRole>('editor')
-  const [activeTab, setActiveTab] = useState('members')
   const [editingSettings, setEditingSettings] = useState(false)
 
   // Check if this is a pending invite for the current user
@@ -327,11 +328,33 @@ export function WorkspaceSettingsDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="members">Members</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'members' | 'settings')} className="mt-2">
+          <div className="grid w-full grid-cols-2 bg-supabase-bg-tertiary rounded-lg p-1 gap-1">
+            <button
+              onClick={() => setActiveTab('members')}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-sm transition-all',
+                activeTab === 'members'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'members' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
+              Members
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-sm transition-all',
+                activeTab === 'settings'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'settings' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
+              Settings
+            </button>
+          </div>
 
           <TabsContent value="members" className="mt-4">
             {/* Invite form */}

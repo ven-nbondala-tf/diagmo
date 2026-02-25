@@ -1,7 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Search, Image, Sparkles, Loader2, ExternalLink } from 'lucide-react'
 import { Input, ScrollArea } from '@/components/ui'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
+import { cn } from '@/utils/cn'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { useDebounce } from '@/hooks/useDebounce'
 import {
   searchImages,
@@ -14,6 +16,8 @@ interface WebImageSearchProps {
 }
 
 export function WebImageSearch({ onImageSelect }: WebImageSearchProps) {
+  const secondaryAccentColor = usePreferencesStore((state) => state.secondaryAccentColor)
+  const secondaryAccentTextColor = usePreferencesStore((state) => state.secondaryAccentTextColor)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<ImageSearchType>('photos')
   const [results, setResults] = useState<WebImageResult[]>([])
@@ -232,23 +236,50 @@ export function WebImageSearch({ onImageSelect }: WebImageSearchProps) {
         className="flex-1 flex flex-col"
       >
         <div className="px-3 pt-2">
-          <TabsList className="w-full grid grid-cols-3 h-8">
-            <TabsTrigger value="photos" className="text-xs h-7 px-2">
+          <div className="w-full grid grid-cols-3 h-8 bg-supabase-bg-tertiary rounded-lg p-1 gap-1">
+            <button
+              onClick={() => setActiveTab('photos')}
+              className={cn(
+                'flex items-center justify-center text-xs h-6 px-2 rounded-md transition-all',
+                activeTab === 'photos'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'photos' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
               <Image className="w-3 h-3 mr-1" />
               Photos
-            </TabsTrigger>
-            <TabsTrigger value="icons" className="text-xs h-7 px-2">
+            </button>
+            <button
+              onClick={() => setActiveTab('icons')}
+              className={cn(
+                'flex items-center justify-center text-xs h-6 px-2 rounded-md transition-all',
+                activeTab === 'icons'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'icons' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
               <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <circle cx="12" cy="12" r="4" />
               </svg>
               Icons
-            </TabsTrigger>
-            <TabsTrigger value="gifs" className="text-xs h-7 px-2">
+            </button>
+            <button
+              onClick={() => setActiveTab('gifs')}
+              className={cn(
+                'flex items-center justify-center text-xs h-6 px-2 rounded-md transition-all',
+                activeTab === 'gifs'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'gifs' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
               <Sparkles className="w-3 h-3 mr-1" />
               GIFs
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
         </div>
 
         <TabsContent value="photos" className="flex-1 mt-0 data-[state=inactive]:hidden">

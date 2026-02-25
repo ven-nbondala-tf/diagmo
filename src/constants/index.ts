@@ -10,7 +10,7 @@ export const DEFAULT_NODE_STYLE = {
   borderColor: '#9ca3af',
   borderWidth: 1,
   borderRadius: 8,
-  textColor: '#1f2937',
+  textColor: '', // Empty string - let CSS handle it via text-foreground class
   fontSize: 14,
   fontWeight: 'normal',
 }
@@ -537,6 +537,7 @@ export const SHAPE_LABELS: Record<ShapeType, string> = {
   cloud: 'Cloud',
   callout: 'Callout',
   note: 'Note',
+  'sticky-note': 'Sticky Note',
   text: 'Text',
   table: 'Table',
   junction: 'Junction',

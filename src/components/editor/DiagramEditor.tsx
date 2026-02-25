@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -14,10 +14,11 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { nanoid } from 'nanoid'
-import { PanelRightOpen, Layers, History, MessageSquare, Wand2, Sparkles } from 'lucide-react'
+import { PanelRightOpen, Layers, History, MessageSquare, Wand2, Sparkles, CheckCircle2, BarChart3 } from 'lucide-react'
 import { useEditorStore } from '@/stores/editorStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
 import { usePreferencesSync, usePreferencesPersist, useCollaboration } from '@/hooks'
+import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import type { Diagram, DiagramNode, DiagramEdge, ShapeType } from '@/types'
 import { nodeTypes } from './nodes'
@@ -28,11 +29,10 @@ import { LayersPanel } from './LayersPanel'
 import { VersionHistoryPanel } from './VersionHistoryPanel'
 import { CommentsPanel } from './CommentsPanel'
 import { FindReplaceBar } from './FindReplaceBar'
-import { ZoomControls } from './ZoomControls'
-import { SelectionToolbar } from './SelectionToolbar'
-import { QuickShapeBar } from './QuickShapeBar'
-import { PageTabs } from './PageTabs'
+import { BottomBar } from './BottomBar'
 import { ConditionalFormattingPanel } from './ConditionalFormattingPanel'
+import { ValidationPanel } from './ValidationPanel'
+import { DiagramAnalyticsPanel } from './DiagramAnalyticsPanel'
 import { SmartGuides } from './SmartGuides'
 import { AnnotationLayer } from './AnnotationLayer'
 import { CollaboratorCursors } from './CollaboratorCursors'
@@ -40,7 +40,10 @@ import { NodeLockIndicators } from './NodeLockIndicators'
 import { AIAssistantPanel } from './AIAssistantPanel'
 import { AIFloatingButton } from './AIFloatingButton'
 import { AIGenerateDialog } from './AIGenerateDialog'
+import { AutoCompleteOverlay } from './AutoCompleteOverlay'
 import { GroupBoundary } from './GroupBoundary'
+import { ViewportScrollbars } from './ViewportScrollbars'
+import { WhiteboardCanvas, WhiteboardToolbar, WhiteboardTextToolbar, AirCanvas } from './whiteboard'
 import { Button } from '@/components/ui'
 
 const defaultEdgeOptions = {
@@ -71,8 +74,9 @@ interface DiagramEditorProps {
 
 export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
-  const { screenToFlowPosition, setCenter, setViewport, getViewport } = useReactFlow()
+  const { screenToFlowPosition, setCenter, setViewport, getViewport, fitView } = useReactFlow()
   const [annotationMode, setAnnotationMode] = useState(false)
+  const [showMinimap, setShowMinimap] = useState(false) // Hidden by default like Lucidchart
 
   // Sync user preferences from localStorage on mount
   usePreferencesSync()
@@ -94,6 +98,9 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
     diagramId: diagram.id,
     enabled: true,
   })
+
+  // Keyboard navigation for accessibility
+  useKeyboardNavigation({ enabled: true })
 
   // Track mouse position for collaboration cursors
   const handleMouseMove = useCallback(
@@ -176,7 +183,6 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const snapToGrid = useEditorStore((state) => state.snapToGrid)
   const gridSize = useEditorStore((state) => state.gridSize)
   const gridLineWidth = useEditorStore((state) => state.gridLineWidth)
-  const loadDiagram = useEditorStore((state) => state.loadDiagram)
   const zoom = useEditorStore((state) => state.zoom)
   const setZoom = useEditorStore((state) => state.setZoom)
   const pushHistory = useEditorStore((state) => state.pushHistory)
@@ -188,6 +194,10 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const toggleLayersPanel = useEditorStore((state) => state.toggleLayersPanel)
   const versionHistoryPanelOpen = useEditorStore((state) => state.versionHistoryPanelOpen)
   const toggleVersionHistoryPanel = useEditorStore((state) => state.toggleVersionHistoryPanel)
+  const validationPanelOpen = useEditorStore((state) => state.validationPanelOpen)
+  const toggleValidationPanel = useEditorStore((state) => state.toggleValidationPanel)
+  const analyticsPanelOpen = useEditorStore((state) => state.analyticsPanelOpen)
+  const toggleAnalyticsPanel = useEditorStore((state) => state.toggleAnalyticsPanel)
   const commentsPanelOpen = useEditorStore((state) => state.commentsPanelOpen)
   const toggleCommentsPanel = useEditorStore((state) => state.toggleCommentsPanel)
   const findReplaceOpen = useEditorStore((state) => state.findReplaceOpen)
@@ -200,6 +210,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   const toggleAIPanel = useEditorStore((state) => state.toggleAIPanel)
   const aiDialogOpen = useEditorStore((state) => state.aiDialogOpen)
   const setAIDialogOpen = useEditorStore((state) => state.setAIDialogOpen)
+  const drawingMode = useEditorStore((state) => state.drawingMode)
 
   // Track diagram in recent items
   const addRecentDiagram = usePreferencesStore((state) => state.addRecentDiagram)
@@ -223,72 +234,27 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
     }
   }, [zoom, gridSize, gridLineWidth])
 
-  // Load diagram on mount
+  // Clear stale content immediately when diagram changes (before paint)
+  // This prevents showing previous page content before BottomBar loads the correct page
+  const lastDiagramIdRef = useRef<string | null>(null)
+  useLayoutEffect(() => {
+    if (lastDiagramIdRef.current !== diagram.id) {
+      // Clear the canvas immediately to prevent flash of stale content
+      useEditorStore.getState().setNodes([])
+      useEditorStore.getState().setEdges([])
+      useEditorStore.getState().setDrawingStrokes([])
+      lastDiagramIdRef.current = diagram.id
+    }
+  }, [diagram.id])
+
+  // Track diagram in recent items on mount
+  // NOTE: Actual diagram loading is handled by BottomBar which manages pages
   useEffect(() => {
-    loadDiagram(diagram.nodes, diagram.edges, diagram.layers)
     // Track as recently opened
     addRecentDiagram(diagram.id)
-  }, [diagram.id, diagram.nodes, diagram.edges, diagram.layers, loadDiagram, addRecentDiagram])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diagram.id])
 
-  // Arrow key panning
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't handle if in input field
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        (event.target as HTMLElement)?.isContentEditable
-      ) {
-        return
-      }
-
-      // Only handle arrow keys without meta/ctrl/alt modifiers
-      if (event.metaKey || event.ctrlKey || event.altKey) {
-        return
-      }
-
-      const panAmount = event.shiftKey ? 100 : 50 // Shift = faster
-      const currentViewport = getViewport()
-
-      switch (event.key) {
-        case 'ArrowLeft':
-          event.preventDefault()
-          setViewport({
-            x: currentViewport.x - panAmount,
-            y: currentViewport.y,
-            zoom: currentViewport.zoom,
-          })
-          break
-        case 'ArrowRight':
-          event.preventDefault()
-          setViewport({
-            x: currentViewport.x + panAmount,
-            y: currentViewport.y,
-            zoom: currentViewport.zoom,
-          })
-          break
-        case 'ArrowUp':
-          event.preventDefault()
-          setViewport({
-            x: currentViewport.x,
-            y: currentViewport.y - panAmount,
-            zoom: currentViewport.zoom,
-          })
-          break
-        case 'ArrowDown':
-          event.preventDefault()
-          setViewport({
-            x: currentViewport.x,
-            y: currentViewport.y + panAmount,
-            zoom: currentViewport.zoom,
-          })
-          break
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [setViewport, getViewport])
 
   const onSelectionChange = useCallback(
     ({ nodes, edges }: OnSelectionChangeParams) => {
@@ -352,7 +318,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         type: edge.type || 'labeled',
         markerEnd: edge.markerEnd,
         style: edge.style,
-        data: { waypointOffset: { x: 0, y: 0 } },
+        data: {},
       }
 
       const edge2: DiagramEdge = {
@@ -364,7 +330,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
         type: edge.type || 'labeled',
         markerEnd: edge.markerEnd,
         style: edge.style,
-        data: { waypointOffset: { x: 0, y: 0 } },
+        data: {},
       }
 
       const currentNodes = useEditorStore.getState().nodes
@@ -474,14 +440,14 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
   )
 
   return (
-    <div className="flex-1 flex overflow-hidden">
+    <div className="flex-1 flex overflow-hidden pb-8">
       <ErrorBoundary>
         <ShapePanel />
       </ErrorBoundary>
       <div className="flex-1 flex flex-col">
         <div
           ref={reactFlowWrapper}
-          className="flex-1 relative"
+          className="flex-1 relative overflow-hidden"
           onDoubleClick={onPaneDoubleClick}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
@@ -514,14 +480,15 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           snapToGrid={snapToGrid}
           snapGrid={[gridSize, gridSize]}
           defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-          selectionOnDrag={interactionMode === 'select'}
-          panOnDrag={interactionMode === 'select' ? [1, 2] : true}
+          selectionOnDrag={interactionMode === 'select' && !drawingMode}
+          panOnDrag={drawingMode ? false : (interactionMode === 'select' ? [1, 2] : true)}
           selectionMode={SelectionMode.Partial}
           // Performance optimizations for large diagrams
           onlyRenderVisibleElements={true}
           elevateEdgesOnSelect={true}
           className="bg-supabase-bg-tertiary"
           data-interaction-mode={interactionMode}
+          proOptions={{ hideAttribution: true }}
         >
           {gridEnabled && (
             <>
@@ -541,23 +508,43 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
               />
             </>
           )}
-          <MiniMap
-            nodeStrokeColor="#3ECF8E"
-            nodeColor="#2a2a2a"
-            nodeBorderRadius={4}
-            onClick={handleMinimapClick}
-            maskColor="rgba(28, 28, 28, 0.85)"
-            className="bg-supabase-bg-secondary border border-supabase-border rounded-lg"
-            style={{ left: 10, bottom: 10, right: 'auto' }}
-          />
+          {showMinimap && (
+            <MiniMap
+              nodeStrokeColor="#3ECF8E"
+              nodeColor="#2a2a2a"
+              nodeBorderRadius={4}
+              onClick={handleMinimapClick}
+              maskColor="rgba(28, 28, 28, 0.85)"
+              className="bg-supabase-bg-secondary border border-supabase-border rounded-lg !shadow-lg"
+              style={{ left: 16, bottom: 40, right: 'auto', width: 140, height: 90 }}
+            />
+          )}
           <SmartGuides enabled={snapToGrid} />
-          <GroupBoundary nodes={nodes} />
-          <CollaboratorCursors collaborators={collaborators} />
           <NodeLockIndicators locks={nodeLocks} />
+          {/* AI Auto-Complete suggestions overlay */}
+          <AutoCompleteOverlay enabled={!drawingMode} />
         </ReactFlow>
-        <SelectionToolbar />
-        <QuickShapeBar />
-        <ZoomControls />
+        {/* GroupBoundary is outside ReactFlow but uses ReactFlowProvider context */}
+        <GroupBoundary nodes={nodes} />
+        {/* Scrollbars for when content extends beyond viewport */}
+        <ViewportScrollbars nodes={nodes} />
+        {/* Whiteboard drawing layer */}
+        <WhiteboardCanvas />
+        {/* Collaborator cursors - rendered after whiteboard to appear on top */}
+        <CollaboratorCursors collaborators={collaborators} />
+        <WhiteboardToolbar />
+        {/* Floating text formatting toolbar for whiteboard mode */}
+        <WhiteboardTextToolbar />
+        {/* Air Canvas for gesture-based drawing via webcam */}
+        <AirCanvas />
+        {/* BottomBar includes page tabs, zoom controls, and minimap toggle */}
+        <BottomBar
+          diagramId={diagram.id}
+          initialNodes={diagram.nodes}
+          initialEdges={diagram.edges}
+          showMinimap={showMinimap}
+          onToggleMinimap={() => setShowMinimap(!showMinimap)}
+        />
         <AnnotationLayer
           enabled={annotationMode}
           onToggle={() => setAnnotationMode(!annotationMode)}
@@ -635,6 +622,28 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
               <History className="w-4 h-4" />
             </Button>
           )}
+          {!validationPanelOpen && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 bg-supabase-bg-secondary border-supabase-border text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary shadow-md"
+              onClick={toggleValidationPanel}
+              title="Validate Diagram"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+            </Button>
+          )}
+          {!analyticsPanelOpen && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 bg-supabase-bg-secondary border-supabase-border text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary shadow-md"
+              onClick={toggleAnalyticsPanel}
+              title="Diagram Analytics"
+            >
+              <BarChart3 className="w-4 h-4" />
+            </Button>
+          )}
           {!layersPanelOpen && (
             <Button
               variant="outline"
@@ -659,7 +668,6 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
           )}
         </div>
         </div>
-        <PageTabs diagramId={diagram.id} />
       </div>
       {conditionalFormattingPanelOpen && (
         <ErrorBoundary>
@@ -674,6 +682,16 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
       {versionHistoryPanelOpen && (
         <ErrorBoundary>
           <VersionHistoryPanel diagramId={diagram.id} />
+        </ErrorBoundary>
+      )}
+      {validationPanelOpen && (
+        <ErrorBoundary>
+          <ValidationPanel onClose={toggleValidationPanel} />
+        </ErrorBoundary>
+      )}
+      {analyticsPanelOpen && (
+        <ErrorBoundary>
+          <DiagramAnalyticsPanel onClose={toggleAnalyticsPanel} />
         </ErrorBoundary>
       )}
       {layersPanelOpen && (
@@ -709,7 +727,7 @@ export function DiagramEditor({ diagram }: DiagramEditorProps) {
               setEdges(newEdges)
             }}
             onClose={toggleAIPanel}
-            className="w-80 border-l border-supabase-border"
+            className="w-80 flex-shrink-0 border-l border-supabase-border"
           />
         </ErrorBoundary>
       )}

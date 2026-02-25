@@ -1,15 +1,16 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useEditorStore } from '@/stores/editorStore'
-import type { NodeStyle, DiagramNode } from '@/types'
+import { usePreferencesStore } from '@/stores/preferencesStore'
+import { collaborationService } from '@/services/collaborationService'
+import type { NodeStyle, DiagramNode, GroupStyle } from '@/types'
 import {
   Button,
   ScrollArea,
   Accordion,
   Tabs,
-  TabsList,
-  TabsTrigger,
   TabsContent,
 } from '@/components/ui'
+import { cn } from '@/utils/cn'
 import {
   Trash2,
   Copy,
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react'
 import { SHAPE_SECTIONS } from './shared'
 import { EdgeProperties } from './EdgeProperties'
-import { ImageSection, FillSection, BorderSection, ShadowSection, TextSection, SizeSection, ArrangeSection, UMLClassDataSection, DatabaseDataSection, MetadataSection, TableSection } from './sections'
+import { ImageSection, FillSection, BorderSection, ShadowSection, TextSection, SizeSection, ArrangeSection, UMLClassDataSection, DatabaseDataSection, MetadataSection, TableSection, GroupSection } from './sections'
 import { PresetPicker } from './sections/PresetPicker'
 
 export function PropertiesPanel() {
@@ -40,10 +41,14 @@ export function PropertiesPanel() {
   const bringForward = useEditorStore((state) => state.bringForward)
   const sendBackward = useEditorStore((state) => state.sendBackward)
   const sendToBack = useEditorStore((state) => state.sendToBack)
+  const updateGroupStyle = useEditorStore((state) => state.updateGroupStyle)
+  const secondaryAccentColor = usePreferencesStore((state) => state.secondaryAccentColor)
+  const secondaryAccentTextColor = usePreferencesStore((state) => state.secondaryAccentTextColor)
 
   // Start with all sections collapsed
   const [expandedSections, setExpandedSections] = useState<string[]>([])
   const [allExpanded, setAllExpanded] = useState(false)
+  const [activeTab, setActiveTab] = useState<'data' | 'style' | 'text' | 'layout'>('style')
 
   // Toggle all sections
   const toggleAllSections = () => {
@@ -63,18 +68,68 @@ export function PropertiesPanel() {
   const updateAllSelectedStyles = useCallback((styleUpdate: Partial<NodeStyle>) => {
     selectedNodes.forEach((nodeId) => {
       updateNodeStyle(nodeId, styleUpdate)
+
+      // Broadcast style update to collaborators
+      if (collaborationService.isConnected()) {
+        collaborationService.broadcastOperation('node-update', nodeId, {
+          data: { style: styleUpdate }
+        })
+      }
     })
   }, [selectedNodes, updateNodeStyle])
 
   const updateAllSelectedData = useCallback((dataUpdate: Partial<DiagramNode['data']>) => {
     selectedNodes.forEach((nodeId) => {
       updateNode(nodeId, dataUpdate)
+
+      // Broadcast data update to collaborators
+      if (collaborationService.isConnected()) {
+        collaborationService.broadcastOperation('node-update', nodeId, {
+          data: dataUpdate
+        })
+      }
     })
   }, [selectedNodes, updateNode])
 
   const selectedNode = nodes.find((n) => selectedNodes.includes(n.id))
   const selectedEdge = edges.find((e) => selectedEdges.includes(e.id))
   const multipleSelected = selectedNodes.length > 1
+
+  // Check if selected nodes are in a group
+  const groupInfo = useMemo(() => {
+    if (selectedNodes.length === 0) return null
+
+    const selectedNodeObjects = nodes.filter((n) => selectedNodes.includes(n.id))
+    const groupIds = new Set(selectedNodeObjects.map((n) => n.data.groupId).filter(Boolean))
+
+    // If all selected nodes share the same groupId
+    if (groupIds.size === 1) {
+      const groupId = [...groupIds][0]!
+      // Find the group style from any node in the group
+      const nodesInGroup = nodes.filter((n) => n.data.groupId === groupId)
+      const styleNode = nodesInGroup.find((n) => n.data.groupStyle)
+      const groupStyle: GroupStyle = styleNode?.data.groupStyle || {}
+      return { groupId, groupStyle }
+    }
+
+    return null
+  }, [nodes, selectedNodes])
+
+  // Check if shape has extended data (UML class, database, table) - computed before early returns
+  const hasDataTab = useMemo(() => {
+    if (!selectedNode) return false
+    const type = selectedNode.data.type
+    return type === 'uml-class' || type === 'uml-interface' || type === 'database' || type === 'table'
+  }, [selectedNode])
+
+  // Set initial active tab based on whether there's a data tab - MUST be before early returns
+  useEffect(() => {
+    if (hasDataTab && activeTab === 'style') {
+      setActiveTab('data')
+    } else if (!hasDataTab && activeTab === 'data') {
+      setActiveTab('style')
+    }
+  }, [hasDataTab, selectedNode?.id])
 
   // Edge properties
   if (selectedEdge && !selectedNode) {
@@ -91,7 +146,7 @@ export function PropertiesPanel() {
   // Nothing selected
   if (!selectedNode) {
     return (
-      <div className="w-72 border-l border-supabase-border bg-supabase-bg flex flex-col h-full">
+      <div className="w-72 flex-shrink-0 border-l border-supabase-border bg-supabase-bg flex flex-col h-full overflow-hidden">
         <div className="p-3 border-b border-supabase-border bg-supabase-bg-secondary">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-sm text-supabase-text-primary">Properties</h2>
@@ -119,7 +174,6 @@ export function PropertiesPanel() {
   const isUMLInterface = data.type === 'uml-interface'
   const isDatabase = data.type === 'database'
   const isTable = data.type === 'table'
-  const hasDataTab = isUMLClass || isUMLInterface || isDatabase || isTable
 
   const handleDuplicate = () => {
     copyNodes()
@@ -144,7 +198,7 @@ export function PropertiesPanel() {
   }
 
   return (
-    <div className="w-72 border-l border-supabase-border bg-supabase-bg flex flex-col h-full overflow-hidden">
+    <div className="w-72 flex-shrink-0 border-l border-supabase-border bg-supabase-bg flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="p-3 border-b border-supabase-border bg-supabase-bg-secondary">
         <div className="flex items-center justify-between mb-1">
@@ -164,16 +218,60 @@ export function PropertiesPanel() {
       </div>
 
       {/* Tabbed content */}
-      <Tabs defaultValue={hasDataTab ? 'data' : 'style'} className="flex-1 flex flex-col overflow-hidden">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'data' | 'style' | 'text' | 'layout')} className="flex-1 flex flex-col overflow-hidden">
         <div className="px-3 pt-2 border-b border-supabase-border">
-          <TabsList className="w-full bg-supabase-bg-tertiary">
+          <div className={cn('w-full bg-supabase-bg-tertiary rounded-lg p-1 gap-1 grid', hasDataTab ? 'grid-cols-4' : 'grid-cols-3')}>
             {hasDataTab && (
-              <TabsTrigger value="data" className="flex-1 text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">Data</TabsTrigger>
+              <button
+                onClick={() => setActiveTab('data')}
+                className={cn(
+                  'flex-1 text-xs py-1.5 rounded-md transition-all',
+                  activeTab === 'data'
+                    ? 'font-medium shadow-sm'
+                    : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+                )}
+                style={activeTab === 'data' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+              >
+                Data
+              </button>
             )}
-            <TabsTrigger value="style" className="flex-1 text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">Style</TabsTrigger>
-            <TabsTrigger value="text" className="flex-1 text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">Text</TabsTrigger>
-            <TabsTrigger value="layout" className="flex-1 text-xs text-supabase-text-secondary data-[state=active]:bg-supabase-bg data-[state=active]:text-supabase-text-primary">Layout</TabsTrigger>
-          </TabsList>
+            <button
+              onClick={() => setActiveTab('style')}
+              className={cn(
+                'flex-1 text-xs py-1.5 rounded-md transition-all',
+                activeTab === 'style'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'style' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
+              Style
+            </button>
+            <button
+              onClick={() => setActiveTab('text')}
+              className={cn(
+                'flex-1 text-xs py-1.5 rounded-md transition-all',
+                activeTab === 'text'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'text' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
+              Text
+            </button>
+            <button
+              onClick={() => setActiveTab('layout')}
+              className={cn(
+                'flex-1 text-xs py-1.5 rounded-md transition-all',
+                activeTab === 'layout'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'layout' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
+              Layout
+            </button>
+          </div>
         </div>
 
         <ScrollArea className="flex-1">
@@ -210,6 +308,13 @@ export function PropertiesPanel() {
             <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full">
               <SizeSection {...sectionProps} />
               <ArrangeSection {...sectionProps} />
+              {groupInfo && (
+                <GroupSection
+                  groupId={groupInfo.groupId}
+                  groupStyle={groupInfo.groupStyle}
+                  updateGroupStyle={updateGroupStyle}
+                />
+              )}
             </Accordion>
             <MetadataSection selectedNodes={nodes.filter(n => selectedNodes.includes(n.id))} />
           </TabsContent>

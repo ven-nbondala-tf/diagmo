@@ -7,6 +7,9 @@ export {
   useDiagramsByFolder,
   useDuplicateDiagram,
   useMoveDiagramToFolder,
+  useUpdateDiagramStatus,
+  useSharedUsers,
+  useSharedUsersForDiagrams,
 } from './useDiagrams'
 
 export {

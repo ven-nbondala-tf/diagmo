@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { diagramService } from '@/services/diagramService'
-import type { Diagram, DiagramNode, DiagramEdge } from '@/types'
+import { diagramService, SharedUser } from '@/services/diagramService'
+import type { Diagram, DiagramNode, DiagramEdge, DiagramStatus } from '@/types'
 
 export const diagramKeys = {
   all: ['diagrams'] as const,
@@ -8,6 +8,8 @@ export const diagramKeys = {
   list: (filters: Record<string, unknown>) => [...diagramKeys.lists(), filters] as const,
   details: () => [...diagramKeys.all, 'detail'] as const,
   detail: (id: string) => [...diagramKeys.details(), id] as const,
+  sharedUsers: (diagramId: string) => [...diagramKeys.all, 'sharedUsers', diagramId] as const,
+  allSharedUsers: (diagramIds: string[]) => [...diagramKeys.all, 'allSharedUsers', diagramIds.join(',')] as const,
 }
 
 export function useDiagrams() {
@@ -164,5 +166,55 @@ export function useMoveDiagramToFolder() {
       if (data) queryClient.setQueryData(diagramKeys.detail(data.id), data)
       queryClient.invalidateQueries({ queryKey: diagramKeys.lists() })
     },
+  })
+}
+
+export function useUpdateDiagramStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: DiagramStatus }) =>
+      diagramService.updateStatus(id, status),
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: diagramKeys.lists() })
+      const previousLists = queryClient.getQueriesData<Diagram[]>({ queryKey: diagramKeys.lists() })
+
+      previousLists.forEach(([queryKey]) => {
+        queryClient.setQueryData<Diagram[]>(queryKey, (old) => {
+          if (!old) return old
+          return old.map((d) =>
+            d.id === id ? { ...d, status, updatedAt: new Date().toISOString() } : d
+          )
+        })
+      })
+
+      return { previousLists }
+    },
+    onError: (_err, _variables, context) => {
+      context?.previousLists.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data)
+      })
+    },
+    onSettled: (data) => {
+      if (data) queryClient.setQueryData(diagramKeys.detail(data.id), data)
+      queryClient.invalidateQueries({ queryKey: diagramKeys.lists() })
+    },
+  })
+}
+
+export function useSharedUsers(diagramId: string) {
+  return useQuery({
+    queryKey: diagramKeys.sharedUsers(diagramId),
+    queryFn: () => diagramService.getSharedUsers(diagramId),
+    enabled: !!diagramId,
+  })
+}
+
+export function useSharedUsersForDiagrams(diagramIds: string[]) {
+  return useQuery<Record<string, SharedUser[]>>({
+    queryKey: diagramKeys.allSharedUsers(diagramIds),
+    queryFn: () => diagramService.getSharedUsersForMultiple(diagramIds),
+    enabled: diagramIds.length > 0,
+    staleTime: 30000, // Cache for 30 seconds
   })
 }

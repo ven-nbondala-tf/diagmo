@@ -89,7 +89,7 @@ export function SelectionToolbar() {
 
   return (
     <div
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 backdrop-blur-md bg-supabase-bg-secondary/95 shadow-lg ring-1 ring-supabase-border rounded-xl p-1 z-50"
+      className="fixed top-[138px] left-1/2 -translate-x-1/2 flex items-center gap-1 backdrop-blur-md bg-supabase-bg-secondary/95 shadow-lg ring-1 ring-supabase-border rounded-xl p-1 z-50"
     >
       {/* Color quick-change */}
       <DropdownMenu>

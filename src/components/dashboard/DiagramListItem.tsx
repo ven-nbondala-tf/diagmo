@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { formatDistanceToNow } from 'date-fns'
-import type { Diagram } from '@/types'
+import React from 'react'
+import { format } from 'date-fns'
+import type { Diagram, DiagramStatus } from '@/types'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,32 +18,53 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  Badge,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from '@/components/ui'
-import { Layers, MoreVertical, Copy, FolderInput, Trash2, Loader2, Home, Users } from 'lucide-react'
-import { useDeleteDiagram, useDuplicateDiagram, useMoveDiagramToFolder, useFolders } from '@/hooks'
+import { MoreVertical, Copy, FolderInput, Trash2, Loader2, Home, Users, Star, ChevronDown } from 'lucide-react'
+import { useDeleteDiagram, useDuplicateDiagram, useMoveDiagramToFolder, useFolders, useUpdateDiagramStatus } from '@/hooks'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { toast } from 'sonner'
+import { cn } from '@/utils'
+import type { SharedUser } from '@/services/diagramService'
+
+const STATUS_CONFIG: Record<DiagramStatus, { label: string; color: string; bgColor: string }> = {
+  draft: { label: 'Draft', color: 'text-blue-600', bgColor: 'bg-blue-500' },
+  internal: { label: 'Internal', color: 'text-gray-600', bgColor: 'bg-gray-400' },
+  pending_review: { label: 'Pending review', color: 'text-amber-600', bgColor: 'bg-amber-500' },
+  approved: { label: 'Approved', color: 'text-green-600', bgColor: 'bg-green-500' },
+}
 
 interface DiagramListItemProps {
   diagram: Diagram
   onClick: () => void
   isShared?: boolean
   isTemplate?: boolean
+  sharedUsers?: SharedUser[]
 }
 
-export function DiagramListItem({ diagram, onClick, isShared, isTemplate }: DiagramListItemProps) {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+export function DiagramListItem({ diagram, onClick, isShared, sharedUsers = [] }: DiagramListItemProps) {
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
   const deleteDiagram = useDeleteDiagram()
   const duplicateDiagram = useDuplicateDiagram()
   const moveDiagram = useMoveDiagramToFolder()
+  const updateStatus = useUpdateDiagramStatus()
   const { data: folders } = useFolders()
+  const { isFavorite, toggleFavorite } = usePreferencesStore()
 
-  // Handle card click with explicit check
-  const handleCardClick = (e: React.MouseEvent) => {
+  const isFav = isFavorite(diagram.id)
+  const currentStatus: DiagramStatus = diagram.status || 'draft'
+  const statusConfig = STATUS_CONFIG[currentStatus]
+
+  // Handle row click with explicit check
+  const handleRowClick = (e: React.MouseEvent) => {
     // Prevent navigation if clicking on dropdown or dialogs
     if ((e.target as HTMLElement).closest('[data-radix-collection-item]') ||
         (e.target as HTMLElement).closest('[role="menu"]') ||
-        (e.target as HTMLElement).closest('[role="dialog"]')) {
+        (e.target as HTMLElement).closest('[role="dialog"]') ||
+        (e.target as HTMLElement).closest('button')) {
       return
     }
     onClick()
@@ -57,6 +78,12 @@ export function DiagramListItem({ diagram, onClick, isShared, isTemplate }: Diag
     }
   }
 
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    toggleFavorite(diagram.id)
+    toast.success(isFav ? 'Removed from favorites' : 'Added to favorites')
+  }
+
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
     setShowDeleteDialog(true)
@@ -66,7 +93,7 @@ export function DiagramListItem({ diagram, onClick, isShared, isTemplate }: Diag
     try {
       await deleteDiagram.mutateAsync(diagram.id)
       toast.success('Diagram deleted')
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete diagram')
     }
     setShowDeleteDialog(false)
@@ -77,7 +104,7 @@ export function DiagramListItem({ diagram, onClick, isShared, isTemplate }: Diag
     try {
       await duplicateDiagram.mutateAsync(diagram.id)
       toast.success('Diagram duplicated')
-    } catch (error) {
+    } catch {
       toast.error('Failed to duplicate diagram')
     }
   }
@@ -86,70 +113,157 @@ export function DiagramListItem({ diagram, onClick, isShared, isTemplate }: Diag
     try {
       await moveDiagram.mutateAsync({ id: diagram.id, folderId })
       toast.success(folderId ? 'Moved to folder' : 'Moved to All Diagrams')
-    } catch (error) {
+    } catch {
       toast.error('Failed to move diagram')
+    }
+  }
+
+  const handleStatusChange = async (newStatus: DiagramStatus, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      await updateStatus.mutateAsync({ id: diagram.id, status: newStatus })
+      toast.success(`Status changed to ${STATUS_CONFIG[newStatus].label}`)
+    } catch {
+      toast.error('Failed to update status')
     }
   }
 
   return (
     <>
       <div
-        className="flex items-center gap-4 px-4 py-3 rounded-xl border bg-card cursor-pointer hover:bg-accent/50 hover:border-primary/20 transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-        onClick={handleCardClick}
+        className="flex items-center gap-3 px-4 py-2 border-b border-supabase-border bg-supabase-bg-secondary text-supabase-text-secondary cursor-pointer hover:bg-supabase-bg-tertiary transition-colors group"
+        onClick={handleRowClick}
         onKeyDown={handleKeyDown}
         role="button"
         tabIndex={0}
         aria-label={`Open diagram: ${diagram.name}`}
       >
-        {/* Thumbnail */}
-        <div className="w-20 h-12 rounded-lg border bg-muted flex-shrink-0 flex items-center justify-center overflow-hidden">
-          {diagram.thumbnail ? (
-            <img
-              src={diagram.thumbnail}
-              alt={diagram.name}
-              className="w-full h-full object-cover"
-            />
+        {/* Orange icon */}
+        <div className="w-6 h-6 rounded bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+          <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+          </svg>
+        </div>
+
+        {/* Title column */}
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <span className="text-sm font-medium text-supabase-text-primary truncate group-hover:text-blue-500 transition-colors">
+            {diagram.name}
+          </span>
+          {/* Favorite star */}
+          <button
+            onClick={handleToggleFavorite}
+            className={cn(
+              'p-0.5 rounded transition-colors',
+              isFav
+                ? 'text-yellow-500'
+                : 'text-supabase-text-muted opacity-0 group-hover:opacity-100 hover:text-yellow-500'
+            )}
+            title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <Star className={cn('h-4 w-4', isFav && 'fill-current')} />
+          </button>
+        </div>
+
+        {/* Users column */}
+        <div className="w-36 flex-shrink-0 hidden lg:flex items-center gap-1">
+          {sharedUsers.length > 0 ? (
+            <TooltipProvider>
+              <div className="flex items-center -space-x-2">
+                {sharedUsers.slice(0, 3).map((user, index) => (
+                  <Tooltip key={user.id}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="w-6 h-6 rounded-full bg-supabase-bg-tertiary border-2 border-supabase-bg-secondary flex items-center justify-center text-xs font-medium text-supabase-text-primary"
+                        style={{ zIndex: 3 - index }}
+                      >
+                        {user.avatarUrl ? (
+                          <img src={user.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          (user.fullName || user.email || '?').charAt(0).toUpperCase()
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{user.fullName || user.email || 'Unknown user'}</p>
+                      <p className="text-xs text-muted-foreground">{user.permission === 'edit' ? 'Can edit' : 'Can view'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+                {sharedUsers.length > 3 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-6 h-6 rounded-full bg-supabase-green text-white border-2 border-supabase-bg-secondary flex items-center justify-center text-xs font-medium">
+                        +{sharedUsers.length - 3}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{sharedUsers.length - 3} more users</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            </TooltipProvider>
+          ) : isShared ? (
+            <span className="text-xs text-supabase-text-muted truncate flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              Shared
+            </span>
           ) : (
-            <div className="w-full h-full relative bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center">
-              <Layers className="h-5 w-5 text-muted-foreground/40" />
-            </div>
+            <span className="text-xs text-supabase-text-muted">-</span>
           )}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-              {diagram.name}
-            </p>
-            {isShared && (
-              <Badge variant="secondary" className="text-[10px] gap-0.5 px-1.5 py-0">
-                <Users className="h-2.5 w-2.5" />
-                Shared
-              </Badge>
-            )}
-            {isTemplate && (
-              <Badge variant="default" className="text-[10px] px-1.5 py-0">
-                Template
-              </Badge>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground truncate">
-            {diagram.description || 'No description'}
-          </p>
+        {/* Status column */}
+        <div className="w-32 flex-shrink-0 hidden md:block">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-supabase-bg-tertiary transition-colors text-xs cursor-pointer"
+            >
+              <div className={cn('w-2 h-2 rounded-full', statusConfig.bgColor)} />
+              <span className={cn('font-medium', statusConfig.color)}>{statusConfig.label}</span>
+              <ChevronDown className="w-3 h-3 text-supabase-text-muted" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()} className="bg-supabase-bg-secondary border-supabase-border">
+              {(Object.keys(STATUS_CONFIG) as DiagramStatus[]).map((key) => (
+                <DropdownMenuItem
+                  key={key}
+                  onClick={(e) => handleStatusChange(key, e)}
+                  disabled={updateStatus.isPending}
+                  className={cn('hover:bg-supabase-bg-tertiary', currentStatus === key && 'bg-supabase-bg-tertiary')}
+                >
+                  <div className={cn('w-2 h-2 rounded-full mr-2', STATUS_CONFIG[key].bgColor)} />
+                  <span className={STATUS_CONFIG[key].color}>{STATUS_CONFIG[key].label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        {/* Timestamp */}
-        <span className="text-xs text-muted-foreground/70 whitespace-nowrap hidden sm:block">
-          {formatDistanceToNow(new Date(diagram.updatedAt), { addSuffix: true })}
-        </span>
+        {/* Created column */}
+        <div className="w-28 flex-shrink-0 hidden sm:block">
+          <span className="text-xs text-supabase-text-muted">
+            {format(new Date(diagram.createdAt), 'M/d/yyyy')}
+          </span>
+        </div>
+
+        {/* Updated column */}
+        <div className="w-44 flex-shrink-0 hidden xl:block">
+          <span className="text-xs text-supabase-text-muted">
+            {format(new Date(diagram.updatedAt), 'EEE MMM dd yyyy HH:mm')}
+          </span>
+        </div>
 
         {/* Menu */}
         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
           <DropdownMenu>
             <DropdownMenuTrigger
               onClick={(e) => e.stopPropagation()}
-              className="p-1.5 rounded-md hover:bg-accent transition-colors"
+              className="p-1.5 rounded-md hover:bg-supabase-bg-tertiary transition-colors text-supabase-text-muted"
             >
               <MoreVertical className="h-4 w-4" />
             </DropdownMenuTrigger>
@@ -230,5 +344,33 @@ export function DiagramListItem({ diagram, onClick, isShared, isTemplate }: Diag
         </AlertDialogContent>
       </AlertDialog>
     </>
+  )
+}
+
+// Table header component for list view
+export function DiagramListHeader() {
+  return (
+    <div className="flex items-center gap-3 px-4 py-2 border-b border-supabase-border bg-supabase-bg-tertiary text-xs font-medium text-supabase-text-muted sticky top-0">
+      {/* Icon spacer */}
+      <div className="w-6 flex-shrink-0" />
+
+      {/* Title */}
+      <div className="flex-1 min-w-0">Title</div>
+
+      {/* Users */}
+      <div className="w-36 flex-shrink-0 hidden lg:block">Users</div>
+
+      {/* Status */}
+      <div className="w-32 flex-shrink-0 hidden md:block">Status</div>
+
+      {/* Created */}
+      <div className="w-28 flex-shrink-0 hidden sm:block">Created</div>
+
+      {/* Updated */}
+      <div className="w-44 flex-shrink-0 hidden xl:block">Last Modified</div>
+
+      {/* Menu spacer */}
+      <div className="w-8 flex-shrink-0" />
+    </div>
   )
 }

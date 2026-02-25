@@ -16,6 +16,7 @@ function filterExportElements(node: HTMLElement | Node): boolean {
     'react-flow__background',
     'react-flow__panel',
     'react-flow__attribution',
+    'custom-handle', // Exclude connection handles
   ]
 
   for (const cls of excludeClasses) {
@@ -25,6 +26,190 @@ function filterExportElements(node: HTMLElement | Node): boolean {
   }
 
   return true
+}
+
+/**
+ * Convert all images in the element to inline base64 to fix export issues.
+ * IMPORTANT: This modifies the ORIGINAL element's images.
+ */
+async function inlineExternalImages(element: HTMLElement): Promise<void> {
+  const images = element.querySelectorAll('img')
+  const promises: Promise<void>[] = []
+
+  images.forEach((img) => {
+    // Skip already inlined images
+    if (!img.src || img.src.startsWith('data:')) {
+      return
+    }
+
+    const promise = new Promise<void>((resolve) => {
+      // For SVG files, fetch and convert to data URI directly
+      if (img.src.endsWith('.svg')) {
+        const absoluteUrl = img.src.startsWith('/')
+          ? `${window.location.origin}${img.src}`
+          : img.src
+
+        fetch(absoluteUrl)
+          .then(res => res.text())
+          .then(svgText => {
+            // Convert SVG to data URI
+            const encoded = encodeURIComponent(svgText)
+              .replace(/'/g, '%27')
+              .replace(/"/g, '%22')
+            img.src = `data:image/svg+xml,${encoded}`
+            resolve()
+          })
+          .catch(() => {
+            console.warn('Failed to fetch SVG:', img.src)
+            resolve()
+          })
+        return
+      }
+
+      // For other images, use canvas approach
+      const tempImg = new Image()
+      tempImg.crossOrigin = 'anonymous'
+      tempImg.onload = () => {
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = tempImg.naturalWidth || 64
+          canvas.height = tempImg.naturalHeight || 64
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(tempImg, 0, 0)
+            img.src = canvas.toDataURL('image/png')
+          }
+        } catch (e) {
+          console.warn('Failed to inline image:', img.src, e)
+        }
+        resolve()
+      }
+      tempImg.onerror = () => {
+        console.warn('Failed to load image:', img.src)
+        resolve()
+      }
+      const absoluteUrl = img.src.startsWith('/')
+        ? `${window.location.origin}${img.src}`
+        : img.src
+      tempImg.src = absoluteUrl
+    })
+    promises.push(promise)
+  })
+
+  await Promise.all(promises)
+}
+
+/**
+ * Resolve CSS variables to actual computed values for export.
+ * This ensures text colors and other CSS variable-dependent styles are captured correctly.
+ */
+function resolveCSSVariables(element: HTMLElement): Map<HTMLElement, string> {
+  const originalStyles = new Map<HTMLElement, string>()
+
+  // Find all elements with CSS variable-based color
+  const allElements = element.querySelectorAll('*')
+  const computedStyle = getComputedStyle(document.documentElement)
+  const textPrimary = computedStyle.getPropertyValue('--text-primary').trim() || '#ededed'
+  const bgSecondary = computedStyle.getPropertyValue('--bg-secondary').trim() || 'rgba(30,30,30,0.95)'
+
+  allElements.forEach((el) => {
+    if (el instanceof HTMLElement) {
+      const style = el.style.color
+      // If using CSS variable, replace with computed value
+      if (style && style.includes('var(--text-primary')) {
+        originalStyles.set(el, style)
+        el.style.color = textPrimary
+      }
+      // Also check for background
+      const bgStyle = el.style.backgroundColor
+      if (bgStyle && bgStyle.includes('var(--bg-secondary')) {
+        if (!originalStyles.has(el)) {
+          originalStyles.set(el, '') // Mark as modified
+        }
+        el.style.backgroundColor = bgSecondary
+      }
+    }
+  })
+
+  return originalStyles
+}
+
+/**
+ * Restore original CSS variable styles after export
+ */
+function restoreCSSVariables(originalStyles: Map<HTMLElement, string>): void {
+  originalStyles.forEach((originalStyle, el) => {
+    if (originalStyle) {
+      el.style.color = originalStyle
+    }
+  })
+}
+
+/**
+ * Resolve all CSS variables to actual values in a cloned element tree.
+ * This is for export where we modify a clone and don't need to restore.
+ */
+function resolveAllCSSVariables(element: HTMLElement): void {
+  const computedStyle = getComputedStyle(document.documentElement)
+
+  // Common CSS variables used in the app
+  const cssVars: Record<string, string> = {
+    '--text-primary': computedStyle.getPropertyValue('--text-primary').trim() || '#ededed',
+    '--text-secondary': computedStyle.getPropertyValue('--text-secondary').trim() || '#a1a1a1',
+    '--bg-primary': computedStyle.getPropertyValue('--bg-primary').trim() || '#1c1c1c',
+    '--bg-secondary': computedStyle.getPropertyValue('--bg-secondary').trim() || '#232323',
+    '--foreground': computedStyle.getPropertyValue('--foreground').trim() || '#ededed',
+    '--background': computedStyle.getPropertyValue('--background').trim() || '#1c1c1c',
+  }
+
+  // Walk through all elements and resolve CSS variables
+  const allElements = element.querySelectorAll('*')
+  allElements.forEach((el) => {
+    if (el instanceof HTMLElement) {
+      const style = el.style
+
+      // Resolve color property
+      if (style.color && style.color.includes('var(')) {
+        for (const [varName, value] of Object.entries(cssVars)) {
+          if (style.color.includes(varName)) {
+            style.color = value
+          }
+        }
+      }
+
+      // Resolve background-color
+      if (style.backgroundColor && style.backgroundColor.includes('var(')) {
+        for (const [varName, value] of Object.entries(cssVars)) {
+          if (style.backgroundColor.includes(varName)) {
+            style.backgroundColor = value
+          }
+        }
+      }
+
+      // Set default text color if element has text but no explicit color
+      if (!style.color && el.textContent?.trim()) {
+        const computed = getComputedStyle(el)
+        if (computed.color) {
+          style.color = computed.color
+        }
+      }
+    }
+  })
+}
+
+/**
+ * Wait for all images in an element to be loaded
+ */
+async function waitForImages(element: HTMLElement): Promise<void> {
+  const images = element.querySelectorAll('img')
+  const promises = Array.from(images).map((img) => {
+    if (img.complete) return Promise.resolve()
+    return new Promise<void>((resolve) => {
+      img.onload = () => resolve()
+      img.onerror = () => resolve()
+    })
+  })
+  await Promise.all(promises)
 }
 
 export const exportService = {
@@ -90,10 +275,10 @@ export const exportService = {
 
   /**
    * Export the full diagram (all nodes) regardless of current viewport
-   * Uses offscreen container to avoid visual glitches
+   * Uses direct viewport manipulation for reliable export
    */
   async exportFullDiagramToPng(
-    viewportElement: HTMLElement,
+    reactFlowWrapper: HTMLElement,
     nodes: DiagramNode[],
     options?: Partial<ExportOptions>
   ): Promise<string> {
@@ -101,71 +286,75 @@ export const exportService = {
       throw new Error('No nodes to export')
     }
 
-    const padding = options?.padding ?? 50
+    // Find the viewport element inside the wrapper
+    const viewport = reactFlowWrapper.querySelector('.react-flow__viewport') as HTMLElement
+    if (!viewport) {
+      throw new Error('Could not find React Flow viewport element')
+    }
+
+    // Calculate bounds of all nodes
     const bounds = getNodesBounds(nodes)
+    const padding = options?.padding ?? 40
 
-    // Calculate dimensions for the export
-    const exportWidth = bounds.width + padding * 2
-    const exportHeight = bounds.height + padding * 2
+    // Calculate image dimensions to fit all nodes with padding
+    const imageWidth = Math.max(Math.ceil(bounds.width + padding * 2), 200)
+    const imageHeight = Math.max(Math.ceil(bounds.height + padding * 2), 200)
 
-    // Get viewport transform to fit all nodes
-    const viewport = getViewportForBounds(
-      bounds,
-      exportWidth,
-      exportHeight,
-      0.5,
-      2,
-      padding
-    )
+    // Calculate simple transform: move bounds to origin + padding offset
+    // No scaling - export at 1:1 with the diagram
+    const translateX = -bounds.x + padding
+    const translateY = -bounds.y + padding
 
-    // Create a container for the export
-    const container = document.createElement('div')
-    container.style.position = 'fixed'
-    container.style.left = '-99999px'
-    container.style.top = '0'
-    container.style.width = `${exportWidth}px`
-    container.style.height = `${exportHeight}px`
-    container.style.overflow = 'hidden'
-    container.style.backgroundColor = options?.backgroundColor || '#ffffff'
+    // Inline all external images first
+    await waitForImages(viewport)
+    await inlineExternalImages(viewport)
 
-    // Clone the viewport element
-    const clone = viewportElement.cloneNode(true) as HTMLElement
-    // Reset any existing transform and apply our calculated one
-    clone.style.position = 'absolute'
-    clone.style.left = '0'
-    clone.style.top = '0'
-    clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
-    clone.style.transformOrigin = 'top left'
+    // Store original transform and styles to restore later
+    const originalTransform = viewport.style.transform
+    const originalWidth = reactFlowWrapper.style.width
+    const originalHeight = reactFlowWrapper.style.height
 
-    container.appendChild(clone)
-    document.body.appendChild(container)
+    // Apply export transform - simple translation to fit content
+    viewport.style.transform = `translate(${translateX}px, ${translateY}px) scale(1)`
+
+    // Resolve CSS variables for proper export
+    const originalStyles = resolveCSSVariables(viewport)
 
     try {
-      const dataUrl = await toPng(container, {
-        quality: options?.quality || 0.95,
+      // Small delay to ensure DOM updates
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const dataUrl = await toPng(reactFlowWrapper, {
         backgroundColor: options?.backgroundColor || '#ffffff',
-        width: exportWidth,
-        height: exportHeight,
+        width: imageWidth,
+        height: imageHeight,
         pixelRatio: 2,
-        cacheBust: true, // Helps with loading external images
+        quality: 1.0,
+        cacheBust: true,
+        skipFonts: true,
         filter: filterExportElements,
         style: {
-          // Ensure visibility
-          opacity: '1',
-          visibility: 'visible',
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
         },
       })
+
       return dataUrl
     } finally {
-      document.body.removeChild(container)
+      // Restore original transform and styles
+      viewport.style.transform = originalTransform
+      reactFlowWrapper.style.width = originalWidth
+      reactFlowWrapper.style.height = originalHeight
+      restoreCSSVariables(originalStyles)
     }
   },
 
   /**
    * Export the full diagram as SVG
+   * Uses direct viewport manipulation for reliable export
    */
   async exportFullDiagramToSvg(
-    viewportElement: HTMLElement,
+    reactFlowWrapper: HTMLElement,
     nodes: DiagramNode[],
     options?: Partial<ExportOptions>
   ): Promise<string> {
@@ -173,57 +362,63 @@ export const exportService = {
       throw new Error('No nodes to export')
     }
 
-    const padding = options?.padding ?? 50
+    // Find the viewport element inside the wrapper
+    const viewport = reactFlowWrapper.querySelector('.react-flow__viewport') as HTMLElement
+    if (!viewport) {
+      throw new Error('Could not find React Flow viewport element')
+    }
+
+    // Calculate bounds of all nodes
     const bounds = getNodesBounds(nodes)
+    const padding = options?.padding ?? 40
 
-    const exportWidth = bounds.width + padding * 2
-    const exportHeight = bounds.height + padding * 2
+    // Calculate image dimensions to fit all nodes with padding
+    const imageWidth = Math.max(Math.ceil(bounds.width + padding * 2), 200)
+    const imageHeight = Math.max(Math.ceil(bounds.height + padding * 2), 200)
 
-    const viewport = getViewportForBounds(
-      bounds,
-      exportWidth,
-      exportHeight,
-      0.5,
-      2,
-      padding
-    )
+    // Calculate simple transform: move bounds to origin + padding offset
+    const translateX = -bounds.x + padding
+    const translateY = -bounds.y + padding
 
-    // Create a container for the export
-    const container = document.createElement('div')
-    container.style.position = 'fixed'
-    container.style.left = '-99999px'
-    container.style.top = '0'
-    container.style.width = `${exportWidth}px`
-    container.style.height = `${exportHeight}px`
-    container.style.overflow = 'hidden'
-    container.style.backgroundColor = options?.backgroundColor || '#ffffff'
+    // Inline all external images first
+    await waitForImages(viewport)
+    await inlineExternalImages(viewport)
 
-    // Clone the viewport element
-    const clone = viewportElement.cloneNode(true) as HTMLElement
-    clone.style.position = 'absolute'
-    clone.style.left = '0'
-    clone.style.top = '0'
-    clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
-    clone.style.transformOrigin = 'top left'
+    // Store original transform and styles to restore later
+    const originalTransform = viewport.style.transform
+    const originalWidth = reactFlowWrapper.style.width
+    const originalHeight = reactFlowWrapper.style.height
 
-    container.appendChild(clone)
-    document.body.appendChild(container)
+    // Apply export transform - simple translation to fit content
+    viewport.style.transform = `translate(${translateX}px, ${translateY}px) scale(1)`
+
+    // Resolve CSS variables for proper export
+    const originalStyles = resolveCSSVariables(viewport)
 
     try {
-      const dataUrl = await toSvg(container, {
+      // Small delay to ensure DOM updates
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const dataUrl = await toSvg(reactFlowWrapper, {
         backgroundColor: options?.backgroundColor || '#ffffff',
-        width: exportWidth,
-        height: exportHeight,
+        width: imageWidth,
+        height: imageHeight,
         cacheBust: true,
+        skipFonts: true,
         filter: filterExportElements,
         style: {
-          opacity: '1',
-          visibility: 'visible',
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
         },
       })
+
       return dataUrl
     } finally {
-      document.body.removeChild(container)
+      // Restore original transform and styles
+      viewport.style.transform = originalTransform
+      reactFlowWrapper.style.width = originalWidth
+      reactFlowWrapper.style.height = originalHeight
+      restoreCSSVariables(originalStyles)
     }
   },
 
@@ -260,57 +455,83 @@ export const exportService = {
   },
 
   async generateThumbnail(
-    element: HTMLElement,
+    reactFlowWrapper: HTMLElement,
     nodes: DiagramNode[],
     width = 400,
     height = 225
   ): Promise<string> {
+    if (!nodes || nodes.length === 0) {
+      return ''
+    }
+
+    // Find the viewport element inside the wrapper
+    const viewport = reactFlowWrapper.querySelector('.react-flow__viewport') as HTMLElement
+    if (!viewport) {
+      return ''
+    }
+
     const padding = 20
     const bounds = getNodesBounds(nodes)
-    const viewport = getViewportForBounds(bounds, width, height, 0.5, 2, padding)
+    const transform = getViewportForBounds(bounds, width, height, 0.5, 2, padding)
 
-    // Detect current theme - check for dark class on html/body or use CSS variable
+    // Detect current theme
     const isDarkMode = document.documentElement.classList.contains('dark') ||
       document.body.classList.contains('dark') ||
       window.matchMedia('(prefers-color-scheme: dark)').matches
     const backgroundColor = isDarkMode ? '#1a1a1a' : '#ffffff'
 
-    // Create a container for the thumbnail
-    const container = document.createElement('div')
-    container.style.position = 'fixed'
-    container.style.left = '-99999px'
-    container.style.top = '0'
-    container.style.width = `${width}px`
-    container.style.height = `${height}px`
-    container.style.overflow = 'hidden'
-    container.style.backgroundColor = backgroundColor
+    // Use clone-based approach to avoid modifying original viewport
+    // First inline images in the original (they'll be cloned)
+    await inlineExternalImages(viewport)
 
-    // Clone the element
-    const clone = element.cloneNode(true) as HTMLElement
-    clone.style.position = 'absolute'
-    clone.style.left = '0'
-    clone.style.top = '0'
-    clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
-    clone.style.transformOrigin = 'top left'
+    // Create offscreen container
+    const container = document.createElement('div')
+    container.style.cssText = `
+      position: fixed;
+      left: -99999px;
+      top: -99999px;
+      width: ${width}px;
+      height: ${height}px;
+      overflow: hidden;
+      background: ${backgroundColor};
+      z-index: -9999;
+    `
+
+    // Clone the viewport
+    const clone = viewport.cloneNode(true) as HTMLElement
+    clone.style.cssText = `
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: ${width * 3}px;
+      height: ${height * 3}px;
+      transform: translate(${transform.x}px, ${transform.y}px) scale(${transform.zoom});
+      transform-origin: top left;
+    `
+
+    // Remove UI elements from clone
+    clone.querySelectorAll('.react-flow__minimap, .react-flow__controls, .react-flow__panel, .react-flow__attribution, .custom-handle').forEach(el => el.remove())
 
     container.appendChild(clone)
     document.body.appendChild(container)
 
     try {
+      await new Promise(resolve => setTimeout(resolve, 50))
+
       const dataUrl = await toPng(container, {
         quality: 0.8,
         backgroundColor,
         width,
         height,
         pixelRatio: 1,
-        skipFonts: true, // Skip external fonts to avoid CORS errors
+        skipFonts: true,
       })
       return dataUrl
     } catch (error) {
       console.warn('Thumbnail generation failed, returning empty:', error)
-      // Return a simple placeholder on error
       return ''
     } finally {
+      // Clean up
       document.body.removeChild(container)
     }
   },
@@ -335,7 +556,7 @@ export const exportService = {
    * Export high-resolution PNG (4x or 8x pixel ratio)
    */
   async exportHighResPng(
-    viewportElement: HTMLElement,
+    reactFlowWrapper: HTMLElement,
     nodes: DiagramNode[],
     resolution: '2x' | '4x' | '8x' = '4x',
     options?: Partial<ExportOptions>
@@ -344,55 +565,52 @@ export const exportService = {
       throw new Error('No nodes to export')
     }
 
+    // Find the viewport element inside the wrapper
+    const viewport = reactFlowWrapper.querySelector('.react-flow__viewport') as HTMLElement
+    if (!viewport) {
+      throw new Error('Could not find React Flow viewport element')
+    }
+
     const pixelRatioMap = { '2x': 2, '4x': 4, '8x': 8 }
     const pixelRatio = pixelRatioMap[resolution]
 
-    const padding = options?.padding ?? 50
+    const padding = options?.padding ?? 40
     const bounds = getNodesBounds(nodes)
-    const exportWidth = bounds.width + padding * 2
-    const exportHeight = bounds.height + padding * 2
+    const imageWidth = Math.max(Math.ceil(bounds.width + padding * 2), 100)
+    const imageHeight = Math.max(Math.ceil(bounds.height + padding * 2), 100)
 
-    const viewport = getViewportForBounds(
-      bounds,
-      exportWidth,
-      exportHeight,
-      0.5,
-      2,
-      padding
-    )
+    // Calculate simple transform: move bounds to origin + padding offset
+    const translateX = -bounds.x + padding
+    const translateY = -bounds.y + padding
 
-    const container = document.createElement('div')
-    container.style.position = 'fixed'
-    container.style.left = '-99999px'
-    container.style.top = '0'
-    container.style.width = `${exportWidth}px`
-    container.style.height = `${exportHeight}px`
-    container.style.overflow = 'hidden'
-    container.style.backgroundColor = options?.backgroundColor || '#ffffff'
+    // Store original transform to restore later
+    const originalTransform = viewport.style.transform
 
-    const clone = viewportElement.cloneNode(true) as HTMLElement
-    clone.style.position = 'absolute'
-    clone.style.left = '0'
-    clone.style.top = '0'
-    clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
-    clone.style.transformOrigin = 'top left'
-
-    container.appendChild(clone)
-    document.body.appendChild(container)
+    // Apply export transform - simple translation to fit content
+    viewport.style.transform = `translate(${translateX}px, ${translateY}px) scale(1)`
 
     try {
-      const dataUrl = await toPng(container, {
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      const dataUrl = await toPng(viewport, {
         quality: 1.0,
         backgroundColor: options?.backgroundColor || '#ffffff',
-        width: exportWidth,
-        height: exportHeight,
+        width: imageWidth,
+        height: imageHeight,
         pixelRatio,
         cacheBust: true,
+        skipFonts: true,
+        style: {
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
+          fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        },
         filter: filterExportElements,
       })
       return dataUrl
     } finally {
-      document.body.removeChild(container)
+      // Restore original transform
+      viewport.style.transform = originalTransform
     }
   },
 
@@ -400,7 +618,7 @@ export const exportService = {
    * Export PNG with transparent background
    */
   async exportTransparentPng(
-    viewportElement: HTMLElement,
+    reactFlowWrapper: HTMLElement,
     nodes: DiagramNode[],
     options?: Partial<ExportOptions>
   ): Promise<string> {
@@ -408,53 +626,49 @@ export const exportService = {
       throw new Error('No nodes to export')
     }
 
-    const padding = options?.padding ?? 50
+    // Find the viewport element inside the wrapper
+    const viewport = reactFlowWrapper.querySelector('.react-flow__viewport') as HTMLElement
+    if (!viewport) {
+      throw new Error('Could not find React Flow viewport element')
+    }
+
+    const padding = options?.padding ?? 40
     const bounds = getNodesBounds(nodes)
-    const exportWidth = bounds.width + padding * 2
-    const exportHeight = bounds.height + padding * 2
+    const imageWidth = Math.max(Math.ceil(bounds.width + padding * 2), 100)
+    const imageHeight = Math.max(Math.ceil(bounds.height + padding * 2), 100)
 
-    const viewport = getViewportForBounds(
-      bounds,
-      exportWidth,
-      exportHeight,
-      0.5,
-      2,
-      padding
-    )
+    // Calculate simple transform: move bounds to origin + padding offset
+    const translateX = -bounds.x + padding
+    const translateY = -bounds.y + padding
 
-    const container = document.createElement('div')
-    container.style.position = 'fixed'
-    container.style.left = '-99999px'
-    container.style.top = '0'
-    container.style.width = `${exportWidth}px`
-    container.style.height = `${exportHeight}px`
-    container.style.overflow = 'hidden'
-    // Transparent background
-    container.style.backgroundColor = 'transparent'
+    // Store original transform to restore later
+    const originalTransform = viewport.style.transform
 
-    const clone = viewportElement.cloneNode(true) as HTMLElement
-    clone.style.position = 'absolute'
-    clone.style.left = '0'
-    clone.style.top = '0'
-    clone.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
-    clone.style.transformOrigin = 'top left'
-
-    container.appendChild(clone)
-    document.body.appendChild(container)
+    // Apply export transform - simple translation to fit content
+    viewport.style.transform = `translate(${translateX}px, ${translateY}px) scale(1)`
 
     try {
-      const dataUrl = await toPng(container, {
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      const dataUrl = await toPng(viewport, {
         quality: options?.quality || 0.95,
         // No backgroundColor = transparent
-        width: exportWidth,
-        height: exportHeight,
-        pixelRatio: options?.quality === 1 ? 4 : 2,
+        width: imageWidth,
+        height: imageHeight,
+        pixelRatio: 2,
         cacheBust: true,
+        skipFonts: true,
+        style: {
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
+          fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        },
         filter: filterExportElements,
       })
       return dataUrl
     } finally {
-      document.body.removeChild(container)
+      // Restore original transform
+      viewport.style.transform = originalTransform
     }
   },
 

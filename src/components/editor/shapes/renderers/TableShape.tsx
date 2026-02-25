@@ -4,6 +4,7 @@ import { registerShape } from '../registry'
 import type { ShapeRenderProps } from '../types'
 import type { TableData } from '@/types'
 import { useEditorStore } from '@/stores/editorStore'
+import { useThemeStore } from '@/stores/themeStore'
 import { collaborationService } from '@/services/collaborationService'
 
 const DEFAULT_TABLE_DATA: TableData = {
@@ -39,15 +40,17 @@ function getLuminance(hexColor: string): number {
 }
 
 // Get contrasting text color based on background
-function getContrastingTextColor(bgColor: string | undefined, explicitTextColor?: string): string {
+function getContrastingTextColor(bgColor: string | undefined, themeTextColor: string, explicitTextColor?: string): string {
   if (explicitTextColor) return explicitTextColor
-  if (!bgColor || bgColor === 'transparent') return '#1f2937'
+  if (!bgColor || bgColor === 'transparent') {
+    return themeTextColor
+  }
 
   try {
     const luminance = getLuminance(bgColor)
     return luminance > 0.5 ? '#1f2937' : '#f3f4f6'
   } catch {
-    return '#1f2937'
+    return themeTextColor
   }
 }
 
@@ -62,6 +65,10 @@ function TableRenderer({ nodeId, data, style, baseStyle, locked, getDropShadowFi
 
   const updateNode = useEditorStore((state) => state.updateNode)
   const updateNodeDimensions = useEditorStore((state) => state.updateNodeDimensions)
+  const resolvedTheme = useThemeStore((state) => state.resolvedTheme)
+
+  // Theme-aware default text color
+  const themeTextColor = resolvedTheme === 'dark' ? '#ededed' : '#111827'
 
   // Column widths and row heights with defaults
   const columnWidths = tableData.columnWidths || Array(tableData.cols).fill(DEFAULT_COLUMN_WIDTH)
@@ -69,7 +76,7 @@ function TableRenderer({ nodeId, data, style, baseStyle, locked, getDropShadowFi
 
   // Table styling options with defaults
   const headerBgColor = tableData.headerBgColor || '#f3f4f6'
-  const headerTextColor = tableData.headerTextColor || '#1f2937'
+  const headerTextColor = tableData.headerTextColor || getContrastingTextColor(headerBgColor, themeTextColor)
   const bandColor = tableData.bandColor || '#f9fafb'
   const bandedRows = tableData.bandedRows || false
   const bandedCols = tableData.bandedCols || false
@@ -271,7 +278,7 @@ function TableRenderer({ nodeId, data, style, baseStyle, locked, getDropShadowFi
     }
 
     const bgColor = getCellBackground(rowIndex, colIndex, false)
-    return getContrastingTextColor(bgColor, style?.textColor)
+    return getContrastingTextColor(bgColor, themeTextColor, style?.textColor)
   }
 
   // Calculate column positions for resize handles

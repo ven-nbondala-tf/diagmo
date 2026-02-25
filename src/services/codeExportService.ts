@@ -512,7 +512,7 @@ export function exportToTerraform(
   nodes.forEach((node) => {
     const type = node.data.type
     let resourceType: string | undefined
-    let resourceName = generateId(node.id).toLowerCase()
+    const resourceName = generateId(node.id).toLowerCase()
 
     // Find resource type
     if (type.startsWith('aws-')) {

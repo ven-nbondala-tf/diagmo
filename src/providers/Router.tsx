@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/auth'
+import { GlobalSearch, useGlobalSearch } from '@/components/shared/GlobalSearch'
 import { Loader2 } from 'lucide-react'
 
 // Lazy load all page components for code splitting
@@ -19,9 +20,21 @@ function PageLoader() {
   )
 }
 
+// Global search wrapper
+function GlobalSearchWrapper({ children }: { children: React.ReactNode }) {
+  const { open, setOpen } = useGlobalSearch()
+  return (
+    <>
+      {children}
+      <GlobalSearch open={open} onOpenChange={setOpen} />
+    </>
+  )
+}
+
 export function Router() {
   return (
     <BrowserRouter>
+      <GlobalSearchWrapper>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -47,6 +60,7 @@ export function Router() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Suspense>
+      </GlobalSearchWrapper>
     </BrowserRouter>
   )
 }

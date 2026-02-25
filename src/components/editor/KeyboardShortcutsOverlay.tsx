@@ -77,6 +77,21 @@ const SHORTCUT_CATEGORIES: ShortcutCategory[] = [
       { keys: 'L', action: 'Add line/connector' },
     ],
   },
+  {
+    name: 'Drawing',
+    shortcuts: [
+      { keys: 'D', action: 'Toggle drawing mode' },
+      { keys: 'V', action: 'Select tool' },
+      { keys: 'B', action: 'Pen tool' },
+      { keys: 'H', action: 'Highlighter tool' },
+      { keys: 'E', action: 'Eraser tool' },
+      { keys: 'L', action: 'Line tool' },
+      { keys: 'A', action: 'Arrow tool' },
+      { keys: 'R', action: 'Rectangle tool' },
+      { keys: 'O', action: 'Ellipse tool' },
+      { keys: 'Escape', action: 'Exit drawing mode' },
+    ],
+  },
 ]
 
 interface KeyboardShortcutsOverlayProps {

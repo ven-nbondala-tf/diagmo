@@ -168,7 +168,7 @@ export function CommentsPanel({ diagramId }: CommentsPanelProps) {
   const unresolvedCount = comments.filter((c) => !c.resolved).length
 
   return (
-    <div className="w-72 border-l border-supabase-border bg-supabase-bg flex flex-col h-full">
+    <div className="w-72 flex-shrink-0 border-l border-supabase-border bg-supabase-bg flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="p-3 border-b border-supabase-border bg-supabase-bg-secondary">
         <div className="flex items-center justify-between">

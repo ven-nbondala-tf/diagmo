@@ -11,6 +11,14 @@ interface CollaborationState {
   myPresenceId: string | null
   // Node locks - map of nodeId to lock info
   nodeLocks: Map<string, NodeLock>
+  // Flag to track when applying remote changes (prevents broadcast loops)
+  isApplyingRemoteChanges: boolean
+  // Follow user mode - userId of the user being followed
+  followingUserId: string | null
+  // Spotlight - currently spotlighted element
+  spotlightedNodeId: string | null
+  spotlightedByUserId: string | null
+  spotlightedByUserName: string | null
 }
 
 interface CollaborationActions {
@@ -20,6 +28,13 @@ interface CollaborationActions {
   setMyPresenceId: (id: string | null) => void
   setNodeLock: (lock: NodeLock) => void
   removeNodeLock: (nodeId: string) => void
+  setApplyingRemoteChanges: (applying: boolean) => void
+  // Follow user actions
+  followUser: (userId: string) => void
+  unfollowUser: () => void
+  // Spotlight actions
+  setSpotlight: (nodeId: string | null, userId: string | null, userName: string | null) => void
+  clearSpotlight: () => void
   reset: () => void
 }
 
@@ -31,6 +46,11 @@ const initialState: CollaborationState = {
   collaborators: [],
   myPresenceId: null,
   nodeLocks: new Map(),
+  isApplyingRemoteChanges: false,
+  followingUserId: null,
+  spotlightedNodeId: null,
+  spotlightedByUserId: null,
+  spotlightedByUserName: null,
 }
 
 /**
@@ -63,5 +83,31 @@ export const useCollaborationStore = create<CollaborationStore>((set) => ({
     return { nodeLocks: newLocks }
   }),
 
-  reset: () => set({ ...initialState, nodeLocks: new Map() }),
+  setApplyingRemoteChanges: (isApplyingRemoteChanges) => set({ isApplyingRemoteChanges }),
+
+  // Follow user mode
+  followUser: (userId) => set({ followingUserId: userId }),
+  unfollowUser: () => set({ followingUserId: null }),
+
+  // Spotlight
+  setSpotlight: (nodeId, userId, userName) => set({
+    spotlightedNodeId: nodeId,
+    spotlightedByUserId: userId,
+    spotlightedByUserName: userName,
+  }),
+  clearSpotlight: () => set({
+    spotlightedNodeId: null,
+    spotlightedByUserId: null,
+    spotlightedByUserName: null,
+  }),
+
+  reset: () => set({
+    ...initialState,
+    nodeLocks: new Map(),
+    isApplyingRemoteChanges: false,
+    followingUserId: null,
+    spotlightedNodeId: null,
+    spotlightedByUserId: null,
+    spotlightedByUserName: null,
+  }),
 }))

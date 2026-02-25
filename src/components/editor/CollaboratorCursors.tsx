@@ -27,7 +27,7 @@ export const CollaboratorCursors = memo(function CollaboratorCursors({
   return (
     <svg
       className="pointer-events-none absolute inset-0 overflow-visible"
-      style={{ zIndex: 9999 }}
+      style={{ zIndex: 100 }}
     >
       <g transform={`translate(${tx}, ${ty}) scale(${zoom})`}>
         {activeCursors.map((collaborator) => (
@@ -37,6 +37,7 @@ export const CollaboratorCursors = memo(function CollaboratorCursors({
             color={collaborator.color}
             x={collaborator.cursorX!}
             y={collaborator.cursorY!}
+            isDrawing={collaborator.isDrawing}
           />
         ))}
       </g>
@@ -49,38 +50,53 @@ interface CollaboratorCursorProps {
   color: string
   x: number
   y: number
+  isDrawing?: boolean
 }
 
 /**
  * Individual cursor with pointer and name label
+ * Shows a pen icon when the user is drawing
  */
 const CollaboratorCursor = memo(function CollaboratorCursor({
   name,
   color,
   x,
   y,
+  isDrawing,
 }: CollaboratorCursorProps) {
   // Get first name or first 10 chars
   const displayName = name.split(' ')[0]?.slice(0, 10) || 'User'
+  // Add pen emoji when drawing
+  const labelText = isDrawing ? `✏️ ${displayName}` : displayName
+  const labelWidth = isDrawing ? (displayName.length * 7 + 28) : (displayName.length * 7 + 8)
 
   return (
     <g transform={`translate(${x}, ${y})`}>
-      {/* Cursor pointer SVG */}
-      <path
-        d="M0 0 L0 16 L4 12 L8 20 L10 19 L6 11 L12 11 Z"
-        fill={color}
-        stroke="white"
-        strokeWidth={1.5}
-        style={{
-          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
-        }}
-      />
+      {/* Cursor - use pen shape when drawing, otherwise pointer */}
+      {isDrawing ? (
+        // Pen cursor for drawing mode
+        <g transform="rotate(-45)">
+          <rect x="-2" y="-2" width="4" height="16" rx="1" fill={color} stroke="white" strokeWidth={1} />
+          <polygon points="-2,14 0,20 2,14" fill={color} stroke="white" strokeWidth={1} />
+        </g>
+      ) : (
+        // Standard pointer cursor
+        <path
+          d="M0 0 L0 16 L4 12 L8 20 L10 19 L6 11 L12 11 Z"
+          fill={color}
+          stroke="white"
+          strokeWidth={1.5}
+          style={{
+            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
+          }}
+        />
+      )}
       {/* Name label */}
       <g transform="translate(14, 18)">
         <rect
           x={-2}
           y={-10}
-          width={displayName.length * 7 + 8}
+          width={labelWidth}
           height={16}
           rx={4}
           fill={color}
@@ -96,7 +112,7 @@ const CollaboratorCursor = memo(function CollaboratorCursor({
           fontFamily="system-ui, -apple-system, sans-serif"
           fontWeight={500}
         >
-          {displayName}
+          {labelText}
         </text>
       </g>
     </g>

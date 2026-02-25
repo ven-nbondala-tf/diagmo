@@ -8,14 +8,14 @@ import {
   Button,
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui'
+import { cn } from '@/utils'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { ActivityPanel } from './ActivityPanel'
 import { useRecentActivity, useMyActivity, useWorkspaceAuditLogs } from '@/hooks/useAuditLogs'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -37,7 +37,10 @@ const actionFilters: { value: AuditAction | 'all'; label: string }[] = [
 
 export function ActivityDialog({ open, onOpenChange }: ActivityDialogProps) {
   const [actionFilter, setActionFilter] = useState<AuditAction | 'all'>('all')
+  const [activeTab, setActiveTab] = useState<'recent' | 'my-activity' | 'workspace'>('recent')
   const { currentWorkspaceId } = useWorkspaceStore()
+  const secondaryAccentColor = usePreferencesStore((state) => state.secondaryAccentColor)
+  const secondaryAccentTextColor = usePreferencesStore((state) => state.secondaryAccentTextColor)
 
   const { data: recentLogs = [], isLoading: isRecentLoading } = useRecentActivity(100)
   const { data: myLogs = [], isLoading: isMyLoading } = useMyActivity(100)
@@ -80,14 +83,47 @@ export function ActivityDialog({ open, onOpenChange }: ActivityDialogProps) {
           </Select>
         </div>
 
-        <Tabs defaultValue="recent" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="recent">Recent</TabsTrigger>
-            <TabsTrigger value="my-activity">My Activity</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'recent' | 'my-activity' | 'workspace')} className="flex-1 overflow-hidden flex flex-col">
+          <div className={cn('grid w-full bg-supabase-bg-tertiary rounded-lg p-1 gap-1', currentWorkspaceId ? 'grid-cols-3' : 'grid-cols-2')}>
+            <button
+              onClick={() => setActiveTab('recent')}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-sm transition-all',
+                activeTab === 'recent'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'recent' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
+              Recent
+            </button>
+            <button
+              onClick={() => setActiveTab('my-activity')}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-sm transition-all',
+                activeTab === 'my-activity'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'my-activity' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
+              My Activity
+            </button>
             {currentWorkspaceId && (
-              <TabsTrigger value="workspace">Workspace</TabsTrigger>
+              <button
+                onClick={() => setActiveTab('workspace')}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-sm transition-all',
+                  activeTab === 'workspace'
+                    ? 'font-medium shadow-sm'
+                    : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+                )}
+                style={activeTab === 'workspace' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+              >
+                Workspace
+              </button>
             )}
-          </TabsList>
+          </div>
 
           <TabsContent value="recent" className="flex-1 overflow-hidden mt-4">
             <ActivityPanel

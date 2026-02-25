@@ -14,18 +14,25 @@ interface UseCollaborationOptions {
 interface UseCollaborationReturn extends CollaborationState {
   connectionStatus: ConnectionStatus
   nodeLocks: Map<string, NodeLock>
-  updateCursor: (x: number | null, y: number | null) => void
+  updateCursor: (x: number | null, y: number | null, isDrawing?: boolean) => void
   updateViewport: (x: number, y: number, zoom: number) => void
   broadcastNodeDrag: (nodeId: string, position: { x: number; y: number }) => void
   broadcastNodesDrag: (nodes: Array<{ id: string; position: { x: number; y: number } }>) => void
   broadcastFullSync: (nodes: DiagramNode[], edges: DiagramEdge[]) => void
   // Operation-based sync
   broadcastOperation: (type: OperationType, targetId: string, data?: Record<string, unknown>) => void
+  // Page and whiteboard sync
+  broadcastPageChange: (pageId: string, pageName: string) => void
+  broadcastDrawingStrokes: (pageId: string, strokes: unknown[], action?: 'add' | 'update' | 'clear') => void
   // Node locking
   acquireLock: (nodeId: string) => Promise<boolean>
   releaseLock: (nodeId: string) => Promise<void>
   renewLock: (nodeId: string) => Promise<boolean>
   isNodeLocked: (nodeId: string) => boolean
+  // Follow mode and spotlight
+  broadcastViewportChange: (viewport: { x: number; y: number; zoom: number }) => void
+  spotlightElement: (nodeId: string) => void
+  clearSpotlight: () => void
 }
 
 /**
@@ -43,6 +50,7 @@ export function useCollaboration({
   const setMyPresenceId = useCollaborationStore((s) => s.setMyPresenceId)
   const setNodeLock = useCollaborationStore((s) => s.setNodeLock)
   const removeNodeLock = useCollaborationStore((s) => s.removeNodeLock)
+  const setApplyingRemoteChanges = useCollaborationStore((s) => s.setApplyingRemoteChanges)
   const reset = useCollaborationStore((s) => s.reset)
 
   // Track if we're mounted
@@ -55,6 +63,14 @@ export function useCollaboration({
     // Guard against null/undefined diagramId
     if (!enabled || !diagramId || diagramId === 'null' || diagramId === 'undefined') {
       console.log('[useCollaboration] Skipping join - invalid diagramId:', diagramId)
+      return
+    }
+
+    // Check if Supabase is properly configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
+      console.warn('[useCollaboration] Collaboration disabled - Supabase not configured')
+      setConnectionStatus('disconnected')
       return
     }
 
@@ -137,7 +153,7 @@ export function useCollaboration({
             if (!isMountedRef.current) return
             if (isApplyingRemoteRef.current) return
 
-            console.log('[useCollaboration] Applying operation:', operation.type, operation.targetId)
+            console.log('[useCollaboration] Received operation:', operation.type, operation.targetId, operation.data)
             isApplyingRemoteRef.current = true
             try {
               const { nodes, edges, setNodes, setEdges } = useEditorStore.getState()
@@ -152,9 +168,23 @@ export function useCollaboration({
                 }
                 case 'node-update': {
                   const updates = operation.data as unknown as Partial<DiagramNode>
-                  setNodes(nodes.map(n =>
-                    n.id === operation.targetId ? { ...n, ...updates } : n
-                  ))
+                  setNodes(nodes.map(n => {
+                    if (n.id !== operation.targetId) return n
+                    // Deep merge data property if present
+                    if (updates.data) {
+                      const newData = { ...n.data, ...updates.data }
+                      // Deep merge style if present
+                      if (updates.data.style && n.data.style) {
+                        newData.style = { ...n.data.style, ...updates.data.style }
+                      }
+                      return {
+                        ...n,
+                        ...updates,
+                        data: newData
+                      }
+                    }
+                    return { ...n, ...updates }
+                  }))
                   break
                 }
                 case 'node-delete': {
@@ -199,6 +229,48 @@ export function useCollaboration({
             console.log('[useCollaboration] Node unlocked:', nodeId)
             removeNodeLock(nodeId)
           },
+          // Page change handler for multi-page collaboration
+          onPageChange: (payload) => {
+            if (!isMountedRef.current) return
+            console.log('[useCollaboration] Page changed by collaborator:', payload.pageId)
+            // Notify that a collaborator changed pages (UI can show notification)
+            toast.info(`Collaborator switched to ${payload.pageName}`, { duration: 2000 })
+          },
+          // Drawing stroke handler for whiteboard collaboration
+          onDrawingStrokeChange: (payload) => {
+            if (!isMountedRef.current) return
+            if (isApplyingRemoteRef.current) return
+
+            // Check if the strokes are for our current page
+            const { currentPageId, setDrawingStrokes, drawingStrokes } = useEditorStore.getState()
+
+            // Only apply strokes if they're for our current page
+            if (payload.pageId && currentPageId && payload.pageId !== currentPageId) {
+              console.log('[useCollaboration] Ignoring strokes for different page:', payload.pageId, 'vs', currentPageId)
+              return
+            }
+
+            console.log('[useCollaboration] Applying drawing strokes from collaborator:', payload.action, 'strokes:', (payload.strokes as unknown[])?.length)
+            isApplyingRemoteRef.current = true
+            // Also set store flag so BottomBar knows not to re-broadcast
+            setApplyingRemoteChanges(true)
+            try {
+              if (payload.action === 'clear') {
+                setDrawingStrokes([])
+              } else if (payload.action === 'add' || payload.action === 'update') {
+                // For simplicity, replace all strokes with the received strokes
+                // In a more advanced implementation, we could merge strokes
+                setDrawingStrokes(payload.strokes as typeof drawingStrokes)
+              }
+            } finally {
+              isApplyingRemoteRef.current = false
+              // Delay clearing the store flag to ensure BottomBar's effect sees it
+              // The effect has a 50ms debounce, so 150ms should be enough
+              setTimeout(() => {
+                setApplyingRemoteChanges(false)
+              }, 150)
+            }
+          },
         })
 
         // Set presence ID after join completes
@@ -229,13 +301,13 @@ export function useCollaboration({
         }
       }, 200)
     }
-  }, [diagramId, enabled, setConnectionStatus, setCollaborators, setMyPresenceId, setNodeLock, removeNodeLock, reset])
+  }, [diagramId, enabled, setConnectionStatus, setCollaborators, setMyPresenceId, setNodeLock, removeNodeLock, setApplyingRemoteChanges, reset])
 
   // Throttled cursor update (max 30fps)
   const updateCursor = useCallback(
-    throttle((x: number | null, y: number | null) => {
+    throttle((x: number | null, y: number | null, isDrawing?: boolean) => {
       if (isConnected) {
-        collaborationService.updateCursor(x, y)
+        collaborationService.updateCursor(x, y, isDrawing)
       }
     }, 33),
     [isConnected]
@@ -291,6 +363,26 @@ export function useCollaboration({
     [isConnected]
   )
 
+  // Broadcast page change
+  const broadcastPageChange = useCallback(
+    (pageId: string, pageName: string) => {
+      if (isConnected) {
+        collaborationService.broadcastPageChange(pageId, pageName)
+      }
+    },
+    [isConnected]
+  )
+
+  // Broadcast drawing strokes (throttled for performance)
+  const broadcastDrawingStrokes = useCallback(
+    throttle((pageId: string, strokes: unknown[], action: 'add' | 'update' | 'clear' = 'update') => {
+      if (isConnected) {
+        collaborationService.broadcastDrawingStrokes(pageId, strokes, action)
+      }
+    }, 100),
+    [isConnected]
+  )
+
   // Node locking functions
   const acquireLock = useCallback(
     async (nodeId: string): Promise<boolean> => {
@@ -343,6 +435,8 @@ export function useCollaboration({
     broadcastNodesDrag,
     broadcastFullSync,
     broadcastOperation,
+    broadcastPageChange,
+    broadcastDrawingStrokes,
     acquireLock,
     releaseLock,
     renewLock,

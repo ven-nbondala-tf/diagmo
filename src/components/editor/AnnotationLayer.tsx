@@ -55,24 +55,14 @@ export function AnnotationLayer({ enabled, onToggle }: AnnotationLayerProps) {
   }, [notes.length])
 
   if (!enabled) {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="absolute bottom-20 right-4 z-10 h-8 gap-1.5 bg-background shadow-md"
-        onClick={onToggle}
-        title="Enable Annotation Mode"
-      >
-        <StickyNoteIcon className="w-4 h-4" />
-        Annotate
-      </Button>
-    )
+    // Hidden by default - can be toggled from View menu
+    return null
   }
 
   return (
     <>
       {/* Annotation Toolbar */}
-      <div className="absolute bottom-20 right-4 z-20 flex items-center gap-2 bg-background border rounded-lg shadow-lg p-2">
+      <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2 bg-supabase-bg-secondary/95 backdrop-blur-md border border-supabase-border rounded-lg shadow-lg p-2">
         <Button
           variant={isAddingNote ? 'default' : 'outline'}
           size="sm"

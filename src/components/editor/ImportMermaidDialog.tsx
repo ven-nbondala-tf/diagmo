@@ -10,7 +10,8 @@ import {
   Textarea,
   Label,
 } from '@/components/ui'
-import { AlertCircle, FileCode, Check } from 'lucide-react'
+import { AlertCircle, FileCode, Check, Loader2 } from 'lucide-react'
+import { mermaidService } from '@/services/mermaidService'
 import { parseMermaid } from '@/services/mermaidParser'
 import { useEditorStore } from '@/stores/editorStore'
 
@@ -32,6 +33,7 @@ export function ImportMermaidDialog({
 }: ImportMermaidDialogProps) {
   const [code, setCode] = useState('')
   const [errors, setErrors] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
   const [preview, setPreview] = useState<{
     nodeCount: number
     edgeCount: number
@@ -39,39 +41,114 @@ export function ImportMermaidDialog({
 
   const importDiagram = useEditorStore((state) => state.importDiagram)
 
-  const handlePreview = () => {
+  const handlePreview = async () => {
     if (!code.trim()) {
       setErrors(['Please enter Mermaid code'])
       setPreview(null)
       return
     }
 
-    const result = parseMermaid(code)
-    setErrors(result.errors)
+    setLoading(true)
+    setErrors([])
 
-    if (result.nodes.length > 0) {
-      setPreview({
-        nodeCount: result.nodes.length,
-        edgeCount: result.edges.length,
-      })
-    } else {
-      setPreview(null)
-      if (result.errors.length === 0) {
+    try {
+      // Try official Mermaid library first
+      console.log('[ImportMermaid] Trying official Mermaid library...')
+      const result = await mermaidService.parse(code)
+      console.log('[ImportMermaid] Mermaid library result:', result)
+
+      if (result.errors.length > 0) {
+        // Fallback to custom parser
+        console.log('[ImportMermaid] Mermaid library failed, trying fallback parser')
+        const fallbackResult = parseMermaid(code)
+        setErrors(fallbackResult.errors)
+
+        if (fallbackResult.nodes.length > 0) {
+          setPreview({
+            nodeCount: fallbackResult.nodes.length,
+            edgeCount: fallbackResult.edges.length,
+          })
+        } else {
+          setPreview(null)
+          if (fallbackResult.errors.length === 0) {
+            setErrors(['No diagram elements found in the code'])
+          }
+        }
+      } else if (result.nodes.length > 0) {
+        setPreview({
+          nodeCount: result.nodes.length,
+          edgeCount: result.edges.length,
+        })
+      } else {
+        setPreview(null)
         setErrors(['No diagram elements found in the code'])
       }
+    } catch (error) {
+      console.error('Preview error:', error)
+      // Fallback to custom parser
+      const fallbackResult = parseMermaid(code)
+      setErrors(fallbackResult.errors)
+
+      if (fallbackResult.nodes.length > 0) {
+        setPreview({
+          nodeCount: fallbackResult.nodes.length,
+          edgeCount: fallbackResult.edges.length,
+        })
+      } else {
+        setPreview(null)
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!code.trim()) return
 
-    const result = parseMermaid(code)
-    if (result.nodes.length > 0) {
-      importDiagram(result.nodes, result.edges)
-      onOpenChange(false)
-      setCode('')
-      setErrors([])
-      setPreview(null)
+    setLoading(true)
+    setErrors([])
+
+    try {
+      // Try official Mermaid library first
+      console.log('[ImportMermaid] Importing with official Mermaid library...')
+      const result = await mermaidService.parse(code)
+      console.log('[ImportMermaid] Import result:', result)
+
+      if (result.nodes.length > 0 && result.errors.length === 0) {
+        console.log('[ImportMermaid] Using Mermaid library result')
+        importDiagram(result.nodes, result.edges)
+        onOpenChange(false)
+        setCode('')
+        setErrors([])
+        setPreview(null)
+      } else {
+        // Fallback to custom parser
+        const fallbackResult = parseMermaid(code)
+        if (fallbackResult.nodes.length > 0) {
+          importDiagram(fallbackResult.nodes, fallbackResult.edges)
+          onOpenChange(false)
+          setCode('')
+          setErrors([])
+          setPreview(null)
+        } else {
+          setErrors(fallbackResult.errors.length > 0 ? fallbackResult.errors : ['Failed to parse diagram'])
+        }
+      }
+    } catch (error) {
+      console.error('Import error:', error)
+      // Fallback to custom parser
+      const fallbackResult = parseMermaid(code)
+      if (fallbackResult.nodes.length > 0) {
+        importDiagram(fallbackResult.nodes, fallbackResult.edges)
+        onOpenChange(false)
+        setCode('')
+        setErrors([])
+        setPreview(null)
+      } else {
+        setErrors(['Failed to import diagram'])
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -182,16 +259,18 @@ export function ImportMermaidDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose} disabled={loading}>
             Cancel
           </Button>
-          <Button variant="outline" onClick={handlePreview}>
+          <Button variant="outline" onClick={handlePreview} disabled={loading}>
+            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Preview
           </Button>
           <Button
             onClick={handleImport}
-            disabled={!preview || errors.length > 0}
+            disabled={loading || !preview || errors.length > 0}
           >
+            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Import
           </Button>
         </DialogFooter>

@@ -46,22 +46,40 @@ export function ShareDialog({
     }
 
     // Basic email validation
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const trimmedEmail = email.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       toast.error('Please enter a valid email address')
+      return
+    }
+
+    // Check if user already has access
+    const existingShare = shares.find(
+      (share) => share.sharedWithEmail?.toLowerCase() === trimmedEmail
+    )
+    if (existingShare) {
+      toast.error(`${trimmedEmail} already has access to this diagram`)
       return
     }
 
     const result = await shareMutation.mutateAsync({
       diagramId,
-      email: email.trim(),
+      email: trimmedEmail,
       permission,
     })
 
     if (result.success) {
-      toast.success(`Shared with ${email}`)
+      toast.success(`Shared with ${trimmedEmail}`)
       setEmail('')
     } else {
-      toast.error(result.error || 'Failed to share diagram')
+      // Show user-friendly error messages
+      const errorMsg = result.error?.toLowerCase() || ''
+      if (errorMsg.includes('already') || errorMsg.includes('duplicate') || errorMsg.includes('unique')) {
+        toast.error(`${trimmedEmail} already has access to this diagram`)
+      } else if (errorMsg.includes('permission') || errorMsg.includes('denied') || errorMsg.includes('policy')) {
+        toast.error('Unable to share. Please try again.')
+      } else {
+        toast.error(result.error || 'Failed to share diagram')
+      }
     }
   }
 

@@ -76,6 +76,13 @@
     --grid-color-major: rgba(255, 255, 255, 0.15);
     --grid-color-minor: rgba(255, 255, 255, 0.08);
 
+    /* Chart colors */
+    --chart-1: 153 70% 53%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 142 76% 36%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 0 72% 51%;
+
     /* shadcn/ui compatible variables (HSL) */
     --background: 0 0% 11%;
     --foreground: 0 0% 93%;
@@ -418,6 +425,12 @@
   box-shadow: 0 6px 20px var(--shadow), 0 2px 6px var(--shadow);
 }
 
+/* Keyboard navigation focus indicator - dashed outline */
+.react-flow__node .keyboard-focused {
+  outline: 2px dashed var(--accent-primary);
+  outline-offset: 3px;
+}
+
 /* Node being dragged */
 .react-flow__node.dragging {
   cursor: grabbing !important;
@@ -552,7 +565,7 @@
   stroke-width: 2.5px !important;
 }
 
-/* Edge waypoint handle styling */
+/* Edge handle styling */
 .react-flow__edge.selected circle {
   pointer-events: all !important;
 }
@@ -705,4 +718,104 @@
 
 .react-flow[data-interaction-mode="pan"] .react-flow__node:active {
   cursor: grabbing;
+}
+
+/* ========== VIEWPORT SCROLLBAR RANGE INPUT STYLING ========== */
+
+/* Base styling for viewport scrollbar range inputs */
+.viewport-scrollbar {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Remove default focus outline */
+.viewport-scrollbar:focus {
+  outline: none;
+}
+
+/* Horizontal scrollbar track */
+.viewport-scrollbar::-webkit-slider-runnable-track {
+  height: 10px;
+  background: var(--bg-tertiary);
+  border-radius: 5px;
+  border: 1px solid var(--border-default);
+}
+
+/* Scrollbar thumb (the draggable part) - horizontal */
+.viewport-scrollbar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 40px;
+  height: 10px;
+  background: var(--scrollbar-thumb);
+  border-radius: 5px;
+  cursor: grab;
+  transition: background-color 0.15s ease;
+}
+
+.viewport-scrollbar::-webkit-slider-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+.viewport-scrollbar::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  background: var(--accent-primary);
+}
+
+/* Vertical scrollbar - needs different dimensions */
+.viewport-scrollbar.vertical {
+  width: 10px;
+}
+
+.viewport-scrollbar.vertical::-webkit-slider-runnable-track {
+  width: 10px;
+  height: 100%;
+  background: var(--bg-tertiary);
+  border-radius: 5px;
+  border: 1px solid var(--border-default);
+}
+
+.viewport-scrollbar.vertical::-webkit-slider-thumb {
+  width: 10px;
+  height: 40px;
+  background: var(--scrollbar-thumb);
+  border-radius: 5px;
+}
+
+/* Firefox support */
+.viewport-scrollbar::-moz-range-track {
+  height: 10px;
+  background: var(--bg-tertiary);
+  border-radius: 5px;
+  border: 1px solid var(--border-default);
+}
+
+.viewport-scrollbar::-moz-range-thumb {
+  width: 40px;
+  height: 10px;
+  background: var(--scrollbar-thumb);
+  border-radius: 5px;
+  border: none;
+  cursor: grab;
+}
+
+.viewport-scrollbar::-moz-range-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+.viewport-scrollbar::-moz-range-thumb:active {
+  cursor: grabbing;
+  background: var(--accent-primary);
+}
+
+.viewport-scrollbar.vertical::-moz-range-track {
+  width: 10px;
+  height: 100%;
+}
+
+.viewport-scrollbar.vertical::-moz-range-thumb {
+  width: 10px;
+  height: 40px;
 }

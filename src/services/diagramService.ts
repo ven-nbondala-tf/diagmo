@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Diagram, DiagramNode, DiagramEdge, DiagramVersion } from '@/types'
+import type { Diagram, DiagramNode, DiagramEdge, DiagramVersion, DiagramStatus } from '@/types'
 
 interface CreateDiagramInput {
   name: string
@@ -17,6 +17,16 @@ interface UpdateDiagramInput {
   nodes?: DiagramNode[]
   edges?: DiagramEdge[]
   thumbnail?: string
+  status?: DiagramStatus
+}
+
+export interface SharedUser {
+  id: string
+  userId: string | null
+  email: string | null
+  fullName: string | null
+  avatarUrl: string | null
+  permission: 'view' | 'edit'
 }
 
 function mapDiagramFromDB(row: Record<string, unknown>): Diagram {
@@ -30,6 +40,7 @@ function mapDiagramFromDB(row: Record<string, unknown>): Diagram {
     nodes: (row.nodes as DiagramNode[]) || [],
     edges: (row.edges as DiagramEdge[]) || [],
     thumbnail: row.thumbnail as string | undefined,
+    status: (row.status as DiagramStatus) || 'draft',
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }
@@ -103,6 +114,7 @@ export const diagramService = {
     if (input.nodes !== undefined) updateData.nodes = input.nodes
     if (input.edges !== undefined) updateData.edges = input.edges
     if (input.thumbnail !== undefined) updateData.thumbnail = input.thumbnail
+    if (input.status !== undefined) updateData.status = input.status
 
     const { data, error } = await supabase
       .from('diagrams')
@@ -113,6 +125,10 @@ export const diagramService = {
 
     if (error) throw error
     return mapDiagramFromDB(data)
+  },
+
+  async updateStatus(id: string, status: DiagramStatus): Promise<Diagram> {
+    return this.update(id, { status })
   },
 
   async delete(id: string): Promise<void> {
@@ -272,5 +288,85 @@ export const diagramService = {
       nodes: version.nodes,
       edges: version.edges,
     })
+  },
+
+  async getSharedUsers(diagramId: string): Promise<SharedUser[]> {
+    // Fetch shares with profile info via join
+    const { data, error } = await supabase
+      .from('diagram_shares')
+      .select(`
+        id,
+        shared_with_user_id,
+        shared_with_email,
+        permission,
+        profiles:shared_with_user_id (
+          full_name,
+          avatar_url
+        )
+      `)
+      .eq('diagram_id', diagramId)
+
+    if (error) {
+      console.warn('Error fetching shared users:', error)
+      return []
+    }
+
+    return (data || []).map((share) => {
+      // Supabase returns profile as object or array depending on join
+      const profiles = share.profiles as { full_name: string | null; avatar_url: string | null } | { full_name: string | null; avatar_url: string | null }[] | null
+      const profile = Array.isArray(profiles) ? profiles[0] : profiles
+      return {
+        id: share.id as string,
+        userId: share.shared_with_user_id as string | null,
+        email: share.shared_with_email as string | null,
+        fullName: profile?.full_name || null,
+        avatarUrl: profile?.avatar_url || null,
+        permission: share.permission as 'view' | 'edit',
+      }
+    })
+  },
+
+  async getSharedUsersForMultiple(diagramIds: string[]): Promise<Record<string, SharedUser[]>> {
+    if (diagramIds.length === 0) return {}
+
+    const { data, error } = await supabase
+      .from('diagram_shares')
+      .select(`
+        id,
+        diagram_id,
+        shared_with_user_id,
+        shared_with_email,
+        permission,
+        profiles:shared_with_user_id (
+          full_name,
+          avatar_url
+        )
+      `)
+      .in('diagram_id', diagramIds)
+
+    if (error) {
+      console.warn('Error fetching shared users for multiple diagrams:', error)
+      return {}
+    }
+
+    const result: Record<string, SharedUser[]> = {}
+    for (const share of data || []) {
+      const diagramId = share.diagram_id as string
+      if (!result[diagramId]) {
+        result[diagramId] = []
+      }
+      // Supabase returns profile as object or array depending on join
+      const profiles = share.profiles as { full_name: string | null; avatar_url: string | null } | { full_name: string | null; avatar_url: string | null }[] | null
+      const profile = Array.isArray(profiles) ? profiles[0] : profiles
+      result[diagramId].push({
+        id: share.id as string,
+        userId: share.shared_with_user_id as string | null,
+        email: share.shared_with_email as string | null,
+        fullName: profile?.full_name || null,
+        avatarUrl: profile?.avatar_url || null,
+        permission: share.permission as 'view' | 'edit',
+      })
+    }
+    return result
   },
 }

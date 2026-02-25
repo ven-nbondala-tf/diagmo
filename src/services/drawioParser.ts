@@ -191,7 +191,7 @@ export function parseDrawio(input: string): ParseResult {
       const diagramEl = xmlDoc.querySelector('diagram')
       if (diagramEl) {
         // Try to parse the diagram content
-        let diagramContent = diagramEl.textContent || ''
+        const diagramContent = diagramEl.textContent || ''
 
         // If it looks like base64, try to decompress
         if (diagramContent && !diagramContent.includes('<')) {

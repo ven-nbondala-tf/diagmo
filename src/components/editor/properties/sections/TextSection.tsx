@@ -68,7 +68,7 @@ export function TextSection({ style, data, selectedNode, multipleSelected, updat
               <Label className="text-xs text-muted-foreground mb-1 block">Color</Label>
               <input
                 type="color"
-                value={style.textColor || '#1f2937'}
+                value={style.textColor || '#ededed'}
                 onChange={(e) => updateAllSelectedStyles({ textColor: e.target.value })}
                 className="w-7 h-7 rounded border cursor-pointer"
               />

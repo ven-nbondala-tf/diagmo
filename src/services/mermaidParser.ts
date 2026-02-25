@@ -15,14 +15,19 @@ interface ParseResult {
   errors: string[]
 }
 
+// Mermaid-like color scheme - soft purple/lavender
+const DEFAULT_SHAPE_COLOR = '#ddd6fe' // violet-200 - matches Mermaid style
+const DEFAULT_BORDER_COLOR = '#a78bfa' // violet-400
+const DEFAULT_TEXT_COLOR = '' // Empty = use CSS variable for dark mode support
+
 // Node style presets for different subgraph contexts
 const subgraphColors = [
-  '#e0f2fe', // sky-100
-  '#fef3c7', // amber-100
-  '#d1fae5', // emerald-100
-  '#ede9fe', // violet-100
-  '#fce7f3', // pink-100
-  '#fed7aa', // orange-200
+  '#c4b5fd', // violet-300
+  '#a5b4fc', // indigo-300
+  '#93c5fd', // blue-300
+  '#86efac', // green-300
+  '#fcd34d', // amber-300
+  '#fca5a5', // red-300
 ]
 
 interface MermaidNode {
@@ -313,66 +318,102 @@ function layoutAndConvert(
   subgraphs: Subgraph[],
   direction: 'TB' | 'LR' | 'BT' | 'RL'
 ): { nodes: DiagramNode[]; edges: DiagramEdge[] } {
-  // Simple layout algorithm based on topological sort and layering
-  const nodeWidth = 140
-  const nodeHeight = 60
+  // Layout constants
+  const nodeWidth = 120
+  const nodeHeight = 50
   const horizontalGap = 80
-  const verticalGap = 80
+  const verticalGap = 100
 
-  // Build adjacency lists
-  const outgoing = new Map<string, string[]>()
+  // Build adjacency lists - store edges with labels for ordering
+  const outgoing = new Map<string, Array<{ target: string; label?: string }>>()
   const incoming = new Map<string, string[]>()
   const nodeIds = mermaidNodes.map((n) => n.id)
+  const nodeIdSet = new Set(nodeIds)
 
   for (const id of nodeIds) {
     outgoing.set(id, [])
     incoming.set(id, [])
   }
 
+  // Store edges with their labels for sibling ordering
   for (const edge of mermaidEdges) {
-    outgoing.get(edge.source)?.push(edge.target)
-    incoming.get(edge.target)?.push(edge.source)
+    if (nodeIdSet.has(edge.source) && nodeIdSet.has(edge.target)) {
+      outgoing.get(edge.source)?.push({ target: edge.target, label: edge.label })
+      incoming.get(edge.target)?.push(edge.source)
+    }
   }
 
-  // Assign layers using longest path method
-  const layers = new Map<string, number>()
+  // Detect back-edges using DFS (more accurate cycle detection)
   const visited = new Set<string>()
+  const inStack = new Set<string>()
+  const backEdges = new Set<string>()
 
-  function assignLayer(nodeId: string): number {
-    if (layers.has(nodeId)) return layers.get(nodeId)!
+  function detectBackEdges(nodeId: string) {
+    visited.add(nodeId)
+    inStack.add(nodeId)
 
-    const sources = incoming.get(nodeId) || []
-    let maxParentLayer = -1
-
-    for (const source of sources) {
-      if (!visited.has(source)) {
-        visited.add(source)
-        const parentLayer = assignLayer(source)
-        maxParentLayer = Math.max(maxParentLayer, parentLayer)
+    for (const { target } of outgoing.get(nodeId) || []) {
+      if (!visited.has(target)) {
+        detectBackEdges(target)
+      } else if (inStack.has(target)) {
+        // This is a back-edge (creates a cycle)
+        backEdges.add(`${nodeId}->${target}`)
       }
     }
 
-    const layer = maxParentLayer + 1
-    layers.set(nodeId, layer)
-    return layer
+    inStack.delete(nodeId)
   }
 
-  // Start from nodes with no incoming edges
-  const roots = nodeIds.filter((id) => (incoming.get(id)?.length || 0) === 0)
-  if (roots.length === 0 && nodeIds.length > 0 && nodeIds[0]) {
-    // Cyclic graph - just start from first node
+  // Run DFS from all unvisited nodes to detect back-edges
+  for (const id of nodeIds) {
+    if (!visited.has(id)) {
+      detectBackEdges(id)
+    }
+  }
+
+  // Find root nodes (no incoming edges except from back-edges)
+  const roots: string[] = []
+  for (const id of nodeIds) {
+    const incomingNodes = incoming.get(id) || []
+    const hasRealIncoming = incomingNodes.some(source => !backEdges.has(`${source}->${id}`))
+    if (!hasRealIncoming) {
+      roots.push(id)
+    }
+  }
+
+  // If no roots, use first node
+  if (roots.length === 0 && nodeIds[0]) {
     roots.push(nodeIds[0])
   }
 
-  for (const root of roots) {
-    visited.add(root)
-    assignLayer(root)
+  // Assign layers using BFS (ignoring back-edges)
+  const layers = new Map<string, number>()
+  const queue: string[] = [...roots]
+  roots.forEach(r => layers.set(r, 0))
+
+  while (queue.length > 0) {
+    const current = queue.shift()!
+    const currentLayer = layers.get(current) ?? 0
+
+    for (const { target } of outgoing.get(current) || []) {
+      // Skip back-edges
+      if (backEdges.has(`${current}->${target}`)) continue
+
+      const existingLayer = layers.get(target)
+      const newLayer = currentLayer + 1
+
+      // Only update if not assigned or if this path gives a deeper layer
+      if (existingLayer === undefined || newLayer > existingLayer) {
+        layers.set(target, newLayer)
+        queue.push(target)
+      }
+    }
   }
 
-  // Ensure all nodes are assigned a layer
+  // Ensure all nodes have a layer
   for (const id of nodeIds) {
     if (!layers.has(id)) {
-      assignLayer(id)
+      layers.set(id, 0)
     }
   }
 
@@ -385,24 +426,80 @@ function layoutAndConvert(
     layerGroups.get(layer)!.push(nodeId)
   }
 
+  // CRITICAL: Order nodes within each layer based on parent's edge order
+  // This ensures "Yes" branch goes left and "No" branch goes right
+  for (const [layer, nodesInLayer] of layerGroups) {
+    if (layer === 0) continue // Root nodes don't need reordering
+
+    // Build ordering based on parent edges
+    const nodeOrder = new Map<string, number>()
+
+    for (const nodeId of nodesInLayer) {
+      // Find the parent(s) of this node
+      const parents = incoming.get(nodeId) || []
+
+      for (const parent of parents) {
+        if (backEdges.has(`${parent}->${nodeId}`)) continue
+
+        // Find this node's position in parent's outgoing edges
+        const parentEdges = outgoing.get(parent) || []
+        const edgeIndex = parentEdges.findIndex(e => e.target === nodeId)
+
+        if (edgeIndex >= 0) {
+          // Use parent's layer * 1000 + edge index for stable sorting
+          const parentLayer = layers.get(parent) ?? 0
+          const orderValue = parentLayer * 1000 + edgeIndex
+
+          // Keep the minimum order value (earliest parent, earliest edge)
+          if (!nodeOrder.has(nodeId) || orderValue < nodeOrder.get(nodeId)!) {
+            nodeOrder.set(nodeId, orderValue)
+          }
+        }
+      }
+    }
+
+    // Sort nodes in this layer by their order value
+    nodesInLayer.sort((a, b) => {
+      const orderA = nodeOrder.get(a) ?? Infinity
+      const orderB = nodeOrder.get(b) ?? Infinity
+      return orderA - orderB
+    })
+  }
+
   // Calculate positions
   const positions = new Map<string, { x: number; y: number }>()
-  const maxLayer = Math.max(...layers.values(), 0)
+  const sortedLayers = Array.from(layerGroups.entries()).sort((a, b) => a[0] - b[0])
+  const maxNodesInLayer = Math.max(...Array.from(layerGroups.values()).map(n => n.length), 1)
+  const totalWidth = maxNodesInLayer * (nodeWidth + horizontalGap)
 
-  for (const [layer, nodesInLayer] of layerGroups) {
+  for (const [layer, nodesInLayer] of sortedLayers) {
+    const layerWidth = nodesInLayer.length * (nodeWidth + horizontalGap)
+    const centerOffset = (totalWidth - layerWidth) / 2
+
     nodesInLayer.forEach((nodeId, index) => {
       let x: number, y: number
 
-      const layerPosition = direction === 'BT' || direction === 'RL' ? maxLayer - layer : layer
-
       if (direction === 'TB' || direction === 'BT') {
-        // Top-bottom or bottom-top
-        x = index * (nodeWidth + horizontalGap) + 100
-        y = layerPosition * (nodeHeight + verticalGap) + 100
+        x = centerOffset + index * (nodeWidth + horizontalGap) + 150
+        y = layer * (nodeHeight + verticalGap) + 100
+
+        if (direction === 'BT') {
+          const maxLayer = Math.max(...layers.values())
+          y = (maxLayer - layer) * (nodeHeight + verticalGap) + 100
+        }
       } else {
-        // Left-right or right-left
-        x = layerPosition * (nodeWidth + horizontalGap) + 100
-        y = index * (nodeHeight + verticalGap) + 100
+        // LR or RL
+        const layerHeight = nodesInLayer.length * (nodeHeight + verticalGap)
+        const totalHeight = maxNodesInLayer * (nodeHeight + verticalGap)
+        const vCenterOffset = (totalHeight - layerHeight) / 2
+
+        x = layer * (nodeWidth + horizontalGap) + 150
+        y = vCenterOffset + index * (nodeHeight + verticalGap) + 100
+
+        if (direction === 'RL') {
+          const maxLayer = Math.max(...layers.values())
+          x = (maxLayer - layer) * (nodeWidth + horizontalGap) + 150
+        }
       }
 
       positions.set(nodeId, { x, y })
@@ -412,8 +509,7 @@ function layoutAndConvert(
   // Create subgraph color mapping
   const subgraphColorMap = new Map<string, string>()
   subgraphs.forEach((sg, i) => {
-    const color = subgraphColors[i % subgraphColors.length] || '#f1f5f9'
-    subgraphColorMap.set(sg.id, color)
+    subgraphColorMap.set(sg.id, subgraphColors[i % subgraphColors.length] || '#f1f5f9')
   })
 
   // Convert to Diagmo nodes
@@ -421,18 +517,48 @@ function layoutAndConvert(
     const pos = positions.get(mNode.id) || { x: 100, y: 100 }
     const bgColor = mNode.subgraph
       ? subgraphColorMap.get(mNode.subgraph)
-      : undefined
+      : DEFAULT_SHAPE_COLOR
+
+    // Calculate width based on label length for better fit
+    const labelLength = mNode.label.length
+
+    // Adjust size based on shape type and label
+    let width = nodeWidth
+    let height = nodeHeight
+
+    if (mNode.shape === 'diamond' || mNode.shape === 'decision') {
+      // Diamonds should be close to square (Mermaid style)
+      // Calculate size based on label, ensuring enough space for text inside diamond
+      width = Math.max(100, labelLength * 9 + 50)
+      height = width  // Keep 1:1 aspect ratio like Mermaid
+    } else if (mNode.shape === 'circle') {
+      // Circles should be square-ish, sized to fit text
+      const size = Math.max(70, labelLength * 7 + 30)
+      width = size
+      height = size
+    } else if (mNode.shape === 'rounded-rectangle') {
+      width = Math.max(100, labelLength * 9 + 30)
+    } else {
+      // Default rectangle - size based on label
+      width = Math.max(100, Math.min(200, labelLength * 10 + 40))
+    }
 
     const style: NodeStyle = {
       ...DEFAULT_NODE_STYLE,
-      ...(bgColor ? { backgroundColor: bgColor } : {}),
+      backgroundColor: bgColor,
+      textColor: DEFAULT_TEXT_COLOR,
+      borderColor: DEFAULT_BORDER_COLOR,
+      borderWidth: 2,
+      borderRadius: mNode.shape === 'rounded-rectangle' ? 12 : 4,
+      // Diamond shapes need more padding to keep text in center visible area
+      textPadding: (mNode.shape === 'diamond' || mNode.shape === 'decision') ? 20 : 8,
     }
 
     return {
       id: mNode.id,
       type: 'custom',
       position: pos,
-      style: { width: nodeWidth, height: nodeHeight },
+      style: { width, height },
       data: {
         label: mNode.label,
         type: mNode.shape,
@@ -441,70 +567,93 @@ function layoutAndConvert(
     }
   })
 
-  // Helper function to determine best connection handles based on node positions and direction
+  // Helper to determine edge handles
   const getEdgeHandles = (
     sourcePos: { x: number; y: number },
     targetPos: { x: number; y: number },
-    graphDirection: 'TB' | 'LR' | 'BT' | 'RL'
+    isBackEdge: boolean
   ): { sourceHandle: string; targetHandle: string } => {
+    if (isBackEdge) {
+      // Back-edges route around the OUTSIDE to avoid crossing the main diagram
+      if (direction === 'TB' || direction === 'BT') {
+        // Vertical layout: route via the side where the source node is
+        // If source is to the RIGHT of target, route via RIGHT side
+        // If source is to the LEFT of target, route via LEFT side
+        if (sourcePos.x > targetPos.x) {
+          return { sourceHandle: 'right', targetHandle: 'right' }
+        } else if (sourcePos.x < targetPos.x) {
+          return { sourceHandle: 'left', targetHandle: 'left' }
+        } else {
+          // Same x position - default to right
+          return { sourceHandle: 'right', targetHandle: 'right' }
+        }
+      } else {
+        // Horizontal layout: route via bottom
+        return { sourceHandle: 'bottom', targetHandle: 'bottom' }
+      }
+    }
+
     const dx = targetPos.x - sourcePos.x
     const dy = targetPos.y - sourcePos.y
 
-    // For left-to-right graphs, prefer horizontal connections
-    if (graphDirection === 'LR') {
-      if (dx > 0) return { sourceHandle: 'right', targetHandle: 'left' }
-      if (dx < 0) return { sourceHandle: 'left', targetHandle: 'right' }
-      // Same column - use vertical
-      if (dy > 0) return { sourceHandle: 'bottom', targetHandle: 'top' }
-      return { sourceHandle: 'top', targetHandle: 'bottom' }
-    }
-
-    // For right-to-left graphs
-    if (graphDirection === 'RL') {
-      if (dx < 0) return { sourceHandle: 'left', targetHandle: 'right' }
-      if (dx > 0) return { sourceHandle: 'right', targetHandle: 'left' }
-      if (dy > 0) return { sourceHandle: 'bottom', targetHandle: 'top' }
-      return { sourceHandle: 'top', targetHandle: 'bottom' }
-    }
-
-    // For top-to-bottom graphs, prefer vertical connections
-    if (graphDirection === 'TB') {
-      if (dy > 0) return { sourceHandle: 'bottom', targetHandle: 'top' }
-      if (dy < 0) return { sourceHandle: 'top', targetHandle: 'bottom' }
-      // Same row - use horizontal
-      if (dx > 0) return { sourceHandle: 'right', targetHandle: 'left' }
-      return { sourceHandle: 'left', targetHandle: 'right' }
-    }
-
-    // For bottom-to-top graphs
-    if (graphDirection === 'BT') {
-      if (dy < 0) return { sourceHandle: 'top', targetHandle: 'bottom' }
-      if (dy > 0) return { sourceHandle: 'bottom', targetHandle: 'top' }
-      if (dx > 0) return { sourceHandle: 'right', targetHandle: 'left' }
-      return { sourceHandle: 'left', targetHandle: 'right' }
-    }
-
-    // Default: use horizontal if dx is larger, vertical if dy is larger
-    if (Math.abs(dx) > Math.abs(dy)) {
-      return dx > 0
-        ? { sourceHandle: 'right', targetHandle: 'left' }
-        : { sourceHandle: 'left', targetHandle: 'right' }
+    if (direction === 'TB' || direction === 'BT') {
+      // Vertical layout (Top-Down or Bottom-Top)
+      if (dy > 0) {
+        // Target is BELOW source
+        if (Math.abs(dx) > 30) {
+          // Target is also to the side - use left/right handles for branching
+          // This creates Mermaid-style decision diamond branches
+          return dx > 0
+            ? { sourceHandle: 'right', targetHandle: 'top' }
+            : { sourceHandle: 'left', targetHandle: 'top' }
+        } else {
+          // Target is directly below - use bottom handle
+          return { sourceHandle: 'bottom', targetHandle: 'top' }
+        }
+      } else {
+        // Target is ABOVE source
+        if (Math.abs(dx) > 30) {
+          return dx > 0
+            ? { sourceHandle: 'right', targetHandle: 'bottom' }
+            : { sourceHandle: 'left', targetHandle: 'bottom' }
+        } else {
+          return { sourceHandle: 'top', targetHandle: 'bottom' }
+        }
+      }
     } else {
-      return dy > 0
-        ? { sourceHandle: 'bottom', targetHandle: 'top' }
-        : { sourceHandle: 'top', targetHandle: 'bottom' }
+      // Horizontal layout (LR/RL)
+      if (dx > 0) {
+        // Target is to the RIGHT
+        if (Math.abs(dy) > 30) {
+          return dy > 0
+            ? { sourceHandle: 'bottom', targetHandle: 'left' }
+            : { sourceHandle: 'top', targetHandle: 'left' }
+        } else {
+          return { sourceHandle: 'right', targetHandle: 'left' }
+        }
+      } else {
+        // Target is to the LEFT
+        if (Math.abs(dy) > 30) {
+          return dy > 0
+            ? { sourceHandle: 'bottom', targetHandle: 'right' }
+            : { sourceHandle: 'top', targetHandle: 'right' }
+        } else {
+          return { sourceHandle: 'left', targetHandle: 'right' }
+        }
+      }
     }
   }
 
   // Convert to Diagmo edges
-  const edges: DiagramEdge[] = mermaidEdges.map((mEdge) => {
-    const strokeWidth = mEdge.style === 'thick' ? 3 : 1.5
-    const strokeDasharray = mEdge.style === 'dotted' ? '5,5' : undefined
+  const edgeColor = '#64748b'
 
-    // Get positions to determine best handles
+  const edges: DiagramEdge[] = mermaidEdges.map((mEdge) => {
     const sourcePos = positions.get(mEdge.source) || { x: 0, y: 0 }
     const targetPos = positions.get(mEdge.target) || { x: 0, y: 0 }
-    const handles = getEdgeHandles(sourcePos, targetPos, direction)
+    const isBackEdge = backEdges.has(`${mEdge.source}->${mEdge.target}`)
+
+    const handles = getEdgeHandles(sourcePos, targetPos, isBackEdge)
+    const strokeWidth = mEdge.style === 'thick' ? 3 : 2
 
     return {
       id: nanoid(),
@@ -512,30 +661,25 @@ function layoutAndConvert(
       target: mEdge.target,
       sourceHandle: handles.sourceHandle,
       targetHandle: handles.targetHandle,
-      type: 'smoothstep',
+      type: 'labeled',
       markerEnd: mEdge.hasArrow
-        ? {
-            type: 'arrowclosed' as const,
-            width: 8,
-            height: 8,
-            color: '#64748b',
-          }
+        ? { type: 'arrowclosed' as const, width: 10, height: 10, color: edgeColor }
         : undefined,
       markerStart: mEdge.bidirectional
-        ? {
-            type: 'arrowclosed' as const,
-            width: 8,
-            height: 8,
-            color: '#64748b',
-          }
+        ? { type: 'arrowclosed' as const, width: 10, height: 10, color: edgeColor }
         : undefined,
       style: {
         strokeWidth,
-        stroke: '#64748b',
-        strokeDasharray,
+        stroke: edgeColor,
+        strokeDasharray: mEdge.style === 'dotted' ? '5,5' : undefined,
       },
       data: {
-        label: mEdge.label,
+        label: mEdge.label || '',
+        style: {
+          strokeColor: edgeColor,
+          strokeWidth,
+          lineType: mEdge.style === 'dotted' ? 'dashed' : 'solid',
+        },
       },
     }
   })

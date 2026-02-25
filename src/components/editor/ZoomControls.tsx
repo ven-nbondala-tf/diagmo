@@ -9,10 +9,14 @@ import {
   Label,
   Switch,
 } from '@/components/ui'
-import { ZoomIn, ZoomOut, Maximize2, MousePointer2, Hand, Grid3X3 } from 'lucide-react'
-import { DiagramStats } from './DiagramStats'
+import { ZoomIn, ZoomOut, Maximize2, MousePointer2, Hand, Grid3X3, Map } from 'lucide-react'
 
-export function ZoomControls() {
+interface ZoomControlsProps {
+  showMinimap?: boolean
+  onToggleMinimap?: () => void
+}
+
+export function ZoomControls({ showMinimap, onToggleMinimap }: ZoomControlsProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
   const zoom = useEditorStore((state) => state.zoom)
   const interactionMode = useEditorStore((state) => state.interactionMode)
@@ -27,95 +31,56 @@ export function ZoomControls() {
   const toggleSnapToGrid = useEditorStore((state) => state.toggleSnapToGrid)
 
   return (
-    <div className="absolute bottom-4 left-4 flex items-center gap-1 backdrop-blur-md bg-supabase-bg-secondary/95 shadow-lg ring-1 ring-supabase-border rounded-xl p-1 z-10">
-      {/* Mode toggle */}
+    <div className="absolute bottom-3 left-[200px] flex items-center gap-1 text-supabase-text-muted z-10">
+      {/* Mode toggle - subtle */}
       <Button
-        variant={interactionMode === 'select' ? 'secondary' : 'ghost'}
+        variant="ghost"
         size="icon"
-        className={`h-8 w-8 ${interactionMode === 'select' ? 'bg-supabase-green-muted text-supabase-green' : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'}`}
+        className={`h-7 w-7 rounded ${interactionMode === 'select' ? 'text-supabase-text-primary bg-supabase-bg-tertiary' : 'hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary/50'}`}
         onClick={() => setInteractionMode('select')}
         title="Select Mode (V)"
       >
-        <MousePointer2 className="h-4 w-4" />
+        <MousePointer2 className="h-3.5 w-3.5" />
       </Button>
 
       <Button
-        variant={interactionMode === 'pan' ? 'secondary' : 'ghost'}
+        variant="ghost"
         size="icon"
-        className={`h-8 w-8 ${interactionMode === 'pan' ? 'bg-supabase-green-muted text-supabase-green' : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'}`}
+        className={`h-7 w-7 rounded ${interactionMode === 'pan' ? 'text-supabase-text-primary bg-supabase-bg-tertiary' : 'hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary/50'}`}
         onClick={() => setInteractionMode('pan')}
         title="Pan Mode (H)"
       >
-        <Hand className="h-4 w-4" />
+        <Hand className="h-3.5 w-3.5" />
       </Button>
 
-      <div className="w-px h-4 bg-supabase-border mx-1" />
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
-        onClick={() => zoomOut()}
-        title="Zoom Out"
-      >
-        <ZoomOut className="h-4 w-4" />
-      </Button>
-
-      <span className="text-xs text-supabase-text-muted w-12 text-center">
-        {Math.round(zoom * 100)}%
-      </span>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
-        onClick={() => zoomIn()}
-        title="Zoom In"
-      >
-        <ZoomIn className="h-4 w-4" />
-      </Button>
-
-      <div className="w-px h-4 bg-supabase-border mx-1" />
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
-        onClick={() => fitView()}
-        title="Fit View"
-      >
-        <Maximize2 className="h-4 w-4" />
-      </Button>
-
-      <div className="w-px h-4 bg-supabase-border mx-1" />
+      <div className="w-px h-4 bg-supabase-border/50 mx-1" />
 
       {/* Grid Settings */}
       <Popover>
         <PopoverTrigger asChild>
           <Button
-            variant={gridEnabled ? 'secondary' : 'ghost'}
+            variant="ghost"
             size="icon"
-            className={`h-8 w-8 ${gridEnabled ? 'bg-supabase-green-muted text-supabase-green' : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'}`}
+            className={`h-7 w-7 rounded ${gridEnabled ? 'text-supabase-text-primary bg-supabase-bg-tertiary' : 'hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary/50'}`}
             title="Grid Settings"
           >
-            <Grid3X3 className="h-4 w-4" />
+            <Grid3X3 className="h-3.5 w-3.5" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
           side="top"
-          align="start"
-          className="w-64 p-4"
+          align="end"
+          className="w-56 p-3"
           style={{
             backgroundColor: 'var(--bg-secondary)',
             borderColor: 'var(--border-default)',
           }}
         >
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm text-supabase-text-primary">Grid Settings</h4>
+          <div className="space-y-3">
+            <h4 className="font-medium text-xs text-supabase-text-primary">Grid Settings</h4>
 
-            {/* Grid Toggle */}
             <div className="flex items-center justify-between">
-              <Label htmlFor="grid-toggle" className="text-sm text-supabase-text-secondary">
+              <Label htmlFor="grid-toggle" className="text-xs text-supabase-text-secondary">
                 Show Grid
               </Label>
               <Switch
@@ -125,9 +90,8 @@ export function ZoomControls() {
               />
             </div>
 
-            {/* Snap to Grid Toggle */}
             <div className="flex items-center justify-between">
-              <Label htmlFor="snap-toggle" className="text-sm text-supabase-text-secondary">
+              <Label htmlFor="snap-toggle" className="text-xs text-supabase-text-secondary">
                 Snap to Grid
               </Label>
               <Switch
@@ -137,10 +101,9 @@ export function ZoomControls() {
               />
             </div>
 
-            {/* Grid Size Slider */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <Label className="text-sm text-supabase-text-secondary">Grid Size</Label>
+                <Label className="text-xs text-supabase-text-secondary">Size</Label>
                 <span className="text-xs text-supabase-text-muted">{gridSize}px</span>
               </div>
               <Slider
@@ -152,29 +115,61 @@ export function ZoomControls() {
                 className="w-full"
               />
             </div>
-
-            {/* Line Width Slider */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm text-supabase-text-secondary">Line Width</Label>
-                <span className="text-xs text-supabase-text-muted">{gridLineWidth.toFixed(1)}</span>
-              </div>
-              <Slider
-                value={[gridLineWidth]}
-                onValueChange={(values) => values[0] !== undefined && setGridLineWidth(values[0])}
-                min={0.5}
-                max={3}
-                step={0.5}
-                className="w-full"
-              />
-            </div>
           </div>
         </PopoverContent>
       </Popover>
 
-      <div className="w-px h-4 bg-supabase-border mx-1" />
+      <div className="w-px h-4 bg-supabase-border/50 mx-1" />
 
-      <DiagramStats />
+      {/* Zoom controls - Lucidchart style */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 rounded hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary/50"
+        onClick={() => zoomOut()}
+        title="Zoom Out"
+      >
+        <ZoomOut className="h-3.5 w-3.5" />
+      </Button>
+
+      <span className="text-xs w-10 text-center font-medium">
+        {Math.round(zoom * 100)}%
+      </span>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 rounded hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary/50"
+        onClick={() => zoomIn()}
+        title="Zoom In"
+      >
+        <ZoomIn className="h-3.5 w-3.5" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 rounded hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary/50"
+        onClick={() => fitView()}
+        title="Fit to Screen"
+      >
+        <Maximize2 className="h-3.5 w-3.5" />
+      </Button>
+
+      {onToggleMinimap && (
+        <>
+          <div className="w-px h-4 bg-supabase-border/50 mx-1" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-7 w-7 rounded ${showMinimap ? 'text-supabase-text-primary bg-supabase-bg-tertiary' : 'hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary/50'}`}
+            onClick={onToggleMinimap}
+            title="Toggle Minimap"
+          >
+            <Map className="h-3.5 w-3.5" />
+          </Button>
+        </>
+      )}
     </div>
   )
 }

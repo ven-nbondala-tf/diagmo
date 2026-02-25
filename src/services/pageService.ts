@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { DiagramPage, DiagramNode, DiagramEdge } from '@/types'
+import type { DiagramPage, DiagramNode, DiagramEdge, DrawingStroke } from '@/types'
 
 interface PageRow {
   id: string
@@ -8,6 +8,7 @@ interface PageRow {
   page_order: number
   nodes: unknown
   edges: unknown
+  drawing_strokes?: unknown
   created_at: string
   updated_at: string
 }
@@ -20,6 +21,7 @@ function mapRowToPage(row: PageRow): DiagramPage {
     pageOrder: row.page_order,
     nodes: (row.nodes as DiagramNode[]) || [],
     edges: (row.edges as DiagramEdge[]) || [],
+    drawingStrokes: (row.drawing_strokes as DrawingStroke[]) || [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -67,16 +69,22 @@ export const pageService = {
   },
 
   /**
-   * Update a page's content (nodes and edges)
+   * Update a page's content (nodes, edges, and drawing strokes)
    */
   async updatePageContent(
     pageId: string,
     nodes: DiagramNode[],
-    edges: DiagramEdge[]
+    edges: DiagramEdge[],
+    drawingStrokes?: DrawingStroke[]
   ): Promise<DiagramPage> {
+    const updateData: Record<string, unknown> = { nodes, edges }
+    if (drawingStrokes !== undefined) {
+      updateData.drawing_strokes = drawingStrokes
+    }
+
     const { data, error } = await supabase
       .from('diagram_pages')
-      .update({ nodes, edges })
+      .update(updateData)
       .eq('id', pageId)
       .select()
       .single()
@@ -128,7 +136,7 @@ export const pageService = {
   },
 
   /**
-   * Duplicate a page
+   * Duplicate a page (including drawing strokes)
    */
   async duplicatePage(page: DiagramPage): Promise<DiagramPage> {
     // Get the next order
@@ -141,12 +149,21 @@ export const pageService = {
 
     const nextOrder = existing && existing[0] ? (existing[0].page_order as number) + 1 : 0
 
-    return this.createPage(
-      page.diagramId,
-      `${page.name} (Copy)`,
-      nextOrder,
-      page.nodes,
-      page.edges
-    )
+    // Create page with drawing strokes
+    const { data, error } = await supabase
+      .from('diagram_pages')
+      .insert({
+        diagram_id: page.diagramId,
+        name: `${page.name} (Copy)`,
+        page_order: nextOrder,
+        nodes: page.nodes,
+        edges: page.edges,
+        drawing_strokes: page.drawingStrokes || [],
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return mapRowToPage(data)
   },
 }

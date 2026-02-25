@@ -23,7 +23,6 @@ import {
   ChevronsUpDown,
   ChevronsDownUp,
   Route,
-  Waypoints,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import type { DiagramEdge } from '@/types'
@@ -137,8 +136,8 @@ export function EdgeProperties({ selectedEdge, updateEdge, deleteSelected, toggl
   const markerSize = (selectedEdge.markerEnd as { width?: number })?.width || 12
 
   return (
-    <div className="w-72 border-l bg-background flex flex-col h-full overflow-hidden">
-      <div className="p-3 border-b bg-muted/30">
+    <div className="w-72 flex-shrink-0 border-l border-supabase-border bg-supabase-bg flex flex-col h-full overflow-hidden">
+      <div className="p-3 border-b border-supabase-border bg-supabase-bg-secondary">
         <div className="flex items-center justify-between mb-1">
           <h2 className="font-semibold text-sm">Connector</h2>
           <div className="flex items-center gap-0.5">
@@ -187,50 +186,6 @@ export function EdgeProperties({ selectedEdge, updateEdge, deleteSelected, toggl
               <p className="text-[10px] text-muted-foreground">
                 {ROUTE_TYPES.find(r => r.value === edgeType)?.description || 'Select a routing style'}
               </p>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* WAYPOINTS */}
-          <AccordionItem value="waypoints" className="border-b">
-            <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline hover:bg-accent/50">
-              <span className="flex items-center gap-2"><Waypoints className="w-4 h-4" />Waypoints</span>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4 space-y-3">
-              {(() => {
-                const waypoints = (selectedEdge.data as { waypoints?: Array<{ id: string; x: number; y: number }> })?.waypoints || []
-                return (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {waypoints.length === 0 ? 'No waypoints' : `${waypoints.length} waypoint${waypoints.length !== 1 ? 's' : ''}`}
-                      </span>
-                      {waypoints.length > 0 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-6 text-xs"
-                          onClick={() => updateEdge(selectedEdge.id, {
-                            data: {
-                              ...selectedEdge.data,
-                              waypoints: [],
-                              waypointOffset: undefined
-                            }
-                          })}
-                        >
-                          Clear All
-                        </Button>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      <strong>Double-click</strong> on the connector to add a waypoint.
-                      <br />
-                      <strong>Drag</strong> waypoint handles to reposition.
-                      <br />
-                      <strong>Right-click</strong> or <strong>Delete</strong> to remove a waypoint.
-                    </p>
-                  </>
-                )
-              })()}
             </AccordionContent>
           </AccordionItem>
 
@@ -416,7 +371,7 @@ export function EdgeProperties({ selectedEdge, updateEdge, deleteSelected, toggl
                       {FONT_FAMILIES.map((font) => (<option key={font.value} value={font.value}>{font.label}</option>))}
                     </select>
                     <Input type="number" value={(selectedEdge.data as { style?: { labelFontSize?: number } })?.style?.labelFontSize || 12} onChange={(e) => updateEdge(selectedEdge.id, { data: { ...selectedEdge.data, style: { ...(selectedEdge.data as { style?: object })?.style, labelFontSize: parseInt(e.target.value) || 12 } } })} min={8} max={24} className="h-7 w-12 text-xs text-center" />
-                    <input type="color" value={(selectedEdge.data as { style?: { labelColor?: string } })?.style?.labelColor || '#374151'} onChange={(e) => updateEdge(selectedEdge.id, { data: { ...selectedEdge.data, style: { ...(selectedEdge.data as { style?: object })?.style, labelColor: e.target.value } } })} className="w-7 h-7 rounded border cursor-pointer" />
+                    <input type="color" value={(selectedEdge.data as { style?: { labelColor?: string } })?.style?.labelColor || '#ededed'} onChange={(e) => updateEdge(selectedEdge.id, { data: { ...selectedEdge.data, style: { ...(selectedEdge.data as { style?: object })?.style, labelColor: e.target.value } } })} className="w-7 h-7 rounded border cursor-pointer" />
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex gap-0.5 border rounded p-0.5">

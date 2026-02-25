@@ -305,9 +305,9 @@ export function ConditionalFormattingPanel() {
   )
 
   return (
-    <div className="w-80 border-l bg-background flex flex-col h-full">
+    <div className="w-80 flex-shrink-0 border-l border-supabase-border bg-supabase-bg flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-supabase-border">
         <div className="flex items-center gap-2">
           <Wand2 className="w-4 h-4" />
           <h2 className="font-semibold text-sm">Conditional Formatting</h2>

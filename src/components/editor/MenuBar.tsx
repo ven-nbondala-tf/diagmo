@@ -30,16 +30,19 @@ interface MenuBarProps {
   onSave: () => void
   onExport: (format: 'png' | 'svg' | 'pdf' | 'json') => void
   onExportCode: () => void
+  onGenerateInfraCode: () => void
   onEmbed: () => void
   onAutoLayout: () => void
   onImport: () => void
   onImportMermaid: () => void
   onImportDrawio: () => void
   onImportTerraform: () => void
+  onCompareVersions: () => void
+  onDocumentation: () => void
   saving: boolean
 }
 
-export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout, onImport, onImportMermaid, onImportDrawio, onImportTerraform, saving }: MenuBarProps) {
+export function MenuBar({ onSave, onExport, onExportCode, onGenerateInfraCode, onEmbed, onAutoLayout, onImport, onImportMermaid, onImportDrawio, onImportTerraform, onCompareVersions, onDocumentation, saving }: MenuBarProps) {
   const navigate = useNavigate()
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showHotkeyCustomization, setShowHotkeyCustomization] = useState(false)
@@ -143,6 +146,9 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
                 <MenubarSeparator />
                 <MenubarItem onClick={onExportCode}>
                   Export as Code...
+                </MenubarItem>
+                <MenubarItem onClick={onGenerateInfraCode}>
+                  Generate Infrastructure Code...
                 </MenubarItem>
               </MenubarSubContent>
             </MenubarSub>
@@ -286,6 +292,13 @@ export function MenuBar({ onSave, onExport, onExportCode, onEmbed, onAutoLayout,
             <MenubarItem onClick={togglePresentationMode}>
               Present
               <MenubarShortcut>F5</MenubarShortcut>
+            </MenubarItem>
+            <MenubarSeparator />
+            <MenubarItem onClick={onCompareVersions}>
+              Compare Versions...
+            </MenubarItem>
+            <MenubarItem onClick={onDocumentation}>
+              Generate Documentation...
             </MenubarItem>
           </MenubarContent>
         </MenubarMenu>

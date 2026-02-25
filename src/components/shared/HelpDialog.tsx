@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -6,9 +7,9 @@ import {
   DialogTitle,
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
 } from '@/components/ui'
+import { cn } from '@/utils'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { Keyboard, Lightbulb, BookOpen, ExternalLink } from 'lucide-react'
 
 interface HelpDialogProps {
@@ -104,6 +105,10 @@ const resources = [
 ]
 
 export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
+  const [activeTab, setActiveTab] = useState<'shortcuts' | 'tips' | 'resources'>('shortcuts')
+  const secondaryAccentColor = usePreferencesStore((state) => state.secondaryAccentColor)
+  const secondaryAccentTextColor = usePreferencesStore((state) => state.secondaryAccentTextColor)
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
@@ -114,21 +119,48 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="shortcuts" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="shortcuts" className="gap-1.5">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'shortcuts' | 'tips' | 'resources')} className="flex-1 overflow-hidden flex flex-col">
+          <div className="grid w-full grid-cols-3 bg-supabase-bg-tertiary rounded-lg p-1 gap-1">
+            <button
+              onClick={() => setActiveTab('shortcuts')}
+              className={cn(
+                'flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-all',
+                activeTab === 'shortcuts'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'shortcuts' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
               <Keyboard className="w-4 h-4" />
               Shortcuts
-            </TabsTrigger>
-            <TabsTrigger value="tips" className="gap-1.5">
+            </button>
+            <button
+              onClick={() => setActiveTab('tips')}
+              className={cn(
+                'flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-all',
+                activeTab === 'tips'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'tips' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
               <Lightbulb className="w-4 h-4" />
               Tips
-            </TabsTrigger>
-            <TabsTrigger value="resources" className="gap-1.5">
+            </button>
+            <button
+              onClick={() => setActiveTab('resources')}
+              className={cn(
+                'flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-all',
+                activeTab === 'resources'
+                  ? 'font-medium shadow-sm'
+                  : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-secondary/50'
+              )}
+              style={activeTab === 'resources' ? { backgroundColor: secondaryAccentColor, color: secondaryAccentTextColor } : undefined}
+            >
               <BookOpen className="w-4 h-4" />
               Resources
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
 
           {/* Shortcuts Tab */}
           <TabsContent value="shortcuts" className="flex-1 overflow-auto mt-4 pr-2">

@@ -36,8 +36,17 @@ export function useKeyboardShortcuts(callbacks?: KeyboardShortcutCallbacks) {
         return
       }
 
-      // Don't trigger other shortcuts when typing in inputs
-      if (isInput) return
+      // When typing in inputs, only allow text formatting shortcuts to pass through
+      // (Ctrl+B, Ctrl+I, Ctrl+U are handled by WhiteboardTextToolbar)
+      if (isInput) {
+        // Let text formatting shortcuts pass through to the toolbar handler
+        if (isMod && (event.key === 'b' || event.key === 'B' ||
+                      event.key === 'i' || event.key === 'I' ||
+                      event.key === 'u' || event.key === 'U')) {
+          return // Don't handle here, let WhiteboardTextToolbar handle it
+        }
+        return
+      }
 
       // Show shortcuts: ?
       if (event.key === '?') {
@@ -72,6 +81,12 @@ export function useKeyboardShortcuts(callbacks?: KeyboardShortcutCallbacks) {
       // Undo: Ctrl+Z
       if (isMod && event.key === 'z' && !event.shiftKey) {
         event.preventDefault()
+        // In drawing mode, undo drawing strokes instead of node/edge changes
+        const { drawingMode, drawingStrokes } = useEditorStore.getState()
+        if (drawingMode && drawingStrokes.length > 0) {
+          useEditorStore.getState().undoDrawingStroke()
+          return
+        }
         const { past } = useEditorStore.getState()
         if (past.length > 0) {
           undo()
@@ -147,6 +162,180 @@ export function useKeyboardShortcuts(callbacks?: KeyboardShortcutCallbacks) {
       if (isMod && event.key === 'f') {
         event.preventDefault()
         useEditorStore.getState().toggleFindReplace()
+      }
+
+      // Drawing Mode: D
+      if (event.key === 'd' && !isMod) {
+        event.preventDefault()
+        useEditorStore.getState().toggleDrawingMode()
+      }
+
+      // Air Canvas toggle: G (works in drawing mode)
+      if (event.key === 'g' && !isMod) {
+        const drawingMode = useEditorStore.getState().drawingMode
+        if (drawingMode) {
+          event.preventDefault()
+          useEditorStore.getState().toggleAirCanvas()
+          return
+        }
+      }
+
+      // Drawing tool shortcuts (when in drawing mode)
+      const drawingMode = useEditorStore.getState().drawingMode
+      if (drawingMode) {
+        // Select tool: V
+        if (event.key === 'v' && !isMod) {
+          event.preventDefault()
+          useEditorStore.getState().setDrawingTool('select')
+        }
+        // Pen tool: B
+        if (event.key === 'b' && !isMod) {
+          event.preventDefault()
+          useEditorStore.getState().setDrawingTool('pen')
+        }
+        // Highlighter: H
+        if (event.key === 'h' && !isMod) {
+          event.preventDefault()
+          useEditorStore.getState().setDrawingTool('highlighter')
+        }
+        // Eraser: E
+        if (event.key === 'e' && !isMod) {
+          event.preventDefault()
+          useEditorStore.getState().setDrawingTool('eraser')
+        }
+        // Line: L
+        if (event.key === 'l' && !isMod) {
+          event.preventDefault()
+          useEditorStore.getState().setDrawingTool('line')
+        }
+        // Arrow: A
+        if (event.key === 'a' && !isMod) {
+          event.preventDefault()
+          useEditorStore.getState().setDrawingTool('arrow')
+        }
+        // Rectangle: R
+        if (event.key === 'r' && !isMod) {
+          event.preventDefault()
+          useEditorStore.getState().setDrawingTool('rectangle')
+        }
+        // Ellipse: O
+        if (event.key === 'o' && !isMod) {
+          event.preventDefault()
+          useEditorStore.getState().setDrawingTool('ellipse')
+        }
+        // Delete selected strokes: Delete or Backspace
+        if (event.key === 'Delete' || event.key === 'Backspace') {
+          const { selectedStrokeIds } = useEditorStore.getState()
+          if (selectedStrokeIds.length > 0) {
+            event.preventDefault()
+            useEditorStore.getState().deleteSelectedStrokes()
+            return
+          }
+        }
+        // Exit drawing mode: Escape
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          useEditorStore.getState().setDrawingMode(false)
+        }
+        // Decrease brush size: [
+        if (event.key === '[') {
+          event.preventDefault()
+          const { drawingWidth, setDrawingWidth } = useEditorStore.getState()
+          setDrawingWidth(Math.max(1, drawingWidth - 2))
+        }
+        // Increase brush size: ]
+        if (event.key === ']') {
+          event.preventDefault()
+          const { drawingWidth, setDrawingWidth } = useEditorStore.getState()
+          setDrawingWidth(Math.min(32, drawingWidth + 2))
+        }
+      }
+
+      // Arrow keys: Move selected nodes
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        // Get fresh state to ensure we have current selection
+        const {
+          nodes: currentNodes,
+          selectedNodes: currentSelectedNodes,
+        } = useEditorStore.getState()
+
+        // Only activate if nodes are selected
+        if (currentSelectedNodes.length === 0) return
+
+        event.preventDefault()
+
+        // Determine move distance (larger with shift)
+        const distance = event.shiftKey ? 10 : 1
+
+        // Calculate delta based on arrow key
+        let dx = 0
+        let dy = 0
+        switch (event.key) {
+          case 'ArrowLeft':
+            dx = -distance
+            break
+          case 'ArrowRight':
+            dx = distance
+            break
+          case 'ArrowUp':
+            dy = -distance
+            break
+          case 'ArrowDown':
+            dy = distance
+            break
+        }
+
+        // Push history before moving
+        useEditorStore.getState().pushHistory()
+
+        // Move selected nodes if any
+        if (currentSelectedNodes.length > 0) {
+          // Get selected node objects
+          const selectedNodeObjects = currentNodes.filter((n) => currentSelectedNodes.includes(n.id))
+          if (selectedNodeObjects.length > 0) {
+            // Check if selected nodes are all in the same group
+            const groupIds = new Set(
+              selectedNodeObjects.map((n) => n.data.groupId).filter(Boolean)
+            )
+
+            // Determine which nodes to move
+            let nodesToMove: string[]
+
+            if (groupIds.size === 1) {
+              // All selected nodes are in the same group
+              const groupId = [...groupIds][0]
+              const allNodesInGroup = currentNodes.filter((n) => n.data.groupId === groupId)
+
+              // Only move entire group if ALL nodes in the group are selected
+              const allGroupNodesSelected = allNodesInGroup.every((n) =>
+                currentSelectedNodes.includes(n.id)
+              )
+
+              if (allGroupNodesSelected) {
+                // Move the entire group
+                nodesToMove = allNodesInGroup.map((n) => n.id)
+              } else {
+                // Only some group nodes selected - move just those
+                nodesToMove = [...currentSelectedNodes]
+              }
+            } else {
+              // Move only the selected nodes (mixed selection or ungrouped)
+              nodesToMove = [...currentSelectedNodes]
+            }
+
+            // Update positions for all nodes to move
+            nodesToMove.forEach((nodeId) => {
+              const node = currentNodes.find((n) => n.id === nodeId)
+              if (node && !node.data.locked) {
+                useEditorStore.getState().updateNodePosition(nodeId, {
+                  x: node.position.x + dx,
+                  y: node.position.y + dy,
+                })
+              }
+            })
+          }
+        }
+
       }
     }
 

@@ -1,0 +1,59 @@
+{
+  "hooks": [
+    {
+      "name": "update-claude-on-feature",
+      "description": "Remind to update CLAUDE.md when adding features",
+      "matcher": "tool == \"Write\" && (tool_input.file_path matches \"components/\" || tool_input.file_path matches \"services/\" || tool_input.file_path matches \"hooks/\")",
+      "hooks": [
+        {
+          "type": "afterToolResult",
+          "command": "echo '[Hook] Remember to update CLAUDE.md if this is a new feature or significant change'"
+        }
+      ]
+    },
+    {
+      "name": "lint-on-save",
+      "description": "Run lint check after editing TypeScript files",
+      "matcher": "tool == \"Write\" && tool_input.file_path matches \"\\.(ts|tsx)$\"",
+      "hooks": [
+        {
+          "type": "afterToolResult",
+          "command": "npm run lint -- --fix"
+        }
+      ]
+    },
+    {
+      "name": "warn-console-log",
+      "description": "Warn about console.log in production code",
+      "matcher": "tool == \"Write\" && tool_input.file_path matches \"src/.*\\.(ts|tsx)$\" && !(tool_input.file_path matches \"test\")",
+      "hooks": [
+        {
+          "type": "afterToolResult",
+          "command": "grep -n 'console.log' \"$TOOL_INPUT_FILE_PATH\" && echo '[Warning] Remove console.log before committing' || true"
+        }
+      ]
+    },
+    {
+      "name": "check-any-type",
+      "description": "Warn about any type usage",
+      "matcher": "tool == \"Write\" && tool_input.file_path matches \"\\.(ts|tsx)$\"",
+      "hooks": [
+        {
+          "type": "afterToolResult",
+          "command": "grep -n ': any' \"$TOOL_INPUT_FILE_PATH\" && echo '[Warning] Avoid using any type' || true"
+        }
+      ]
+    },
+    {
+      "name": "run-tests-on-store-change",
+      "description": "Run tests when modifying stores",
+      "matcher": "tool == \"Write\" && tool_input.file_path matches \"stores/.*\\.ts$\" && !(tool_input.file_path matches \"test\")",
+      "hooks": [
+        {
+          "type": "afterToolResult",
+          "command": "npm run test -- --run stores/"
+        }
+      ]
+    }
+  ]
+}

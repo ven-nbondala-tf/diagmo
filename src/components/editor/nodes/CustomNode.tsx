@@ -3,6 +3,7 @@ import { Handle, Position, NodeResizer, useConnection, type NodeProps } from '@x
 import type { DiagramNode, ShapeType } from '@/types'
 import { cn } from '@/utils'
 import { useEditorStore } from '@/stores/editorStore'
+import { useThemeStore } from '@/stores/themeStore'
 import { collaborationService } from '@/services/collaborationService'
 import { Lock, Group, RotateCw } from 'lucide-react'
 import { getShapeRenderer, renderCloudIconOrDefault, type ShapeRenderProps } from '../shapes'
@@ -75,7 +76,6 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
   // Get node dimensions - use measured or default
   const nodeWidth = width || 64
   const nodeHeight = height || 64
-  const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(label)
   const [isHovered, setIsHovered] = useState(false)
   const [isRotating, setIsRotating] = useState(false)
@@ -84,6 +84,19 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
   const nodeRef = useRef<HTMLDivElement>(null)
   const updateNode = useEditorStore((state) => state.updateNode)
   const updateNodeStyle = useEditorStore((state) => state.updateNodeStyle)
+  const setEditingNodeId = useEditorStore((state) => state.setEditingNodeId)
+  const editingNodeId = useEditorStore((state) => state.editingNodeId)
+  const focusedNodeId = useEditorStore((state) => state.focusedNodeId)
+  const resolvedTheme = useThemeStore((state) => state.resolvedTheme)
+
+  // Derive isEditing from store - this node is editing if editingNodeId matches
+  const isEditing = editingNodeId === id
+
+  // Check if this node has keyboard navigation focus (show ring when focused but not selected)
+  const isFocused = focusedNodeId === id && !selected
+
+  // Get theme-aware default text color for cloud icons
+  const themeTextColor = resolvedTheme === 'dark' ? '#ededed' : '#111827'
 
   // Handle rotation drag
   const handleRotationMouseDown = useCallback((e: React.MouseEvent) => {
@@ -219,12 +232,50 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
 
   const hasComplexBackground = style?.gradientEnabled || style?.patternEnabled
 
-  // Compute the actual text color - use explicit textColor if set, otherwise get from CSS variable
+  // Calculate luminance to determine if a color is light or dark
+  const getLuminance = (hex: string): number => {
+    const color = hex.replace('#', '')
+    if (color.length !== 6) return 0.5
+    const r = parseInt(color.substr(0, 2), 16) / 255
+    const g = parseInt(color.substr(2, 2), 16) / 255
+    const b = parseInt(color.substr(4, 2), 16) / 255
+    const toLinear = (c: number) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+    return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
+  }
+
+  // Compute the actual text color - use explicit textColor if set, otherwise auto-contrast
   const getTextColor = () => {
-    if (style?.textColor) return style.textColor
-    // Get computed value of CSS variable for reliable rendering
-    const computed = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim()
-    return computed || '#ededed'
+    // If explicitly set (and not empty), use it
+    if (style?.textColor && style.textColor.trim() !== '') {
+      return style.textColor
+    }
+
+    // For cloud icons and transparent backgrounds, use theme-aware color
+    const bgColor = style?.backgroundColor
+    if (!bgColor || bgColor === 'transparent' || bgColor === '' || isCloudIcon) {
+      // Return theme-aware text color
+      return themeTextColor
+    }
+
+    // If background is the default white (#ffffff), use theme-aware color
+    // This ensures nodes without explicit styling adapt to the current theme
+    if (bgColor.toLowerCase() === '#ffffff' || bgColor.toLowerCase() === 'white') {
+      return themeTextColor
+    }
+
+    // Auto-detect based on background color for proper contrast
+    if (bgColor) {
+      try {
+        const luminance = getLuminance(bgColor)
+        // If background is light (luminance > 0.5), use dark text; otherwise use light text
+        return luminance > 0.5 ? '#1f2937' : '#f3f4f6'
+      } catch {
+        // Fall through to default
+      }
+    }
+
+    // Fallback to theme-aware color
+    return themeTextColor
   }
 
   const baseStyle = {
@@ -299,12 +350,22 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
     if (locked) return
     e.stopPropagation()
     setEditText(label)
-    setIsEditing(true)
-  }, [locked, label])
+    setEditingNodeId(id) // This triggers isEditing to become true
+  }, [locked, label, id, setEditingNodeId])
 
-  // Focus input/textarea when editing starts
+  // Track previous editing state to detect when editing starts
+  const prevIsEditingRef = useRef(false)
+
+  // Focus input/textarea and sync text when editing STARTS (not on every label change)
   useEffect(() => {
-    if (isEditing) {
+    const wasEditing = prevIsEditingRef.current
+    prevIsEditingRef.current = isEditing
+
+    // Only sync text when editing transitions from false to true
+    if (isEditing && !wasEditing) {
+      // Sync editText with current label when editing starts
+      setEditText(label)
+      // Focus the appropriate input
       if (type === 'sticky-note' && textareaRef.current) {
         textareaRef.current.focus()
         textareaRef.current.select()
@@ -313,7 +374,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
         inputRef.current.select()
       }
     }
-  }, [isEditing, type])
+  }, [isEditing, type, label])
 
   // Handle saving the text
   const handleSave = useCallback(() => {
@@ -329,8 +390,48 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
         })
       }
     }
-    setIsEditing(false)
-  }, [editText, label, id, updateNode])
+    setEditingNodeId(null) // Clear editing state - this sets isEditing to false
+  }, [editText, label, id, updateNode, setEditingNodeId])
+
+  // Ref to track pending blur timeout
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Delayed blur handler - allows toolbar clicks to happen before exiting edit mode
+  const handleBlur = useCallback(() => {
+    // Clear any existing timeout
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current)
+    }
+
+    // Delay the save to allow toolbar interactions to cancel it
+    blurTimeoutRef.current = setTimeout(() => {
+      // Check if a popover or toolbar element is currently active
+      const activeElement = document.activeElement
+      const hasOpenPopover = document.querySelector('[data-radix-popper-content-wrapper]')
+      const isToolbarActive = activeElement?.closest('[data-text-toolbar]') ||
+                              document.querySelector('[data-text-toolbar]:hover')
+
+      // Don't close if toolbar or popover is active
+      if (hasOpenPopover || isToolbarActive) {
+        return
+      }
+
+      // Check if we're still supposed to be editing this node
+      const currentEditingId = useEditorStore.getState().editingNodeId
+      if (currentEditingId === id) {
+        handleSave()
+      }
+    }, 250) // 250ms delay to allow popover and click handlers to fire first
+  }, [handleSave, id])
+
+  // Cancel blur timeout when component unmounts or when style changes (toolbar interaction)
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Broadcast text changes in real-time while typing (debounced)
   const broadcastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -370,9 +471,9 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
       handleSave()
     } else if (e.key === 'Escape') {
       setEditText(label)
-      setIsEditing(false)
+      setEditingNodeId(null) // Clear editing state
     }
-  }, [handleSave, label])
+  }, [handleSave, label, setEditingNodeId])
 
   const renderShape = () => {
     // Common classes for all shapes - use w-full h-full for resize support
@@ -443,7 +544,9 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
         'relative',
         // Add a subtle glow when being targeted for connection (only when hovered)
         isValidTarget && 'drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]',
-        isRotating && 'cursor-grabbing'
+        isRotating && 'cursor-grabbing',
+        // Keyboard navigation focus indicator
+        isFocused && 'keyboard-focused'
       )}
       style={{
         width: nodeWidth,
@@ -543,11 +646,11 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
                 ref={textareaRef}
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                onBlur={handleSave}
+                onBlur={handleBlur}
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') {
                     setEditText(label)
-                    setIsEditing(false)
+                    setEditingNodeId(null) // Clear editing state
                   }
                   // Allow Enter for new lines in sticky notes
                   if (e.key === 'Enter' && e.ctrlKey) {
@@ -559,7 +662,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
                 style={{
                   fontSize: baseStyle.fontSize,
                   fontWeight: baseStyle.fontWeight,
-                  color: '#1f2937',
+                  color: style?.textColor || '#1f2937', // Dark for yellow sticky note background
                   backgroundColor: style?.backgroundColor || '#fef08a',
                   lineHeight: 1.4,
                 }}
@@ -571,12 +674,15 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
                 type="text"
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                onBlur={handleSave}
+                onBlur={handleBlur}
                 onKeyDown={handleKeyDown}
-                className="w-[90%] px-2 py-1 text-center border border-primary rounded outline-none"
+                className="w-[90%] px-2 py-1 border border-primary rounded outline-none bg-white/95"
                 style={{
                   fontSize: baseStyle.fontSize,
                   fontWeight: baseStyle.fontWeight,
+                  fontStyle: baseStyle.fontStyle as React.CSSProperties['fontStyle'],
+                  textDecoration: baseStyle.textDecoration,
+                  textAlign: baseStyle.textAlign,
                   color: baseStyle.color,
                 }}
               />
@@ -617,28 +723,29 @@ export const CustomNode = memo(function CustomNode({ id, data, selected, width, 
               onChange={(e) => setEditText(e.target.value)}
               onBlur={handleSave}
               onKeyDown={handleKeyDown}
-              className="text-center border-b-2 border-blue-500 outline-none bg-transparent text-foreground"
+              className="text-center border-b-2 border-blue-500 outline-none bg-transparent"
               style={{
                 fontSize: baseStyle.fontSize,
                 fontWeight: baseStyle.fontWeight,
-                fontStyle: baseStyle.fontStyle,
+                fontStyle: baseStyle.fontStyle as React.CSSProperties['fontStyle'],
                 fontFamily: baseStyle.fontFamily,
                 textDecoration: baseStyle.textDecoration,
+                color: style?.textColor && style.textColor.trim() !== '' ? style.textColor : themeTextColor,
                 width: `${Math.max(editText.length * 8, 40)}px`,
                 minWidth: '40px',
               }}
             />
           ) : (
             <div
-              className="cursor-text hover:bg-blue-50 dark:hover:bg-blue-900/30 px-1 py-0.5 rounded transition-colors text-foreground"
+              className="cursor-text hover:bg-blue-50/50 dark:hover:bg-blue-900/30 px-1 py-0.5 rounded transition-colors"
               style={{
                 fontSize: baseStyle.fontSize,
                 fontFamily: baseStyle.fontFamily,
                 fontWeight: baseStyle.fontWeight,
-                fontStyle: baseStyle.fontStyle,
+                fontStyle: baseStyle.fontStyle as React.CSSProperties['fontStyle'],
                 textDecoration: baseStyle.textDecoration,
+                color: style?.textColor && style.textColor.trim() !== '' ? style.textColor : themeTextColor,
                 lineHeight: '1.3',
-                ...(style?.textColor ? { color: style.textColor } : {}),
               }}
               onDoubleClick={handleDoubleClick}
             >

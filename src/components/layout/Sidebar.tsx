@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { NavLink, useLocation, useSearchParams } from 'react-router-dom'
 import { cn } from '@/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
-import { useFolders, useCreateFolder, useDeleteFolder } from '@/hooks'
+import { useFolders, useCreateFolder, useDeleteFolder, useSharedDiagrams, useDiagramsByFolder } from '@/hooks'
 import { WorkspaceSettingsDialog } from '@/components/dashboard/WorkspaceSettingsDialog'
 import { CreateWorkspaceDialog } from '@/components/dashboard/CreateWorkspaceDialog'
 import {
@@ -14,9 +14,6 @@ import {
   Users,
   Star,
   Clock,
-  Cloud,
-  GitBranch,
-  Network,
   Settings,
   ChevronDown,
   ChevronRight,
@@ -28,6 +25,8 @@ import {
   Loader2,
   X,
   Check,
+  FileText,
+  File,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -39,8 +38,10 @@ import {
   TooltipContent,
   TooltipTrigger,
   Input,
+  ScrollArea,
 } from '@/components/ui'
 import { toast } from 'sonner'
+import type { Folder as FolderType } from '@/types'
 
 interface SidebarProps {
   collapsed?: boolean
@@ -48,33 +49,157 @@ interface SidebarProps {
   onNewDiagram?: () => void
 }
 
+// Tree node component for folder hierarchy
+interface FolderTreeNodeProps {
+  folder: FolderType
+  level: number
+  selectedFolderId: string | null
+  expandedFolders: Set<string>
+  onSelectFolder: (folderId: string | null) => void
+  onToggleExpand: (folderId: string) => void
+  onDeleteFolder: (folderId: string, e: React.MouseEvent) => void
+  onCreateSubfolder: (parentId: string) => void
+  allFolders: FolderType[]
+}
+
+function FolderTreeNode({
+  folder,
+  level,
+  selectedFolderId,
+  expandedFolders,
+  onSelectFolder,
+  onToggleExpand,
+  onDeleteFolder,
+  onCreateSubfolder,
+  allFolders,
+}: FolderTreeNodeProps) {
+  const childFolders = allFolders.filter(f => f.parentId === folder.id)
+  const hasChildren = childFolders.length > 0
+  const isExpanded = expandedFolders.has(folder.id)
+  const isSelected = selectedFolderId === folder.id
+
+  return (
+    <div>
+      <div
+        className={cn(
+          'group flex items-center gap-1 w-full py-1 rounded-md text-sm transition-all cursor-pointer',
+          isSelected
+            ? 'bg-blue-500/10 text-blue-500'
+            : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'
+        )}
+        style={{ paddingLeft: `${8 + level * 16}px` }}
+      >
+        {hasChildren ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleExpand(folder.id)
+            }}
+            className="p-0.5 hover:bg-supabase-bg-tertiary rounded"
+          >
+            {isExpanded ? (
+              <ChevronDown className="w-3 h-3" />
+            ) : (
+              <ChevronRight className="w-3 h-3" />
+            )}
+          </button>
+        ) : (
+          <span className="w-4" /> // Spacer for alignment
+        )}
+        <button
+          onClick={() => onSelectFolder(folder.id)}
+          className="flex items-center gap-2 flex-1 min-w-0"
+        >
+          <Folder className="w-4 h-4 flex-shrink-0 text-supabase-text-muted" />
+          <span className="flex-1 text-left truncate">{folder.name}</span>
+        </button>
+        {/* Create subfolder button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onCreateSubfolder(folder.id)
+          }}
+          className="p-0.5 opacity-0 group-hover:opacity-100 text-supabase-text-muted hover:text-supabase-green transition-all"
+          title="Create subfolder"
+        >
+          <FolderPlus className="w-3 h-3" />
+        </button>
+        <button
+          onClick={(e) => onDeleteFolder(folder.id, e)}
+          className="p-0.5 opacity-0 group-hover:opacity-100 text-supabase-text-muted hover:text-red-500 transition-all mr-2"
+          title="Delete folder"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      </div>
+      {hasChildren && isExpanded && (
+        <div>
+          {childFolders.map(child => (
+            <FolderTreeNode
+              key={child.id}
+              folder={child}
+              level={level + 1}
+              selectedFolderId={selectedFolderId}
+              expandedFolders={expandedFolders}
+              onSelectFolder={onSelectFolder}
+              onToggleExpand={onToggleExpand}
+              onDeleteFolder={onDeleteFolder}
+              onCreateSubfolder={onCreateSubfolder}
+              allFolders={allFolders}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: SidebarProps) {
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [expandedSections, setExpandedSections] = useState(['TEMPLATES', 'FOLDERS'])
+  const [expandedSections, setExpandedSections] = useState(['DOCUMENTS'])
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false)
   const [isCreatingFolder, setIsCreatingFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
+  const [parentFolderId, setParentFolderId] = useState<string | null>(null)
   const { currentWorkspaceId, setCurrentWorkspace, setWorkspaceSettingsOpen } = useWorkspaceStore()
   const { data: workspaces = [] } = useWorkspaces()
   const { data: folders = [], isLoading: foldersLoading } = useFolders()
+  const { data: sharedDiagrams } = useSharedDiagrams()
   const createFolder = useCreateFolder()
   const deleteFolder = useDeleteFolder()
 
   const currentWorkspace = workspaces.find((w) => w.id === currentWorkspaceId)
   const selectedFolderId = searchParams.get('folder')
+  const currentView = searchParams.get('view')
+  const sharedCount = sharedDiagrams?.length || 0
+
+  // Get root-level folders (no parent)
+  const rootFolders = folders.filter(f => !f.parentId)
 
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return
     try {
-      await createFolder.mutateAsync({ name: newFolderName.trim() })
+      await createFolder.mutateAsync({ name: newFolderName.trim(), parentId: parentFolderId })
+      // Auto-expand parent folder if creating subfolder
+      if (parentFolderId) {
+        setExpandedFolders(prev => new Set([...prev, parentFolderId]))
+      }
       setNewFolderName('')
       setIsCreatingFolder(false)
-      toast.success('Folder created')
+      setParentFolderId(null)
+      toast.success(parentFolderId ? 'Subfolder created' : 'Folder created')
     } catch {
       toast.error('Failed to create folder')
     }
   }
+
+  const handleCreateSubfolder = useCallback((parentId: string) => {
+    setParentFolderId(parentId)
+    setIsCreatingFolder(true)
+    setNewFolderName('')
+  }, [])
 
   const handleDeleteFolder = async (folderId: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -92,12 +217,24 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
   }
 
   const handleSelectFolder = (folderId: string | null) => {
+    const newParams = new URLSearchParams()
     if (folderId) {
-      setSearchParams({ folder: folderId })
-    } else {
-      setSearchParams({})
+      newParams.set('folder', folderId)
     }
+    setSearchParams(newParams)
   }
+
+  const handleToggleExpand = useCallback((folderId: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev)
+      if (next.has(folderId)) {
+        next.delete(folderId)
+      } else {
+        next.add(folderId)
+      }
+      return next
+    })
+  }, [])
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) =>
@@ -107,378 +244,332 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
     )
   }
 
+  const handleNavigate = (view: string | null) => {
+    const newParams = new URLSearchParams()
+    if (view) {
+      newParams.set('view', view)
+    }
+    setSearchParams(newParams)
+  }
+
   return (
     <aside
       className={cn(
         'flex flex-col h-screen border-r transition-all duration-200',
         'bg-supabase-bg border-supabase-border',
-        collapsed ? 'w-16' : 'w-64'
+        collapsed ? 'w-16' : 'w-56'
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-14 px-4 border-b border-supabase-border">
+      <div className="flex items-center justify-between h-12 px-3 border-b border-supabase-border">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-supabase-green to-supabase-green-hover flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-sm">D</span>
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+            <span className="text-white font-bold text-xs">D</span>
           </div>
           {!collapsed && (
-            <span className="font-semibold text-supabase-text-primary">Diagmo Pro</span>
+            <span className="font-semibold text-supabase-text-primary text-sm">Diagmo</span>
           )}
         </div>
         {!collapsed && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => onCollapse?.(true)}
-                className="p-1.5 rounded-md text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors cursor-pointer"
-              >
-                <PanelLeftClose className="w-4 h-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Collapse sidebar</TooltipContent>
-          </Tooltip>
+          <button
+            onClick={() => onCollapse?.(true)}
+            className="p-1 rounded-md text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors cursor-pointer"
+          >
+            <PanelLeftClose className="w-4 h-4" />
+          </button>
         )}
         {collapsed && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => onCollapse?.(false)}
-                className="p-1.5 rounded-md text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors cursor-pointer"
-              >
-                <PanelLeft className="w-4 h-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Expand sidebar</TooltipContent>
-          </Tooltip>
+          <button
+            onClick={() => onCollapse?.(false)}
+            className="p-1 rounded-md text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors cursor-pointer"
+          >
+            <PanelLeft className="w-4 h-4" />
+          </button>
         )}
       </div>
 
-      {/* Workspace Selector */}
-      {!collapsed && (
-        <div className="p-3 border-b border-supabase-border">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-supabase-bg-secondary hover:bg-supabase-bg-tertiary border border-supabase-border text-sm transition-colors cursor-pointer">
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded bg-supabase-green-muted flex items-center justify-center">
-                    <span className="text-supabase-green text-xs font-medium">
-                      {currentWorkspace?.name?.[0]?.toUpperCase() || 'P'}
-                    </span>
-                  </div>
-                  <span className="text-supabase-text-primary truncate">
-                    {currentWorkspace?.name || 'Personal Workspace'}
-                  </span>
-                </div>
-                <ChevronDown className="w-4 h-4 text-supabase-text-muted flex-shrink-0" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-supabase-bg-secondary border-supabase-border">
-              <DropdownMenuItem
-                onClick={() => setCurrentWorkspace(null)}
-                className={cn(
-                  'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary',
-                  !currentWorkspaceId && 'bg-supabase-green-muted text-supabase-green'
-                )}
-              >
-                <div className="w-5 h-5 rounded bg-supabase-green-muted flex items-center justify-center mr-2">
-                  <span className="text-supabase-green text-xs font-medium">P</span>
-                </div>
-                Personal Workspace
-              </DropdownMenuItem>
-              {workspaces.length > 0 && <DropdownMenuSeparator className="bg-supabase-border" />}
-              {workspaces.map((workspace) => (
-                <DropdownMenuItem
-                  key={workspace.id}
-                  onClick={() => setCurrentWorkspace(workspace.id)}
-                  className={cn(
-                    'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary',
-                    currentWorkspaceId === workspace.id && 'bg-supabase-green-muted text-supabase-green'
-                  )}
-                >
-                  <div className="w-5 h-5 rounded bg-supabase-green-muted flex items-center justify-center mr-2">
-                    <span className="text-supabase-green text-xs font-medium">
-                      {workspace.name[0]?.toUpperCase()}
-                    </span>
-                  </div>
-                  {workspace.name}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator className="bg-supabase-border" />
-              <DropdownMenuItem
-                onClick={() => setCreateWorkspaceOpen(true)}
-                className="text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Workspace
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
-
-      {/* Search */}
-      {!collapsed && (
-        <div className="p-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-supabase-text-muted" />
-            <input
-              type="text"
-              placeholder="Search diagrams..."
-              className="w-full pl-9 pr-12 py-2 rounded-md bg-supabase-bg-secondary border border-supabase-border text-sm text-supabase-text-primary placeholder-supabase-text-muted focus:outline-none focus:border-supabase-green/50 focus:ring-1 focus:ring-supabase-green/20 transition-colors"
-            />
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] text-supabase-text-muted bg-supabase-bg-tertiary rounded border border-supabase-border">
-              Ctrl+K
-            </kbd>
-          </div>
-        </div>
-      )}
-
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2">
-        {/* Main Items */}
-        <div className="px-3 space-y-1">
-          <SidebarItem
-            icon={Home}
-            label="Dashboard"
-            href="/dashboard"
-            collapsed={collapsed}
-            active={location.pathname === '/dashboard' && !searchParams.get('view') && !searchParams.get('folder')}
-          />
-          <SidebarItem
-            icon={FolderOpen}
-            label="My Diagrams"
-            href="/dashboard"
-            collapsed={collapsed}
-            active={false}
-          />
-          <SidebarItem
-            icon={Users}
-            label="Shared with Me"
-            href="/dashboard?view=shared"
-            collapsed={collapsed}
-            active={searchParams.get('view') === 'shared'}
-          />
-          <SidebarItem
-            icon={Star}
-            label="Favorites"
-            href="/dashboard?view=favorites"
-            collapsed={collapsed}
-            active={searchParams.get('view') === 'favorites'}
-          />
-          <SidebarItem
-            icon={Clock}
-            label="Recent"
-            href="/dashboard?view=recent"
-            collapsed={collapsed}
-            active={searchParams.get('view') === 'recent'}
-          />
-        </div>
+      <ScrollArea className="flex-1">
+        <nav className="py-2">
+          {/* Quick Access */}
+          <div className="px-2 space-y-0.5">
+            {/* Recent */}
+            <NavItem
+              icon={Clock}
+              label="Recent"
+              collapsed={collapsed}
+              active={currentView === 'recent'}
+              onClick={() => handleNavigate('recent')}
+            />
 
-        {/* Folders Section */}
-        {!collapsed && (
-          <div className="mt-6">
-            <div className="flex items-center justify-between px-3 py-1.5">
-              <button
-                onClick={() => toggleSection('FOLDERS')}
-                className="flex items-center gap-1 text-xs font-medium text-supabase-text-muted hover:text-supabase-text-secondary transition-colors cursor-pointer"
-              >
-                {expandedSections.includes('FOLDERS') ? (
-                  <ChevronDown className="w-3 h-3" />
-                ) : (
-                  <ChevronRight className="w-3 h-3" />
-                )}
-                <span>FOLDERS</span>
-              </button>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setIsCreatingFolder(true)}
-                    className="p-1 rounded text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors"
-                  >
-                    <FolderPlus className="w-3.5 h-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Create folder</TooltipContent>
-              </Tooltip>
-            </div>
-            {expandedSections.includes('FOLDERS') && (
-              <div className="px-3 mt-1 space-y-1">
-                {/* Create folder input */}
-                {isCreatingFolder && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-supabase-bg-secondary rounded-md border border-supabase-border">
-                    <Folder className="w-4 h-4 text-supabase-text-muted flex-shrink-0" />
-                    <Input
-                      value={newFolderName}
-                      onChange={(e) => setNewFolderName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleCreateFolder()
-                        if (e.key === 'Escape') {
-                          setIsCreatingFolder(false)
-                          setNewFolderName('')
-                        }
-                      }}
-                      placeholder="Folder name"
-                      className="h-6 text-xs border-0 bg-transparent p-0 focus-visible:ring-0"
-                      autoFocus
-                    />
-                    <button
-                      onClick={handleCreateFolder}
-                      disabled={!newFolderName.trim() || createFolder.isPending}
-                      className="p-0.5 text-supabase-green hover:text-supabase-green-hover disabled:opacity-50"
-                    >
-                      {createFolder.isPending ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Check className="w-3.5 h-3.5" />
-                      )}
-                    </button>
+            {/* Starred */}
+            <NavItem
+              icon={Star}
+              label="Starred"
+              collapsed={collapsed}
+              active={currentView === 'favorites'}
+              onClick={() => handleNavigate('favorites')}
+            />
+          </div>
+
+          {/* Documents Section */}
+          {!collapsed && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between px-3 py-1">
+                <button
+                  onClick={() => toggleSection('DOCUMENTS')}
+                  className="flex items-center gap-1 text-xs font-medium text-supabase-text-muted hover:text-supabase-text-secondary transition-colors cursor-pointer"
+                >
+                  {expandedSections.includes('DOCUMENTS') ? (
+                    <ChevronDown className="w-3 h-3" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3" />
+                  )}
+                  <FileText className="w-3.5 h-3.5 mr-1" />
+                  <span>Documents</span>
+                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <button
                       onClick={() => {
-                        setIsCreatingFolder(false)
-                        setNewFolderName('')
+                        setParentFolderId(null)
+                        setIsCreatingFolder(true)
                       }}
-                      className="p-0.5 text-supabase-text-muted hover:text-supabase-text-primary"
+                      className="p-1 rounded text-supabase-text-muted hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary transition-colors"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <FolderPlus className="w-3.5 h-3.5" />
                     </button>
-                  </div>
-                )}
+                  </TooltipTrigger>
+                  <TooltipContent>Create folder</TooltipContent>
+                </Tooltip>
+              </div>
 
-                {/* All Diagrams - only highlighted when no folder AND no special view */}
-                <button
-                  onClick={() => handleSelectFolder(null)}
-                  className={cn(
-                    'flex items-center gap-3 w-full px-2 py-1.5 rounded-md text-sm transition-all',
-                    !selectedFolderId && !searchParams.get('view')
-                      ? 'bg-black/10 dark:bg-white/10 text-supabase-text-primary'
-                      : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-black/5 dark:hover:bg-white/5'
-                  )}
-                >
-                  <FolderOpen className="w-4 h-4 flex-shrink-0" />
-                  <span className="flex-1 text-left truncate">All Diagrams</span>
-                </button>
-
-                {/* Folder list */}
-                {foldersLoading ? (
-                  <div className="flex items-center justify-center py-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-supabase-text-muted" />
-                  </div>
-                ) : folders.length === 0 ? (
-                  <p className="px-2 py-1.5 text-xs text-supabase-text-muted">No folders yet</p>
-                ) : (
-                  folders.map((folder) => (
-                    <div
-                      key={folder.id}
+              {expandedSections.includes('DOCUMENTS') && (
+                <div className="mt-1">
+                  {/* My documents */}
+                  <div className="px-2">
+                    <button
+                      onClick={() => handleSelectFolder(null)}
                       className={cn(
-                        'group flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm transition-all',
-                        selectedFolderId === folder.id
-                          ? 'bg-black/10 dark:bg-white/10 text-supabase-text-primary'
-                          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-black/5 dark:hover:bg-white/5'
+                        'flex items-center gap-2 w-full py-1.5 px-2 rounded-md text-sm transition-all',
+                        !selectedFolderId && !currentView
+                          ? 'bg-blue-500/10 text-blue-500'
+                          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'
                       )}
                     >
-                      <button
-                        onClick={() => handleSelectFolder(folder.id)}
-                        className="flex items-center gap-3 flex-1 min-w-0"
-                      >
-                        <Folder className="w-4 h-4 flex-shrink-0" />
-                        <span className="flex-1 text-left truncate">{folder.name}</span>
-                      </button>
-                      <button
-                        onClick={(e) => handleDeleteFolder(folder.id, e)}
-                        className="p-0.5 opacity-0 group-hover:opacity-100 text-supabase-text-muted hover:text-red-500 transition-all"
-                        title="Delete folder"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <File className="w-4 h-4 text-supabase-text-muted" />
+                      <span>My documents</span>
+                    </button>
+                  </div>
+
+                  {/* Create folder input */}
+                  {isCreatingFolder && (
+                    <div className="mx-2 mt-1">
+                      {parentFolderId && (
+                        <div className="text-[10px] text-supabase-text-muted mb-1 px-2">
+                          Creating in: {folders.find(f => f.id === parentFolderId)?.name}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1 px-2 py-1 bg-supabase-bg-secondary rounded-md border border-supabase-border">
+                        <Folder className="w-4 h-4 text-supabase-text-muted flex-shrink-0" />
+                        <Input
+                          value={newFolderName}
+                          onChange={(e) => setNewFolderName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleCreateFolder()
+                            if (e.key === 'Escape') {
+                              setIsCreatingFolder(false)
+                              setNewFolderName('')
+                              setParentFolderId(null)
+                            }
+                          }}
+                          placeholder={parentFolderId ? "Subfolder name" : "Folder name"}
+                          className="h-6 text-xs border-0 bg-transparent p-0 focus-visible:ring-0"
+                          autoFocus
+                        />
+                        <button
+                          onClick={handleCreateFolder}
+                          disabled={!newFolderName.trim() || createFolder.isPending}
+                          className="p-0.5 text-green-600 hover:text-green-700 disabled:opacity-50"
+                        >
+                          {createFolder.isPending ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Check className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsCreatingFolder(false)
+                            setNewFolderName('')
+                            setParentFolderId(null)
+                          }}
+                          className="p-0.5 text-supabase-text-muted hover:text-supabase-text-primary"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        )}
+                  )}
 
-        {/* Templates Section */}
-        {!collapsed && (
-          <div className="mt-6">
-            <button
-              onClick={() => toggleSection('TEMPLATES')}
-              className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium text-supabase-text-muted hover:text-supabase-text-secondary transition-colors cursor-pointer"
-            >
-              <span>TEMPLATES</span>
-              {expandedSections.includes('TEMPLATES') ? (
-                <ChevronDown className="w-3 h-3" />
-              ) : (
-                <ChevronRight className="w-3 h-3" />
+                  {/* Folder Tree */}
+                  <div className="px-2 mt-1">
+                    {foldersLoading ? (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-supabase-text-muted" />
+                      </div>
+                    ) : rootFolders.length > 0 ? (
+                      rootFolders.map(folder => (
+                        <FolderTreeNode
+                          key={folder.id}
+                          folder={folder}
+                          level={1}
+                          selectedFolderId={selectedFolderId}
+                          expandedFolders={expandedFolders}
+                          onSelectFolder={handleSelectFolder}
+                          onToggleExpand={handleToggleExpand}
+                          onDeleteFolder={handleDeleteFolder}
+                          onCreateSubfolder={handleCreateSubfolder}
+                          allFolders={folders}
+                        />
+                      ))
+                    ) : null}
+                  </div>
+                </div>
               )}
-            </button>
-            {expandedSections.includes('TEMPLATES') && (
-              <div className="px-3 mt-1 space-y-1">
-                <SidebarButton icon={Cloud} label="AWS" onClick={() => onNewDiagram?.()} />
-                <SidebarButton icon={Cloud} label="Azure" onClick={() => onNewDiagram?.()} />
-                <SidebarButton icon={Cloud} label="GCP" onClick={() => onNewDiagram?.()} />
-                <SidebarButton icon={GitBranch} label="Flowcharts" onClick={() => onNewDiagram?.()} />
-                <SidebarButton icon={Network} label="Network" onClick={() => onNewDiagram?.()} />
-              </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Workspace Section */}
-        {!collapsed && (
-          <div className="mt-6">
-            <button
-              onClick={() => toggleSection('WORKSPACE')}
-              className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium text-supabase-text-muted hover:text-supabase-text-secondary transition-colors cursor-pointer"
-            >
-              <span>WORKSPACE</span>
-              {expandedSections.includes('WORKSPACE') ? (
-                <ChevronDown className="w-3 h-3" />
-              ) : (
-                <ChevronRight className="w-3 h-3" />
-              )}
-            </button>
-            {expandedSections.includes('WORKSPACE') && (
-              <div className="px-3 mt-1 space-y-1">
-                <SidebarButton
-                  icon={Settings}
-                  label="Settings"
-                  onClick={() => setWorkspaceSettingsOpen(true, currentWorkspaceId)}
-                  disabled={!currentWorkspaceId}
-                  tooltip={!currentWorkspaceId ? 'Select a workspace first' : undefined}
-                />
-                <SidebarButton
-                  icon={Users}
-                  label="Team"
-                  onClick={() => setWorkspaceSettingsOpen(true, currentWorkspaceId)}
-                  disabled={!currentWorkspaceId}
-                  tooltip={!currentWorkspaceId ? 'Select a workspace first' : undefined}
-                />
+          {/* Trash */}
+          {!collapsed && (
+            <div className="px-2 mt-2">
+              <NavItem
+                icon={Trash2}
+                label="Trash"
+                collapsed={collapsed}
+                active={currentView === 'trash'}
+                onClick={() => handleNavigate('trash')}
+              />
+            </div>
+          )}
+
+          {/* Shared with me */}
+          {!collapsed && (
+            <div className="mt-4 pt-4 border-t border-supabase-border">
+              <div className="px-2">
+                <button
+                  onClick={() => handleNavigate('shared')}
+                  className={cn(
+                    'flex items-center gap-2 w-full py-1.5 px-2 rounded-md text-sm transition-all',
+                    currentView === 'shared'
+                      ? 'bg-blue-500/10 text-blue-500'
+                      : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'
+                  )}
+                >
+                  <Users className="w-4 h-4 text-supabase-text-muted" />
+                  <span className="flex-1 text-left">Shared with me</span>
+                  {sharedCount > 0 && (
+                    <span className="text-xs bg-supabase-bg-tertiary text-supabase-text-muted px-1.5 py-0.5 rounded-full">
+                      {sharedCount}
+                    </span>
+                  )}
+                </button>
               </div>
-            )}
-          </div>
-        )}
-      </nav>
+            </div>
+          )}
+
+          {/* Workspace Selector - at bottom of nav */}
+          {!collapsed && (
+            <div className="mt-4 pt-4 border-t border-supabase-border px-3">
+              <p className="text-xs font-medium text-supabase-text-muted mb-2 px-2">Workspace</p>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="w-full flex items-center justify-between px-2 py-1.5 rounded-md bg-supabase-bg-secondary hover:bg-supabase-bg-tertiary border border-supabase-border text-sm transition-colors cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded bg-supabase-green-muted flex items-center justify-center">
+                        <span className="text-supabase-green text-xs font-medium">
+                          {currentWorkspace?.name?.[0]?.toUpperCase() || 'P'}
+                        </span>
+                      </div>
+                      <span className="text-supabase-text-primary truncate text-xs">
+                        {currentWorkspace?.name || 'Personal'}
+                      </span>
+                    </div>
+                    <ChevronDown className="w-3 h-3 text-supabase-text-muted flex-shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 bg-supabase-bg-secondary border-supabase-border">
+                  <DropdownMenuItem
+                    onClick={() => setCurrentWorkspace(null)}
+                    className={cn(
+                      'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary',
+                      !currentWorkspaceId && 'bg-supabase-green-muted text-supabase-green'
+                    )}
+                  >
+                    <div className="w-5 h-5 rounded bg-supabase-green-muted flex items-center justify-center mr-2">
+                      <span className="text-supabase-green text-xs font-medium">P</span>
+                    </div>
+                    Personal
+                  </DropdownMenuItem>
+                  {workspaces.length > 0 && <DropdownMenuSeparator className="bg-supabase-border" />}
+                  {workspaces.map((workspace) => (
+                    <DropdownMenuItem
+                      key={workspace.id}
+                      onClick={() => setCurrentWorkspace(workspace.id)}
+                      className={cn(
+                        'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary',
+                        currentWorkspaceId === workspace.id && 'bg-supabase-green-muted text-supabase-green'
+                      )}
+                    >
+                      <div className="w-5 h-5 rounded bg-supabase-green-muted flex items-center justify-center mr-2">
+                        <span className="text-supabase-green text-xs font-medium">
+                          {workspace.name[0]?.toUpperCase()}
+                        </span>
+                      </div>
+                      {workspace.name}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator className="bg-supabase-border" />
+                  <DropdownMenuItem
+                    onClick={() => setCreateWorkspaceOpen(true)}
+                    className="text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Workspace
+                  </DropdownMenuItem>
+                  {currentWorkspaceId && (
+                    <DropdownMenuItem
+                      onClick={() => setWorkspaceSettingsOpen(true, currentWorkspaceId)}
+                      className="text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Workspace Settings
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+        </nav>
+      </ScrollArea>
 
       {/* Bottom Actions */}
       <div className="p-3 border-t border-supabase-border">
         <button
           onClick={onNewDiagram}
           className={cn(
-            'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md',
-            'bg-supabase-green hover:bg-supabase-green-hover text-supabase-bg font-medium text-sm',
+            'w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md',
+            'bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm',
             'transition-colors cursor-pointer'
           )}
         >
           <Plus className="w-4 h-4" />
-          {!collapsed && <span>New Diagram</span>}
+          {!collapsed && <span>New</span>}
         </button>
       </div>
 
-      {/* Workspace Settings Dialog - rendered via store state */}
+      {/* Dialogs */}
       <WorkspaceSettingsDialog />
-
-      {/* Create Workspace Dialog */}
       <CreateWorkspaceDialog
         open={createWorkspaceOpen}
         onOpenChange={setCreateWorkspaceOpen}
@@ -487,31 +578,32 @@ export function Sidebar({ collapsed = false, onCollapse, onNewDiagram }: Sidebar
   )
 }
 
-interface SidebarItemProps {
+// Nav item component
+interface NavItemProps {
   icon: React.ComponentType<{ className?: string }>
   label: string
-  href: string
   collapsed?: boolean
   active?: boolean
+  onClick?: () => void
   badge?: number
 }
 
-function SidebarItem({ icon: Icon, label, href, collapsed, active, badge }: SidebarItemProps) {
+function NavItem({ icon: Icon, label, collapsed, active, onClick, badge }: NavItemProps) {
   if (collapsed) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <NavLink
-            to={href}
+          <button
+            onClick={onClick}
             className={cn(
-              'flex items-center justify-center p-2 rounded-md text-sm transition-all cursor-pointer',
+              'flex items-center justify-center p-2 rounded-md text-sm transition-all cursor-pointer w-full',
               active
-                ? 'bg-black/10 dark:bg-white/10 text-supabase-text-primary'
-                : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-black/5 dark:hover:bg-white/5'
+                ? 'bg-blue-500/10 text-blue-500'
+                : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'
             )}
           >
             <Icon className="w-4 h-4" />
-          </NavLink>
+          </button>
         </TooltipTrigger>
         <TooltipContent side="right">{label}</TooltipContent>
       </Tooltip>
@@ -519,60 +611,22 @@ function SidebarItem({ icon: Icon, label, href, collapsed, active, badge }: Side
   }
 
   return (
-    <NavLink
-      to={href}
+    <button
+      onClick={onClick}
       className={cn(
-        'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all cursor-pointer',
+        'flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-all cursor-pointer w-full',
         active
-          ? 'bg-black/10 dark:bg-white/10 text-supabase-text-primary'
-          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-black/5 dark:hover:bg-white/5'
+          ? 'bg-blue-500/10 text-blue-500'
+          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-supabase-bg-tertiary'
       )}
     >
       <Icon className="w-4 h-4 flex-shrink-0" />
-      <span className="flex-1">{label}</span>
+      <span className="flex-1 text-left">{label}</span>
       {badge !== undefined && (
         <span className="px-1.5 py-0.5 text-xs rounded-full bg-supabase-border text-supabase-text-secondary">
           {badge}
         </span>
       )}
-    </NavLink>
-  )
-}
-
-// Button variant for non-navigation actions
-interface SidebarButtonProps {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  onClick: () => void
-  disabled?: boolean
-  tooltip?: string
-}
-
-function SidebarButton({ icon: Icon, label, onClick, disabled, tooltip }: SidebarButtonProps) {
-  const button = (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all w-full text-left',
-        disabled
-          ? 'text-supabase-text-muted cursor-not-allowed'
-          : 'text-supabase-text-secondary hover:text-supabase-text-primary hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer'
-      )}
-    >
-      <Icon className="w-4 h-4 flex-shrink-0" />
-      <span className="flex-1">{label}</span>
     </button>
   )
-
-  if (tooltip) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{button}</TooltipTrigger>
-        <TooltipContent>{tooltip}</TooltipContent>
-      </Tooltip>
-    )
-  }
-
-  return button
 }

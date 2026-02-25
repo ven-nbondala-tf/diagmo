@@ -432,6 +432,7 @@ CREATE TABLE IF NOT EXISTS diagram_pages (
   page_order INTEGER NOT NULL DEFAULT 0,
   nodes JSONB DEFAULT '[]'::jsonb,
   edges JSONB DEFAULT '[]'::jsonb,
+  drawing_strokes JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
