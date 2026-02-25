@@ -83,9 +83,8 @@ CREATE INDEX IF NOT EXISTS idx_templates_use_count ON architecture_templates(use
 CREATE INDEX IF NOT EXISTS idx_templates_created_by ON architecture_templates(created_by);
 CREATE INDEX IF NOT EXISTS idx_template_favorites_user ON template_favorites(user_id);
 
--- Full-text search index
-CREATE INDEX IF NOT EXISTS idx_templates_search ON architecture_templates
-  USING GIN (to_tsvector('english', name || ' ' || description || ' ' || array_to_string(tags, ' ')));
+-- Note: Full-text search is handled at the application level using ILIKE queries
+-- This avoids PostgreSQL immutability issues with to_tsvector in index expressions
 
 -- Enable RLS
 ALTER TABLE architecture_templates ENABLE ROW LEVEL SECURITY;
