@@ -1,0 +1,429 @@
+{
+  "templates": [
+    {
+      "template_id": "azure-service-fabric-cluster",
+      "name": "Service Fabric Cluster",
+      "description": "Microservices platform with Service Fabric",
+      "categories": ["azure", "containers"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/microservices/service-fabric",
+      "tags": ["service-fabric", "microservices", "stateful", "cluster"],
+      "use_cases": ["microservices", "stateful-services", "actor-model"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Users", "type": "users"}},
+        {"id": "lb", "type": "azure-load-balancer", "position": {"x": 180, "y": 150}, "data": {"label": "Load Balancer", "type": "azure-load-balancer"}},
+        {"id": "sf", "type": "azure-service-fabric", "position": {"x": 350, "y": 150}, "data": {"label": "Service Fabric", "type": "azure-service-fabric"}},
+        {"id": "sql", "type": "azure-sql", "position": {"x": 520, "y": 150}, "data": {"label": "SQL Database", "type": "azure-sql"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "lb", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "lb", "target": "sf", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "sf", "target": "sql", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-spring-apps",
+      "name": "Azure Spring Apps",
+      "description": "Managed Spring Boot application platform",
+      "categories": ["azure", "web-app", "containers"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/web-apps/spring-apps/spring-apps-multi-region",
+      "tags": ["spring", "java", "spring-boot", "microservices"],
+      "use_cases": ["java-apps", "spring-microservices", "enterprise-java"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Users", "type": "users"}},
+        {"id": "agw", "type": "azure-app-gateway", "position": {"x": 180, "y": 150}, "data": {"label": "App Gateway", "type": "azure-app-gateway"}},
+        {"id": "spring", "type": "azure-spring-apps", "position": {"x": 350, "y": 150}, "data": {"label": "Spring Apps", "type": "azure-spring-apps"}},
+        {"id": "mysql", "type": "azure-mysql", "position": {"x": 520, "y": 150}, "data": {"label": "MySQL", "type": "azure-mysql"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "agw", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "agw", "target": "spring", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "spring", "target": "mysql", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-redis-caching",
+      "name": "Redis Caching Pattern",
+      "description": "High-performance caching with Azure Cache for Redis",
+      "categories": ["azure", "data-analytics"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/caching",
+      "tags": ["redis", "caching", "session", "performance"],
+      "use_cases": ["session-cache", "data-cache", "real-time"],
+      "nodes": [
+        {"id": "app", "type": "azure-app-service", "position": {"x": 50, "y": 150}, "data": {"label": "Application", "type": "azure-app-service"}},
+        {"id": "redis", "type": "azure-redis", "position": {"x": 220, "y": 150}, "data": {"label": "Redis Cache", "type": "azure-redis"}},
+        {"id": "sql", "type": "azure-sql", "position": {"x": 390, "y": 150}, "data": {"label": "SQL Database", "type": "azure-sql"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "app", "target": "redis", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "redis", "target": "sql", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-cosmos-change-feed",
+      "name": "Cosmos DB Change Feed",
+      "description": "Event-driven architecture using Cosmos DB change feed",
+      "categories": ["azure", "data-analytics", "serverless"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/change-feed-functions",
+      "tags": ["cosmos-db", "change-feed", "event-driven", "functions"],
+      "use_cases": ["event-sourcing", "real-time-sync", "materialized-views"],
+      "nodes": [
+        {"id": "app", "type": "azure-app-service", "position": {"x": 50, "y": 150}, "data": {"label": "Application", "type": "azure-app-service"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 200, "y": 150}, "data": {"label": "Cosmos DB", "type": "azure-cosmos"}},
+        {"id": "functions", "type": "azure-functions", "position": {"x": 350, "y": 150}, "data": {"label": "Change Feed Processor", "type": "azure-functions"}},
+        {"id": "search", "type": "azure-cognitive-search", "position": {"x": 500, "y": 80}, "data": {"label": "Search Index", "type": "azure-cognitive-search"}},
+        {"id": "eventhub", "type": "azure-event-hub", "position": {"x": 500, "y": 220}, "data": {"label": "Event Hub", "type": "azure-event-hub"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "app", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "cosmos", "target": "functions", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "functions", "target": "search", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "functions", "target": "eventhub", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-postgresql-flexible",
+      "name": "PostgreSQL Flexible Server",
+      "description": "Managed PostgreSQL with high availability",
+      "categories": ["azure", "data-analytics"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/databases/guide/postgresql-highly-available-zone-redundant",
+      "tags": ["postgresql", "database", "ha", "flexible-server"],
+      "use_cases": ["relational-db", "open-source", "migration"],
+      "nodes": [
+        {"id": "app", "type": "azure-app-service", "position": {"x": 50, "y": 150}, "data": {"label": "Application", "type": "azure-app-service"}},
+        {"id": "pgsql", "type": "azure-postgresql", "position": {"x": 250, "y": 150}, "data": {"label": "PostgreSQL Flexible", "type": "azure-postgresql"}},
+        {"id": "replica", "type": "azure-postgresql", "position": {"x": 450, "y": 150}, "data": {"label": "Read Replica", "type": "azure-postgresql"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "app", "target": "pgsql", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "pgsql", "target": "replica", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-mysql-flexible",
+      "name": "MySQL Flexible Server",
+      "description": "Managed MySQL with zone redundancy",
+      "categories": ["azure", "data-analytics"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/databases/guide/mysql-highly-available-zone-redundant",
+      "tags": ["mysql", "database", "ha", "flexible-server"],
+      "use_cases": ["relational-db", "wordpress", "lamp-stack"],
+      "nodes": [
+        {"id": "app", "type": "azure-app-service", "position": {"x": 50, "y": 150}, "data": {"label": "Application", "type": "azure-app-service"}},
+        {"id": "mysql", "type": "azure-mysql", "position": {"x": 250, "y": 150}, "data": {"label": "MySQL Flexible", "type": "azure-mysql"}},
+        {"id": "backup", "type": "azure-backup", "position": {"x": 250, "y": 50}, "data": {"label": "Automated Backup", "type": "azure-backup"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "app", "target": "mysql", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "backup", "target": "mysql", "sourceHandle": "bottom", "targetHandle": "top"}
+      ]
+    },
+    {
+      "template_id": "azure-mariadb",
+      "name": "MariaDB on Azure",
+      "description": "Azure Database for MariaDB deployment",
+      "categories": ["azure", "data-analytics"],
+      "complexity": "beginner",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/databases/guide/mariadb",
+      "tags": ["mariadb", "database", "mysql-compatible"],
+      "use_cases": ["mariadb-apps", "mysql-migration", "open-source"],
+      "nodes": [
+        {"id": "app", "type": "azure-app-service", "position": {"x": 50, "y": 150}, "data": {"label": "Application", "type": "azure-app-service"}},
+        {"id": "mariadb", "type": "azure-mariadb", "position": {"x": 250, "y": 150}, "data": {"label": "MariaDB", "type": "azure-mariadb"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "app", "target": "mariadb", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-managed-grafana",
+      "name": "Azure Managed Grafana",
+      "description": "Monitoring dashboards with Managed Grafana",
+      "categories": ["azure", "devops"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/monitor/enterprise-monitoring",
+      "tags": ["grafana", "monitoring", "dashboards", "observability"],
+      "use_cases": ["monitoring", "alerting", "visualization"],
+      "nodes": [
+        {"id": "resources", "type": "azure-vm", "position": {"x": 50, "y": 80}, "data": {"label": "Azure Resources", "type": "azure-vm"}},
+        {"id": "aks", "type": "azure-aks", "position": {"x": 50, "y": 180}, "data": {"label": "AKS Clusters", "type": "azure-aks"}},
+        {"id": "monitor", "type": "azure-monitor", "position": {"x": 220, "y": 130}, "data": {"label": "Azure Monitor", "type": "azure-monitor"}},
+        {"id": "prometheus", "type": "rectangle", "position": {"x": 390, "y": 80}, "data": {"label": "Prometheus", "type": "rectangle"}},
+        {"id": "grafana", "type": "azure-grafana", "position": {"x": 390, "y": 180}, "data": {"label": "Managed Grafana", "type": "azure-grafana"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "resources", "target": "monitor", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "aks", "target": "monitor", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "monitor", "target": "prometheus", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "prometheus", "target": "grafana", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e5", "source": "monitor", "target": "grafana", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-load-testing",
+      "name": "Azure Load Testing",
+      "description": "Cloud-native load testing at scale",
+      "categories": ["azure", "devops"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/testing/load-testing-pipeline-azure-devops",
+      "tags": ["load-testing", "performance", "jmeter", "devops"],
+      "use_cases": ["performance-testing", "stress-testing", "capacity-planning"],
+      "nodes": [
+        {"id": "devops", "type": "azure-devops", "position": {"x": 50, "y": 150}, "data": {"label": "Azure DevOps", "type": "azure-devops"}},
+        {"id": "loadtest", "type": "azure-load-testing", "position": {"x": 220, "y": 150}, "data": {"label": "Load Testing", "type": "azure-load-testing"}},
+        {"id": "target", "type": "azure-app-service", "position": {"x": 400, "y": 150}, "data": {"label": "Target App", "type": "azure-app-service"}},
+        {"id": "insights", "type": "azure-app-insights", "position": {"x": 400, "y": 50}, "data": {"label": "App Insights", "type": "azure-app-insights"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "devops", "target": "loadtest", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "loadtest", "target": "target", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "target", "target": "insights", "sourceHandle": "top", "targetHandle": "bottom"}
+      ]
+    },
+    {
+      "template_id": "azure-chaos-studio",
+      "name": "Azure Chaos Studio",
+      "description": "Chaos engineering and fault injection",
+      "categories": ["azure", "devops"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/framework/resiliency/chaos-engineering",
+      "tags": ["chaos-engineering", "fault-injection", "resilience", "testing"],
+      "use_cases": ["resilience-testing", "fault-injection", "disaster-simulation"],
+      "nodes": [
+        {"id": "chaos", "type": "azure-chaos-studio", "position": {"x": 200, "y": 50}, "data": {"label": "Chaos Studio", "type": "azure-chaos-studio"}},
+        {"id": "vm", "type": "azure-vm", "position": {"x": 100, "y": 180}, "data": {"label": "VMs", "type": "azure-vm"}},
+        {"id": "aks", "type": "azure-aks", "position": {"x": 250, "y": 180}, "data": {"label": "AKS", "type": "azure-aks"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 400, "y": 180}, "data": {"label": "Cosmos DB", "type": "azure-cosmos"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "chaos", "target": "vm", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e2", "source": "chaos", "target": "aks", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e3", "source": "chaos", "target": "cosmos", "sourceHandle": "bottom", "targetHandle": "top"}
+      ]
+    },
+    {
+      "template_id": "azure-github-actions",
+      "name": "GitHub Actions with Azure",
+      "description": "CI/CD pipeline with GitHub Actions deploying to Azure",
+      "categories": ["azure", "devops"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/devops/gitops/gitops-overview",
+      "tags": ["github-actions", "cicd", "gitops", "deployment"],
+      "use_cases": ["github-deployment", "gitops", "automation"],
+      "nodes": [
+        {"id": "dev", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Developers", "type": "users"}},
+        {"id": "github", "type": "rectangle", "position": {"x": 180, "y": 150}, "data": {"label": "GitHub", "type": "rectangle"}},
+        {"id": "actions", "type": "rectangle", "position": {"x": 320, "y": 150}, "data": {"label": "GitHub Actions", "type": "rectangle"}},
+        {"id": "acr", "type": "azure-container-registry", "position": {"x": 460, "y": 80}, "data": {"label": "Container Registry", "type": "azure-container-registry"}},
+        {"id": "aks", "type": "azure-aks", "position": {"x": 460, "y": 220}, "data": {"label": "AKS", "type": "azure-aks"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "dev", "target": "github", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "github", "target": "actions", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "actions", "target": "acr", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "acr", "target": "aks", "sourceHandle": "bottom", "targetHandle": "top"}
+      ]
+    },
+    {
+      "template_id": "azure-key-vault-secrets",
+      "name": "Key Vault Secrets Management",
+      "description": "Centralized secrets management with Key Vault",
+      "categories": ["azure", "security"],
+      "complexity": "beginner",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/framework/security/design-storage-keys",
+      "tags": ["key-vault", "secrets", "certificates", "keys"],
+      "use_cases": ["secrets-management", "certificate-management", "encryption-keys"],
+      "nodes": [
+        {"id": "apps", "type": "azure-app-service", "position": {"x": 50, "y": 80}, "data": {"label": "Applications", "type": "azure-app-service"}},
+        {"id": "aks", "type": "azure-aks", "position": {"x": 50, "y": 180}, "data": {"label": "AKS", "type": "azure-aks"}},
+        {"id": "keyvault", "type": "azure-key-vault", "position": {"x": 250, "y": 130}, "data": {"label": "Key Vault", "type": "azure-key-vault"}},
+        {"id": "hsm", "type": "rectangle", "position": {"x": 420, "y": 130}, "data": {"label": "Managed HSM", "type": "rectangle"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "apps", "target": "keyvault", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "aks", "target": "keyvault", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "keyvault", "target": "hsm", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-confidential-computing",
+      "name": "Confidential Computing",
+      "description": "Hardware-based data protection with confidential VMs",
+      "categories": ["azure", "security"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/guide/confidential-computing/confidential-computing-solutions",
+      "tags": ["confidential-computing", "tee", "sgx", "encryption"],
+      "use_cases": ["sensitive-data", "multi-party-compute", "privacy"],
+      "nodes": [
+        {"id": "data", "type": "azure-blob-storage", "position": {"x": 50, "y": 150}, "data": {"label": "Encrypted Data", "type": "azure-blob-storage"}},
+        {"id": "cvm", "type": "azure-vm", "position": {"x": 220, "y": 150}, "data": {"label": "Confidential VM", "type": "azure-vm"}},
+        {"id": "attestation", "type": "rectangle", "position": {"x": 220, "y": 50}, "data": {"label": "Attestation", "type": "rectangle"}},
+        {"id": "output", "type": "azure-blob-storage", "position": {"x": 400, "y": 150}, "data": {"label": "Results", "type": "azure-blob-storage"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "data", "target": "cvm", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "attestation", "target": "cvm", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e3", "source": "cvm", "target": "output", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-defender-cloud",
+      "name": "Microsoft Defender for Cloud",
+      "description": "Cloud security posture management and workload protection",
+      "categories": ["azure", "security"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/guide/security/defender-for-cloud",
+      "tags": ["defender", "cspm", "cwp", "security-center"],
+      "use_cases": ["security-posture", "threat-protection", "compliance"],
+      "nodes": [
+        {"id": "azure", "type": "rectangle", "position": {"x": 100, "y": 80}, "data": {"label": "Azure Resources", "type": "rectangle"}},
+        {"id": "aws", "type": "rectangle", "position": {"x": 100, "y": 180}, "data": {"label": "AWS Resources", "type": "rectangle"}},
+        {"id": "defender", "type": "azure-defender", "position": {"x": 300, "y": 130}, "data": {"label": "Defender for Cloud", "type": "azure-defender"}},
+        {"id": "alerts", "type": "azure-sentinel", "position": {"x": 500, "y": 130}, "data": {"label": "Security Alerts", "type": "azure-sentinel"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "azure", "target": "defender", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "aws", "target": "defender", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "defender", "target": "alerts", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-purview-data-governance",
+      "name": "Microsoft Purview Data Governance",
+      "description": "Unified data governance with Microsoft Purview",
+      "categories": ["azure", "data-analytics", "security"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/data-governance-with-microsoft-purview",
+      "tags": ["purview", "data-governance", "data-catalog", "lineage"],
+      "use_cases": ["data-catalog", "data-lineage", "compliance"],
+      "nodes": [
+        {"id": "sources", "type": "rectangle", "position": {"x": 50, "y": 80}, "data": {"label": "Data Sources", "type": "rectangle"}},
+        {"id": "lake", "type": "azure-data-lake", "position": {"x": 50, "y": 180}, "data": {"label": "Data Lake", "type": "azure-data-lake"}},
+        {"id": "purview", "type": "azure-purview", "position": {"x": 250, "y": 130}, "data": {"label": "Microsoft Purview", "type": "azure-purview"}},
+        {"id": "catalog", "type": "rectangle", "position": {"x": 450, "y": 80}, "data": {"label": "Data Catalog", "type": "rectangle"}},
+        {"id": "lineage", "type": "rectangle", "position": {"x": 450, "y": 180}, "data": {"label": "Data Lineage", "type": "rectangle"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "sources", "target": "purview", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "lake", "target": "purview", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "purview", "target": "catalog", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "purview", "target": "lineage", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-notification-hubs",
+      "name": "Push Notifications",
+      "description": "Cross-platform push notifications with Notification Hubs",
+      "categories": ["azure", "web-app"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/push-notifications",
+      "tags": ["notifications", "push", "mobile", "cross-platform"],
+      "use_cases": ["mobile-notifications", "broadcast", "targeted-push"],
+      "nodes": [
+        {"id": "backend", "type": "azure-app-service", "position": {"x": 50, "y": 150}, "data": {"label": "App Backend", "type": "azure-app-service"}},
+        {"id": "hub", "type": "azure-notification-hub", "position": {"x": 220, "y": 150}, "data": {"label": "Notification Hub", "type": "azure-notification-hub"}},
+        {"id": "ios", "type": "rectangle", "position": {"x": 400, "y": 80}, "data": {"label": "iOS APNS", "type": "rectangle"}},
+        {"id": "android", "type": "rectangle", "position": {"x": 400, "y": 150}, "data": {"label": "Android FCM", "type": "rectangle"}},
+        {"id": "windows", "type": "rectangle", "position": {"x": 400, "y": 220}, "data": {"label": "Windows WNS", "type": "rectangle"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "backend", "target": "hub", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "hub", "target": "ios", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "hub", "target": "android", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "hub", "target": "windows", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-communication-services",
+      "name": "Azure Communication Services",
+      "description": "Add voice, video, chat, and SMS to applications",
+      "categories": ["azure", "web-app"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/communication-services",
+      "tags": ["communication", "voice", "video", "chat", "sms"],
+      "use_cases": ["video-calling", "chat-apps", "contact-center"],
+      "nodes": [
+        {"id": "webapp", "type": "azure-app-service", "position": {"x": 50, "y": 150}, "data": {"label": "Web App", "type": "azure-app-service"}},
+        {"id": "acs", "type": "azure-communication", "position": {"x": 220, "y": 150}, "data": {"label": "Communication Services", "type": "azure-communication"}},
+        {"id": "voice", "type": "rectangle", "position": {"x": 400, "y": 80}, "data": {"label": "Voice/Video", "type": "rectangle"}},
+        {"id": "chat", "type": "rectangle", "position": {"x": 400, "y": 150}, "data": {"label": "Chat", "type": "rectangle"}},
+        {"id": "sms", "type": "rectangle", "position": {"x": 400, "y": 220}, "data": {"label": "SMS", "type": "rectangle"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "webapp", "target": "acs", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "acs", "target": "voice", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "acs", "target": "chat", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "acs", "target": "sms", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-web-pubsub",
+      "name": "Web PubSub Service",
+      "description": "Real-time messaging with WebSocket support",
+      "categories": ["azure", "web-app", "serverless"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/web-pubsub",
+      "tags": ["websocket", "real-time", "pubsub", "messaging"],
+      "use_cases": ["real-time-apps", "live-updates", "collaboration"],
+      "nodes": [
+        {"id": "clients", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Web Clients", "type": "users"}},
+        {"id": "pubsub", "type": "azure-web-pubsub", "position": {"x": 220, "y": 150}, "data": {"label": "Web PubSub", "type": "azure-web-pubsub"}},
+        {"id": "functions", "type": "azure-functions", "position": {"x": 400, "y": 150}, "data": {"label": "Event Handler", "type": "azure-functions"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "clients", "target": "pubsub", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "pubsub", "target": "functions", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-logic-apps-standard",
+      "name": "Logic Apps Standard",
+      "description": "Workflow automation with Logic Apps Standard",
+      "categories": ["azure", "serverless"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/apps/workflow-automation-logic-apps",
+      "tags": ["logic-apps", "workflow", "automation", "integration"],
+      "use_cases": ["workflow-automation", "system-integration", "business-process"],
+      "nodes": [
+        {"id": "trigger", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Trigger", "type": "rectangle"}},
+        {"id": "logicapp", "type": "azure-logic-apps", "position": {"x": 200, "y": 150}, "data": {"label": "Logic App Standard", "type": "azure-logic-apps"}},
+        {"id": "servicebus", "type": "azure-service-bus", "position": {"x": 380, "y": 80}, "data": {"label": "Service Bus", "type": "azure-service-bus"}},
+        {"id": "sql", "type": "azure-sql", "position": {"x": 380, "y": 150}, "data": {"label": "SQL Database", "type": "azure-sql"}},
+        {"id": "dynamics", "type": "rectangle", "position": {"x": 380, "y": 220}, "data": {"label": "Dynamics 365", "type": "rectangle"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "trigger", "target": "logicapp", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "logicapp", "target": "servicebus", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "logicapp", "target": "sql", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "logicapp", "target": "dynamics", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-durable-functions",
+      "name": "Durable Functions",
+      "description": "Stateful workflows with Durable Functions",
+      "categories": ["azure", "serverless"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/serverless/durable-functions-saga",
+      "tags": ["durable-functions", "orchestration", "saga", "stateful"],
+      "use_cases": ["long-running-workflows", "saga-pattern", "fan-out-fan-in"],
+      "nodes": [
+        {"id": "trigger", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "HTTP Trigger", "type": "rectangle"}},
+        {"id": "orchestrator", "type": "azure-functions", "position": {"x": 200, "y": 150}, "data": {"label": "Orchestrator", "type": "azure-functions"}},
+        {"id": "activity1", "type": "azure-functions", "position": {"x": 380, "y": 80}, "data": {"label": "Activity 1", "type": "azure-functions"}},
+        {"id": "activity2", "type": "azure-functions", "position": {"x": 380, "y": 150}, "data": {"label": "Activity 2", "type": "azure-functions"}},
+        {"id": "activity3", "type": "azure-functions", "position": {"x": 380, "y": 220}, "data": {"label": "Activity 3", "type": "azure-functions"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "trigger", "target": "orchestrator", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "orchestrator", "target": "activity1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "orchestrator", "target": "activity2", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "orchestrator", "target": "activity3", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    }
+  ]
+}

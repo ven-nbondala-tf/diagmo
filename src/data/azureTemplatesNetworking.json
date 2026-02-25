@@ -1,0 +1,271 @@
+{
+  "templates": [
+    {
+      "template_id": "azure-virtual-wan",
+      "name": "Azure Virtual WAN",
+      "description": "Global transit network architecture with Virtual WAN",
+      "categories": ["azure", "networking"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/networking/hub-spoke-vwan-architecture",
+      "tags": ["virtual-wan", "global-networking", "sd-wan", "transit"],
+      "use_cases": ["global-enterprise", "branch-connectivity", "hybrid-network"],
+      "nodes": [
+        {"id": "branch1", "type": "rectangle", "position": {"x": 50, "y": 80}, "data": {"label": "Branch Office 1", "type": "rectangle"}},
+        {"id": "branch2", "type": "rectangle", "position": {"x": 50, "y": 180}, "data": {"label": "Branch Office 2", "type": "rectangle"}},
+        {"id": "vwan", "type": "azure-virtual-wan", "position": {"x": 250, "y": 130}, "data": {"label": "Virtual WAN Hub", "type": "azure-virtual-wan"}},
+        {"id": "vnet1", "type": "azure-vnet", "position": {"x": 450, "y": 80}, "data": {"label": "Prod VNet", "type": "azure-vnet"}},
+        {"id": "vnet2", "type": "azure-vnet", "position": {"x": 450, "y": 180}, "data": {"label": "Dev VNet", "type": "azure-vnet"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "branch1", "target": "vwan", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "branch2", "target": "vwan", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "vwan", "target": "vnet1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "vwan", "target": "vnet2", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-front-door-waf",
+      "name": "Front Door with WAF",
+      "description": "Global load balancing with Web Application Firewall",
+      "categories": ["azure", "networking", "security"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/gateway/firewall-application-gateway",
+      "tags": ["front-door", "waf", "global-lb", "cdn"],
+      "use_cases": ["global-apps", "ddos-protection", "edge-security"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Global Users", "type": "users"}},
+        {"id": "fd", "type": "azure-front-door", "position": {"x": 200, "y": 150}, "data": {"label": "Front Door + WAF", "type": "azure-front-door"}},
+        {"id": "app1", "type": "azure-app-service", "position": {"x": 400, "y": 80}, "data": {"label": "App (US)", "type": "azure-app-service"}},
+        {"id": "app2", "type": "azure-app-service", "position": {"x": 400, "y": 220}, "data": {"label": "App (EU)", "type": "azure-app-service"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "fd", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "fd", "target": "app1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "fd", "target": "app2", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-app-gateway-waf",
+      "name": "Application Gateway with WAF v2",
+      "description": "Regional load balancing with WAF v2 and URL-based routing",
+      "categories": ["azure", "networking", "security"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/networking/app-gateway-ingress",
+      "tags": ["app-gateway", "waf", "load-balancer", "ssl-termination"],
+      "use_cases": ["web-apps", "api-gateway", "ssl-offload"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Users", "type": "users"}},
+        {"id": "agw", "type": "azure-app-gateway", "position": {"x": 200, "y": 150}, "data": {"label": "App Gateway + WAF v2", "type": "azure-app-gateway"}},
+        {"id": "web", "type": "azure-app-service", "position": {"x": 400, "y": 80}, "data": {"label": "Web Servers", "type": "azure-app-service"}},
+        {"id": "api", "type": "azure-app-service", "position": {"x": 400, "y": 220}, "data": {"label": "API Servers", "type": "azure-app-service"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "agw", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "agw", "target": "web", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "agw", "target": "api", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-load-balancer-standard",
+      "name": "Standard Load Balancer",
+      "description": "Layer 4 load balancing for high availability",
+      "categories": ["azure", "networking"],
+      "complexity": "beginner",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/load-balancing-overview",
+      "tags": ["load-balancer", "ha", "layer4", "tcp-udp"],
+      "use_cases": ["vm-scaling", "high-availability", "tcp-services"],
+      "nodes": [
+        {"id": "internet", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Internet", "type": "rectangle"}},
+        {"id": "lb", "type": "azure-load-balancer", "position": {"x": 200, "y": 150}, "data": {"label": "Standard LB", "type": "azure-load-balancer"}},
+        {"id": "vm1", "type": "azure-vm", "position": {"x": 400, "y": 80}, "data": {"label": "VM 1", "type": "azure-vm"}},
+        {"id": "vm2", "type": "azure-vm", "position": {"x": 400, "y": 150}, "data": {"label": "VM 2", "type": "azure-vm"}},
+        {"id": "vm3", "type": "azure-vm", "position": {"x": 400, "y": 220}, "data": {"label": "VM 3", "type": "azure-vm"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "internet", "target": "lb", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "lb", "target": "vm1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "lb", "target": "vm2", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "lb", "target": "vm3", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-traffic-manager",
+      "name": "Traffic Manager DNS LB",
+      "description": "DNS-based global traffic distribution",
+      "categories": ["azure", "networking"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/app-service-web-app/multi-region",
+      "tags": ["traffic-manager", "dns", "geo-routing", "failover"],
+      "use_cases": ["global-failover", "geo-distribution", "disaster-recovery"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Global Users", "type": "users"}},
+        {"id": "tm", "type": "azure-traffic-manager", "position": {"x": 200, "y": 150}, "data": {"label": "Traffic Manager", "type": "azure-traffic-manager"}},
+        {"id": "region1", "type": "azure-app-service", "position": {"x": 400, "y": 80}, "data": {"label": "Primary (US East)", "type": "azure-app-service"}},
+        {"id": "region2", "type": "azure-app-service", "position": {"x": 400, "y": 220}, "data": {"label": "Secondary (US West)", "type": "azure-app-service"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "tm", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "tm", "target": "region1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "tm", "target": "region2", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-bastion-secure-access",
+      "name": "Azure Bastion Secure Access",
+      "description": "Secure RDP/SSH access without public IPs",
+      "categories": ["azure", "networking", "security"],
+      "complexity": "beginner",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/azure-bastion",
+      "tags": ["bastion", "secure-access", "rdp", "ssh"],
+      "use_cases": ["secure-management", "jumpbox-replacement", "compliance"],
+      "nodes": [
+        {"id": "admin", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Admin", "type": "users"}},
+        {"id": "portal", "type": "rectangle", "position": {"x": 180, "y": 150}, "data": {"label": "Azure Portal", "type": "rectangle"}},
+        {"id": "bastion", "type": "azure-bastion", "position": {"x": 330, "y": 150}, "data": {"label": "Azure Bastion", "type": "azure-bastion"}},
+        {"id": "vnet", "type": "azure-vnet", "position": {"x": 480, "y": 150}, "data": {"label": "Virtual Network", "type": "azure-vnet"}},
+        {"id": "vm", "type": "azure-vm", "position": {"x": 630, "y": 150}, "data": {"label": "Private VM", "type": "azure-vm"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "admin", "target": "portal", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "portal", "target": "bastion", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "bastion", "target": "vnet", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "vnet", "target": "vm", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-ddos-protection",
+      "name": "DDoS Protection Standard",
+      "description": "DDoS protection for Azure virtual networks",
+      "categories": ["azure", "networking", "security"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/virtual-networks-dmz/nva-ha",
+      "tags": ["ddos", "protection", "security", "networking"],
+      "use_cases": ["public-apps", "ddos-mitigation", "security"],
+      "nodes": [
+        {"id": "internet", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Internet Traffic", "type": "rectangle"}},
+        {"id": "ddos", "type": "azure-ddos", "position": {"x": 200, "y": 150}, "data": {"label": "DDoS Protection", "type": "azure-ddos"}},
+        {"id": "pip", "type": "azure-public-ip", "position": {"x": 350, "y": 150}, "data": {"label": "Public IP", "type": "azure-public-ip"}},
+        {"id": "vnet", "type": "azure-vnet", "position": {"x": 500, "y": 150}, "data": {"label": "Protected VNet", "type": "azure-vnet"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "internet", "target": "ddos", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "ddos", "target": "pip", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "pip", "target": "vnet", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-dns-private-zones",
+      "name": "Private DNS Zones",
+      "description": "Private DNS resolution for Azure resources",
+      "categories": ["azure", "networking"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/networking/private-dns-virtual-network",
+      "tags": ["dns", "private-dns", "name-resolution", "networking"],
+      "use_cases": ["private-endpoints", "name-resolution", "hybrid-dns"],
+      "nodes": [
+        {"id": "vnet1", "type": "azure-vnet", "position": {"x": 100, "y": 80}, "data": {"label": "VNet 1", "type": "azure-vnet"}},
+        {"id": "vnet2", "type": "azure-vnet", "position": {"x": 100, "y": 220}, "data": {"label": "VNet 2", "type": "azure-vnet"}},
+        {"id": "dns", "type": "azure-dns", "position": {"x": 300, "y": 150}, "data": {"label": "Private DNS Zone", "type": "azure-dns"}},
+        {"id": "storage", "type": "azure-blob-storage", "position": {"x": 500, "y": 80}, "data": {"label": "Storage (PE)", "type": "azure-blob-storage"}},
+        {"id": "sql", "type": "azure-sql", "position": {"x": 500, "y": 220}, "data": {"label": "SQL (PE)", "type": "azure-sql"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "vnet1", "target": "dns", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "vnet2", "target": "dns", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "dns", "target": "storage", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "dns", "target": "sql", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-nat-gateway",
+      "name": "NAT Gateway",
+      "description": "Outbound internet connectivity for private subnets",
+      "categories": ["azure", "networking"],
+      "complexity": "beginner",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/networking/guide/nat-gateway",
+      "tags": ["nat", "outbound", "internet", "private-subnet"],
+      "use_cases": ["private-workloads", "outbound-connectivity", "security"],
+      "nodes": [
+        {"id": "vm", "type": "azure-vm", "position": {"x": 50, "y": 150}, "data": {"label": "Private VMs", "type": "azure-vm"}},
+        {"id": "subnet", "type": "azure-vnet", "position": {"x": 200, "y": 150}, "data": {"label": "Private Subnet", "type": "azure-vnet"}},
+        {"id": "nat", "type": "azure-nat-gateway", "position": {"x": 350, "y": 150}, "data": {"label": "NAT Gateway", "type": "azure-nat-gateway"}},
+        {"id": "internet", "type": "rectangle", "position": {"x": 500, "y": 150}, "data": {"label": "Internet", "type": "rectangle"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "vm", "target": "subnet", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "subnet", "target": "nat", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "nat", "target": "internet", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-vpn-p2s",
+      "name": "Point-to-Site VPN",
+      "description": "Remote user VPN connectivity to Azure",
+      "categories": ["azure", "networking", "hybrid"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/vpn",
+      "tags": ["vpn", "p2s", "remote-access", "hybrid"],
+      "use_cases": ["remote-work", "developer-access", "admin-access"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Remote Users", "type": "users"}},
+        {"id": "vpn", "type": "azure-vpn-gateway", "position": {"x": 250, "y": 150}, "data": {"label": "VPN Gateway (P2S)", "type": "azure-vpn-gateway"}},
+        {"id": "vnet", "type": "azure-vnet", "position": {"x": 450, "y": 150}, "data": {"label": "Azure VNet", "type": "azure-vnet"}},
+        {"id": "resources", "type": "azure-vm", "position": {"x": 600, "y": 150}, "data": {"label": "Azure Resources", "type": "azure-vm"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "vpn", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "vpn", "target": "vnet", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "vnet", "target": "resources", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-vpn-s2s",
+      "name": "Site-to-Site VPN",
+      "description": "IPsec VPN tunnel between on-premises and Azure",
+      "categories": ["azure", "networking", "hybrid"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/vpn",
+      "tags": ["vpn", "s2s", "ipsec", "hybrid"],
+      "use_cases": ["hybrid-connectivity", "branch-office", "disaster-recovery"],
+      "nodes": [
+        {"id": "onprem", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "On-Premises DC", "type": "rectangle"}},
+        {"id": "router", "type": "rectangle", "position": {"x": 200, "y": 150}, "data": {"label": "VPN Device", "type": "rectangle"}},
+        {"id": "tunnel", "type": "rectangle", "position": {"x": 350, "y": 150}, "data": {"label": "IPsec Tunnel", "type": "rectangle"}},
+        {"id": "vpn", "type": "azure-vpn-gateway", "position": {"x": 500, "y": 150}, "data": {"label": "VPN Gateway", "type": "azure-vpn-gateway"}},
+        {"id": "vnet", "type": "azure-vnet", "position": {"x": 650, "y": 150}, "data": {"label": "Azure VNet", "type": "azure-vnet"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "onprem", "target": "router", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "router", "target": "tunnel", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "tunnel", "target": "vpn", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "vpn", "target": "vnet", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-nva-ha",
+      "name": "NVA High Availability",
+      "description": "Highly available network virtual appliances",
+      "categories": ["azure", "networking", "security"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/dmz/nva-ha",
+      "tags": ["nva", "high-availability", "firewall", "load-balancer"],
+      "use_cases": ["network-security", "firewall-ha", "ingress-egress"],
+      "nodes": [
+        {"id": "internet", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Internet", "type": "rectangle"}},
+        {"id": "extlb", "type": "azure-load-balancer", "position": {"x": 180, "y": 150}, "data": {"label": "External LB", "type": "azure-load-balancer"}},
+        {"id": "nva1", "type": "azure-vm", "position": {"x": 330, "y": 80}, "data": {"label": "NVA 1", "type": "azure-vm"}},
+        {"id": "nva2", "type": "azure-vm", "position": {"x": 330, "y": 220}, "data": {"label": "NVA 2", "type": "azure-vm"}},
+        {"id": "intlb", "type": "azure-load-balancer", "position": {"x": 480, "y": 150}, "data": {"label": "Internal LB", "type": "azure-load-balancer"}},
+        {"id": "workloads", "type": "azure-app-service", "position": {"x": 630, "y": 150}, "data": {"label": "Workloads", "type": "azure-app-service"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "internet", "target": "extlb", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "extlb", "target": "nva1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "extlb", "target": "nva2", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "nva1", "target": "intlb", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "nva2", "target": "intlb", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e6", "source": "intlb", "target": "workloads", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,764 @@
+{
+  "templates": [
+    {
+      "template_id": "azure-3-tier-web-app",
+      "name": "Three-Tier Web Application",
+      "description": "Classic three-tier architecture with web, application, and database tiers on Azure",
+      "categories": ["azure", "web-app"],
+      "complexity": "beginner",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/n-tier",
+      "tags": ["web", "app-service", "sql", "load-balancer"],
+      "use_cases": ["corporate-website", "web-application", "api-backend"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Users", "type": "users"}},
+        {"id": "lb", "type": "azure-load-balancer", "position": {"x": 200, "y": 150}, "data": {"label": "Load Balancer", "type": "azure-load-balancer"}},
+        {"id": "web1", "type": "azure-app-service", "position": {"x": 380, "y": 80}, "data": {"label": "Web App 1", "type": "azure-app-service"}},
+        {"id": "web2", "type": "azure-app-service", "position": {"x": 380, "y": 220}, "data": {"label": "Web App 2", "type": "azure-app-service"}},
+        {"id": "sql", "type": "azure-sql", "position": {"x": 550, "y": 150}, "data": {"label": "Azure SQL", "type": "azure-sql"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "lb", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "lb", "target": "web1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "lb", "target": "web2", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "web1", "target": "sql", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "web2", "target": "sql", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-serverless-web",
+      "name": "Serverless Web Application",
+      "description": "Static web app with serverless backend using Azure Functions and Cosmos DB",
+      "categories": ["azure", "web-app", "serverless"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/serverless/web-app",
+      "tags": ["serverless", "functions", "static-web-app", "cosmos-db"],
+      "use_cases": ["spa", "jamstack", "api-first"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Users", "type": "users"}},
+        {"id": "cdn", "type": "azure-cdn", "position": {"x": 180, "y": 150}, "data": {"label": "Azure CDN", "type": "azure-cdn"}},
+        {"id": "swa", "type": "azure-static-web-app", "position": {"x": 320, "y": 150}, "data": {"label": "Static Web App", "type": "azure-static-web-app"}},
+        {"id": "functions", "type": "azure-functions", "position": {"x": 460, "y": 150}, "data": {"label": "Functions", "type": "azure-functions"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 600, "y": 150}, "data": {"label": "Cosmos DB", "type": "azure-cosmos"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "cdn", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "cdn", "target": "swa", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "swa", "target": "functions", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "functions", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-aks-microservices",
+      "name": "AKS Microservices Architecture",
+      "description": "Microservices running on Azure Kubernetes Service with API Gateway",
+      "categories": ["azure", "containers"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/containers/aks-microservices/aks-microservices",
+      "tags": ["kubernetes", "aks", "microservices", "api-gateway"],
+      "use_cases": ["microservices", "cloud-native", "containerized-apps"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 180}, "data": {"label": "Users", "type": "users"}},
+        {"id": "apim", "type": "azure-api-management", "position": {"x": 180, "y": 180}, "data": {"label": "API Management", "type": "azure-api-management"}},
+        {"id": "agw", "type": "azure-app-gateway", "position": {"x": 320, "y": 180}, "data": {"label": "App Gateway", "type": "azure-app-gateway"}},
+        {"id": "aks", "type": "azure-aks", "position": {"x": 480, "y": 180}, "data": {"label": "AKS Cluster", "type": "azure-aks"}},
+        {"id": "acr", "type": "azure-container-registry", "position": {"x": 480, "y": 60}, "data": {"label": "Container Registry", "type": "azure-container-registry"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 620, "y": 120}, "data": {"label": "Cosmos DB", "type": "azure-cosmos"}},
+        {"id": "redis", "type": "azure-redis", "position": {"x": 620, "y": 240}, "data": {"label": "Redis Cache", "type": "azure-redis"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "apim", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "apim", "target": "agw", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "agw", "target": "aks", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "acr", "target": "aks", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e5", "source": "aks", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e6", "source": "aks", "target": "redis", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-openai-chatbot",
+      "name": "Azure OpenAI Chatbot",
+      "description": "Intelligent chatbot using Azure OpenAI Service with RAG pattern",
+      "categories": ["azure", "ai-ml"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/ai-ml/architecture/conversational-bot",
+      "tags": ["openai", "chatbot", "ai", "rag", "cognitive-search"],
+      "use_cases": ["customer-support", "virtual-assistant", "knowledge-base"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Users", "type": "users"}},
+        {"id": "webapp", "type": "azure-app-service", "position": {"x": 180, "y": 150}, "data": {"label": "Chat UI", "type": "azure-app-service"}},
+        {"id": "openai", "type": "azure-openai", "position": {"x": 350, "y": 150}, "data": {"label": "Azure OpenAI", "type": "azure-openai"}},
+        {"id": "search", "type": "azure-cognitive-search", "position": {"x": 350, "y": 280}, "data": {"label": "AI Search", "type": "azure-cognitive-search"}},
+        {"id": "storage", "type": "azure-blob-storage", "position": {"x": 500, "y": 280}, "data": {"label": "Documents", "type": "azure-blob-storage"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "webapp", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "webapp", "target": "openai", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "openai", "target": "search", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e4", "source": "search", "target": "storage", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-hub-spoke-network",
+      "name": "Hub-Spoke Network Topology",
+      "description": "Hub and spoke network architecture with centralized services",
+      "categories": ["azure", "networking"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/hub-spoke",
+      "tags": ["hub-spoke", "vnet", "firewall", "networking"],
+      "use_cases": ["enterprise-network", "multi-workload", "centralized-security"],
+      "nodes": [
+        {"id": "onprem", "type": "rectangle", "position": {"x": 50, "y": 180}, "data": {"label": "On-Premises", "type": "rectangle"}},
+        {"id": "vpn", "type": "azure-vpn-gateway", "position": {"x": 180, "y": 180}, "data": {"label": "VPN Gateway", "type": "azure-vpn-gateway"}},
+        {"id": "hub", "type": "azure-vnet", "position": {"x": 350, "y": 180}, "data": {"label": "Hub VNet", "type": "azure-vnet"}},
+        {"id": "firewall", "type": "azure-firewall", "position": {"x": 350, "y": 60}, "data": {"label": "Azure Firewall", "type": "azure-firewall"}},
+        {"id": "spoke1", "type": "azure-vnet", "position": {"x": 520, "y": 100}, "data": {"label": "Spoke 1 - Prod", "type": "azure-vnet"}},
+        {"id": "spoke2", "type": "azure-vnet", "position": {"x": 520, "y": 260}, "data": {"label": "Spoke 2 - Dev", "type": "azure-vnet"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "onprem", "target": "vpn", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "vpn", "target": "hub", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "hub", "target": "firewall", "sourceHandle": "top", "targetHandle": "bottom"},
+        {"id": "e4", "source": "hub", "target": "spoke1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "hub", "target": "spoke2", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-devops-pipeline",
+      "name": "Azure DevOps CI/CD Pipeline",
+      "description": "Complete CI/CD pipeline with Azure DevOps, Container Registry, and AKS",
+      "categories": ["azure", "devops"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/apps/devops-with-aks",
+      "tags": ["devops", "cicd", "azure-devops", "aks", "gitops"],
+      "use_cases": ["continuous-integration", "continuous-deployment", "automation"],
+      "nodes": [
+        {"id": "dev", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Developers", "type": "users"}},
+        {"id": "repos", "type": "azure-devops", "position": {"x": 180, "y": 150}, "data": {"label": "Azure Repos", "type": "azure-devops"}},
+        {"id": "pipeline", "type": "azure-devops", "position": {"x": 320, "y": 150}, "data": {"label": "Build Pipeline", "type": "azure-devops"}},
+        {"id": "acr", "type": "azure-container-registry", "position": {"x": 460, "y": 150}, "data": {"label": "Container Registry", "type": "azure-container-registry"}},
+        {"id": "aks", "type": "azure-aks", "position": {"x": 600, "y": 150}, "data": {"label": "AKS Cluster", "type": "azure-aks"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "dev", "target": "repos", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "repos", "target": "pipeline", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "pipeline", "target": "acr", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "acr", "target": "aks", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-iot-reference",
+      "name": "Azure IoT Reference Architecture",
+      "description": "End-to-end IoT solution with device management, stream processing, and analytics",
+      "categories": ["azure", "iot"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/iot",
+      "tags": ["iot", "iot-hub", "stream-analytics", "digital-twins"],
+      "use_cases": ["smart-factory", "connected-devices", "telemetry"],
+      "nodes": [
+        {"id": "devices", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "IoT Devices", "type": "rectangle"}},
+        {"id": "edge", "type": "azure-iot-edge", "position": {"x": 180, "y": 150}, "data": {"label": "IoT Edge", "type": "azure-iot-edge"}},
+        {"id": "hub", "type": "azure-iot-hub", "position": {"x": 320, "y": 150}, "data": {"label": "IoT Hub", "type": "azure-iot-hub"}},
+        {"id": "stream", "type": "azure-stream-analytics", "position": {"x": 460, "y": 80}, "data": {"label": "Stream Analytics", "type": "azure-stream-analytics"}},
+        {"id": "storage", "type": "azure-data-lake", "position": {"x": 460, "y": 220}, "data": {"label": "Data Lake", "type": "azure-data-lake"}},
+        {"id": "powerbi", "type": "azure-power-bi", "position": {"x": 600, "y": 150}, "data": {"label": "Power BI", "type": "azure-power-bi"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "devices", "target": "edge", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "edge", "target": "hub", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "hub", "target": "stream", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "hub", "target": "storage", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "stream", "target": "powerbi", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-synapse-analytics",
+      "name": "Azure Synapse Analytics",
+      "description": "Modern data warehouse with Synapse Analytics for enterprise analytics",
+      "categories": ["azure", "data-analytics"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/data/data-warehouse",
+      "tags": ["synapse", "data-warehouse", "analytics", "spark"],
+      "use_cases": ["enterprise-analytics", "data-warehouse", "bi-reporting"],
+      "nodes": [
+        {"id": "sources", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Data Sources", "type": "rectangle"}},
+        {"id": "adf", "type": "azure-data-factory", "position": {"x": 180, "y": 150}, "data": {"label": "Data Factory", "type": "azure-data-factory"}},
+        {"id": "lake", "type": "azure-data-lake", "position": {"x": 320, "y": 150}, "data": {"label": "Data Lake", "type": "azure-data-lake"}},
+        {"id": "synapse", "type": "azure-synapse", "position": {"x": 460, "y": 150}, "data": {"label": "Synapse Analytics", "type": "azure-synapse"}},
+        {"id": "powerbi", "type": "azure-power-bi", "position": {"x": 600, "y": 150}, "data": {"label": "Power BI", "type": "azure-power-bi"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "sources", "target": "adf", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "adf", "target": "lake", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "lake", "target": "synapse", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "synapse", "target": "powerbi", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-landing-zone",
+      "name": "Azure Landing Zone",
+      "description": "Enterprise-scale landing zone for Azure adoption with governance",
+      "categories": ["azure", "security"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/",
+      "tags": ["landing-zone", "governance", "caf", "enterprise"],
+      "use_cases": ["enterprise-adoption", "multi-subscription", "governance"],
+      "nodes": [
+        {"id": "mgmt-group", "type": "rectangle", "position": {"x": 300, "y": 30}, "data": {"label": "Root Management Group", "type": "rectangle"}},
+        {"id": "platform", "type": "azure-subscription", "position": {"x": 150, "y": 120}, "data": {"label": "Platform", "type": "azure-subscription"}},
+        {"id": "landing", "type": "azure-subscription", "position": {"x": 450, "y": 120}, "data": {"label": "Landing Zones", "type": "azure-subscription"}},
+        {"id": "identity", "type": "azure-entra-id", "position": {"x": 80, "y": 220}, "data": {"label": "Identity", "type": "azure-entra-id"}},
+        {"id": "mgmt", "type": "azure-monitor", "position": {"x": 220, "y": 220}, "data": {"label": "Management", "type": "azure-monitor"}},
+        {"id": "connectivity", "type": "azure-vnet", "position": {"x": 380, "y": 220}, "data": {"label": "Connectivity", "type": "azure-vnet"}},
+        {"id": "workloads", "type": "azure-app-service", "position": {"x": 520, "y": 220}, "data": {"label": "Workloads", "type": "azure-app-service"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "mgmt-group", "target": "platform", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e2", "source": "mgmt-group", "target": "landing", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e3", "source": "platform", "target": "identity", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e4", "source": "platform", "target": "mgmt", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e5", "source": "landing", "target": "connectivity", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e6", "source": "landing", "target": "workloads", "sourceHandle": "bottom", "targetHandle": "top"}
+      ]
+    },
+    {
+      "template_id": "azure-disaster-recovery",
+      "name": "Azure Site Recovery",
+      "description": "Disaster recovery with Azure Site Recovery for business continuity",
+      "categories": ["azure", "security"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/disaster-recovery-smb-azure-site-recovery",
+      "tags": ["disaster-recovery", "site-recovery", "bcdr", "replication"],
+      "use_cases": ["business-continuity", "dr-planning", "failover"],
+      "nodes": [
+        {"id": "primary", "type": "rectangle", "position": {"x": 100, "y": 150}, "data": {"label": "Primary Region", "type": "rectangle"}},
+        {"id": "asr", "type": "azure-site-recovery", "position": {"x": 300, "y": 150}, "data": {"label": "Site Recovery", "type": "azure-site-recovery"}},
+        {"id": "secondary", "type": "rectangle", "position": {"x": 500, "y": 150}, "data": {"label": "Secondary Region", "type": "rectangle"}},
+        {"id": "vault", "type": "azure-backup", "position": {"x": 300, "y": 50}, "data": {"label": "Recovery Vault", "type": "azure-backup"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "primary", "target": "asr", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "asr", "target": "secondary", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "asr", "target": "vault", "sourceHandle": "top", "targetHandle": "bottom"}
+      ]
+    },
+    {
+      "template_id": "azure-api-management",
+      "name": "API Management Architecture",
+      "description": "Centralized API gateway with Azure API Management",
+      "categories": ["azure", "serverless"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/enterprise-integration/basic-enterprise-integration",
+      "tags": ["api-management", "api-gateway", "oauth", "developer-portal"],
+      "use_cases": ["api-platform", "partner-apis", "api-monetization"],
+      "nodes": [
+        {"id": "consumers", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "API Consumers", "type": "users"}},
+        {"id": "apim", "type": "azure-api-management", "position": {"x": 200, "y": 150}, "data": {"label": "API Management", "type": "azure-api-management"}},
+        {"id": "functions", "type": "azure-functions", "position": {"x": 400, "y": 80}, "data": {"label": "Functions", "type": "azure-functions"}},
+        {"id": "webapp", "type": "azure-app-service", "position": {"x": 400, "y": 150}, "data": {"label": "Web API", "type": "azure-app-service"}},
+        {"id": "aks", "type": "azure-aks", "position": {"x": 400, "y": 220}, "data": {"label": "AKS Services", "type": "azure-aks"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "consumers", "target": "apim", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "apim", "target": "functions", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "apim", "target": "webapp", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "apim", "target": "aks", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-virtual-desktop",
+      "name": "Azure Virtual Desktop",
+      "description": "Desktop virtualization service for remote work scenarios",
+      "categories": ["azure", "hybrid"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/wvd/windows-virtual-desktop",
+      "tags": ["avd", "virtual-desktop", "remote-work", "vdi"],
+      "use_cases": ["remote-work", "vdi", "desktop-as-service"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Remote Users", "type": "users"}},
+        {"id": "entra", "type": "azure-entra-id", "position": {"x": 200, "y": 80}, "data": {"label": "Entra ID", "type": "azure-entra-id"}},
+        {"id": "avd", "type": "azure-virtual-desktop", "position": {"x": 350, "y": 150}, "data": {"label": "AVD", "type": "azure-virtual-desktop"}},
+        {"id": "hosts", "type": "azure-vm", "position": {"x": 500, "y": 150}, "data": {"label": "Session Hosts", "type": "azure-vm"}},
+        {"id": "storage", "type": "azure-files", "position": {"x": 500, "y": 250}, "data": {"label": "FSLogix Profiles", "type": "azure-files"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "avd", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "entra", "target": "avd", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e3", "source": "avd", "target": "hosts", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "hosts", "target": "storage", "sourceHandle": "bottom", "targetHandle": "top"}
+      ]
+    },
+    {
+      "template_id": "azure-event-driven",
+      "name": "Event-Driven Architecture",
+      "description": "Loosely coupled event-driven system using Event Grid and Service Bus",
+      "categories": ["azure", "serverless"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/event-driven",
+      "tags": ["event-driven", "event-grid", "service-bus", "functions"],
+      "use_cases": ["decoupled-systems", "real-time-processing", "event-sourcing"],
+      "nodes": [
+        {"id": "producers", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Event Producers", "type": "rectangle"}},
+        {"id": "eventgrid", "type": "azure-event-grid", "position": {"x": 200, "y": 150}, "data": {"label": "Event Grid", "type": "azure-event-grid"}},
+        {"id": "servicebus", "type": "azure-service-bus", "position": {"x": 350, "y": 150}, "data": {"label": "Service Bus", "type": "azure-service-bus"}},
+        {"id": "functions", "type": "azure-functions", "position": {"x": 500, "y": 80}, "data": {"label": "Functions", "type": "azure-functions"}},
+        {"id": "logicapps", "type": "azure-logic-apps", "position": {"x": 500, "y": 220}, "data": {"label": "Logic Apps", "type": "azure-logic-apps"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "producers", "target": "eventgrid", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "eventgrid", "target": "servicebus", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "servicebus", "target": "functions", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "servicebus", "target": "logicapps", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-digital-twins",
+      "name": "Azure Digital Twins",
+      "description": "Digital twin solution for modeling physical environments",
+      "categories": ["azure", "iot"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/iot/iot-and-data-analytics",
+      "tags": ["digital-twins", "iot", "modeling", "simulation"],
+      "use_cases": ["smart-building", "manufacturing", "supply-chain"],
+      "nodes": [
+        {"id": "devices", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Physical Assets", "type": "rectangle"}},
+        {"id": "iothub", "type": "azure-iot-hub", "position": {"x": 200, "y": 150}, "data": {"label": "IoT Hub", "type": "azure-iot-hub"}},
+        {"id": "twins", "type": "azure-digital-twins", "position": {"x": 350, "y": 150}, "data": {"label": "Digital Twins", "type": "azure-digital-twins"}},
+        {"id": "signalr", "type": "azure-signalr", "position": {"x": 500, "y": 80}, "data": {"label": "SignalR", "type": "azure-signalr"}},
+        {"id": "tsinsights", "type": "azure-time-series", "position": {"x": 500, "y": 220}, "data": {"label": "Time Series Insights", "type": "azure-time-series"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "devices", "target": "iothub", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "iothub", "target": "twins", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "twins", "target": "signalr", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "twins", "target": "tsinsights", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-cognitive-search",
+      "name": "Azure AI Search Solution",
+      "description": "Enterprise search using Azure AI Search with cognitive skills",
+      "categories": ["azure", "ai-ml"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/cognitive-search-with-skillsets",
+      "tags": ["cognitive-search", "ai-search", "full-text-search", "skillsets"],
+      "use_cases": ["enterprise-search", "document-search", "knowledge-mining"],
+      "nodes": [
+        {"id": "sources", "type": "azure-blob-storage", "position": {"x": 50, "y": 150}, "data": {"label": "Data Sources", "type": "azure-blob-storage"}},
+        {"id": "search", "type": "azure-cognitive-search", "position": {"x": 200, "y": 150}, "data": {"label": "AI Search", "type": "azure-cognitive-search"}},
+        {"id": "cognitive", "type": "azure-cognitive-services", "position": {"x": 200, "y": 50}, "data": {"label": "Cognitive Services", "type": "azure-cognitive-services"}},
+        {"id": "webapp", "type": "azure-app-service", "position": {"x": 350, "y": 150}, "data": {"label": "Search App", "type": "azure-app-service"}},
+        {"id": "users", "type": "users", "position": {"x": 500, "y": 150}, "data": {"label": "Users", "type": "users"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "sources", "target": "search", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "cognitive", "target": "search", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e3", "source": "search", "target": "webapp", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "webapp", "target": "users", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-container-apps",
+      "name": "Azure Container Apps",
+      "description": "Serverless container platform for microservices",
+      "categories": ["azure", "containers", "serverless"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/compute-decision-tree",
+      "tags": ["container-apps", "serverless", "dapr", "keda"],
+      "use_cases": ["microservices", "event-driven", "api-backends"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Users", "type": "users"}},
+        {"id": "acaenv", "type": "azure-container-apps", "position": {"x": 250, "y": 150}, "data": {"label": "Container Apps Env", "type": "azure-container-apps"}},
+        {"id": "app1", "type": "azure-container-apps", "position": {"x": 420, "y": 80}, "data": {"label": "Frontend App", "type": "azure-container-apps"}},
+        {"id": "app2", "type": "azure-container-apps", "position": {"x": 420, "y": 220}, "data": {"label": "Backend API", "type": "azure-container-apps"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 580, "y": 150}, "data": {"label": "Cosmos DB", "type": "azure-cosmos"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "acaenv", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "acaenv", "target": "app1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "acaenv", "target": "app2", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "app2", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-arc-hybrid",
+      "name": "Azure Arc Hybrid Cloud",
+      "description": "Extend Azure management to on-premises and multi-cloud resources",
+      "categories": ["azure", "hybrid"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/hybrid/azure-arc-hybrid-config",
+      "tags": ["arc", "hybrid", "multi-cloud", "kubernetes"],
+      "use_cases": ["hybrid-management", "multi-cloud", "on-premises"],
+      "nodes": [
+        {"id": "azure", "type": "rectangle", "position": {"x": 300, "y": 50}, "data": {"label": "Azure Cloud", "type": "rectangle"}},
+        {"id": "arc", "type": "azure-arc", "position": {"x": 300, "y": 150}, "data": {"label": "Azure Arc", "type": "azure-arc"}},
+        {"id": "onprem", "type": "rectangle", "position": {"x": 100, "y": 280}, "data": {"label": "On-Premises", "type": "rectangle"}},
+        {"id": "aws", "type": "rectangle", "position": {"x": 300, "y": 280}, "data": {"label": "AWS", "type": "rectangle"}},
+        {"id": "gcp", "type": "rectangle", "position": {"x": 500, "y": 280}, "data": {"label": "GCP", "type": "rectangle"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "azure", "target": "arc", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e2", "source": "arc", "target": "onprem", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e3", "source": "arc", "target": "aws", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e4", "source": "arc", "target": "gcp", "sourceHandle": "bottom", "targetHandle": "top"}
+      ]
+    },
+    {
+      "template_id": "azure-expressroute",
+      "name": "ExpressRoute Connection",
+      "description": "Private connectivity from on-premises to Azure",
+      "categories": ["azure", "networking", "hybrid"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/expressroute",
+      "tags": ["expressroute", "hybrid", "private-connectivity", "networking"],
+      "use_cases": ["hybrid-connectivity", "low-latency", "private-network"],
+      "nodes": [
+        {"id": "onprem", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "On-Premises DC", "type": "rectangle"}},
+        {"id": "edge", "type": "rectangle", "position": {"x": 200, "y": 150}, "data": {"label": "Edge Router", "type": "rectangle"}},
+        {"id": "provider", "type": "rectangle", "position": {"x": 350, "y": 150}, "data": {"label": "ExpressRoute Provider", "type": "rectangle"}},
+        {"id": "msee", "type": "rectangle", "position": {"x": 500, "y": 150}, "data": {"label": "MSEE", "type": "rectangle"}},
+        {"id": "vnet", "type": "azure-vnet", "position": {"x": 650, "y": 150}, "data": {"label": "Azure VNet", "type": "azure-vnet"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "onprem", "target": "edge", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "edge", "target": "provider", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "provider", "target": "msee", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "msee", "target": "vnet", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-media-services",
+      "name": "Azure Media Services",
+      "description": "Video streaming platform with encoding and CDN delivery",
+      "categories": ["azure", "web-app"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/digital-media-video",
+      "tags": ["media", "streaming", "video", "cdn"],
+      "use_cases": ["video-streaming", "live-events", "vod"],
+      "nodes": [
+        {"id": "upload", "type": "azure-blob-storage", "position": {"x": 50, "y": 150}, "data": {"label": "Upload Storage", "type": "azure-blob-storage"}},
+        {"id": "media", "type": "azure-media-services", "position": {"x": 200, "y": 150}, "data": {"label": "Media Services", "type": "azure-media-services"}},
+        {"id": "cdn", "type": "azure-cdn", "position": {"x": 350, "y": 150}, "data": {"label": "Azure CDN", "type": "azure-cdn"}},
+        {"id": "player", "type": "rectangle", "position": {"x": 500, "y": 150}, "data": {"label": "Video Players", "type": "rectangle"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "upload", "target": "media", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "media", "target": "cdn", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "cdn", "target": "player", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-batch-processing",
+      "name": "Azure Batch Processing",
+      "description": "Large-scale parallel and batch compute workloads",
+      "categories": ["azure", "data-analytics"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/apps/hpc-saas",
+      "tags": ["batch", "hpc", "parallel-processing", "compute"],
+      "use_cases": ["hpc", "rendering", "simulation"],
+      "nodes": [
+        {"id": "client", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Clients", "type": "users"}},
+        {"id": "storage", "type": "azure-blob-storage", "position": {"x": 200, "y": 80}, "data": {"label": "Input Storage", "type": "azure-blob-storage"}},
+        {"id": "batch", "type": "azure-batch", "position": {"x": 350, "y": 150}, "data": {"label": "Azure Batch", "type": "azure-batch"}},
+        {"id": "pool", "type": "azure-vm", "position": {"x": 500, "y": 150}, "data": {"label": "Compute Pool", "type": "azure-vm"}},
+        {"id": "output", "type": "azure-blob-storage", "position": {"x": 500, "y": 80}, "data": {"label": "Output Storage", "type": "azure-blob-storage"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "client", "target": "storage", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "storage", "target": "batch", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "batch", "target": "pool", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "pool", "target": "output", "sourceHandle": "top", "targetHandle": "bottom"}
+      ]
+    },
+    {
+      "template_id": "azure-b2c-auth",
+      "name": "Azure AD B2C Authentication",
+      "description": "Customer identity and access management with Azure AD B2C",
+      "categories": ["azure", "security"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/consumer-mobile-app",
+      "tags": ["b2c", "authentication", "identity", "ciam"],
+      "use_cases": ["consumer-apps", "social-login", "mfa"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Consumers", "type": "users"}},
+        {"id": "b2c", "type": "azure-ad-b2c", "position": {"x": 200, "y": 150}, "data": {"label": "Azure AD B2C", "type": "azure-ad-b2c"}},
+        {"id": "social", "type": "rectangle", "position": {"x": 200, "y": 50}, "data": {"label": "Social Providers", "type": "rectangle"}},
+        {"id": "webapp", "type": "azure-app-service", "position": {"x": 400, "y": 150}, "data": {"label": "Web App", "type": "azure-app-service"}},
+        {"id": "api", "type": "azure-functions", "position": {"x": 550, "y": 150}, "data": {"label": "Backend API", "type": "azure-functions"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "b2c", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "social", "target": "b2c", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e3", "source": "b2c", "target": "webapp", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "webapp", "target": "api", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-data-factory-etl",
+      "name": "Azure Data Factory ETL",
+      "description": "Cloud ETL and data integration service",
+      "categories": ["azure", "data-analytics"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/data-guide/technology-choices/pipeline-orchestration-data-movement",
+      "tags": ["data-factory", "etl", "data-integration", "orchestration"],
+      "use_cases": ["data-migration", "etl-pipelines", "data-movement"],
+      "nodes": [
+        {"id": "onprem", "type": "rectangle", "position": {"x": 50, "y": 80}, "data": {"label": "On-Premises SQL", "type": "rectangle"}},
+        {"id": "saas", "type": "rectangle", "position": {"x": 50, "y": 180}, "data": {"label": "SaaS Apps", "type": "rectangle"}},
+        {"id": "adf", "type": "azure-data-factory", "position": {"x": 250, "y": 130}, "data": {"label": "Data Factory", "type": "azure-data-factory"}},
+        {"id": "lake", "type": "azure-data-lake", "position": {"x": 420, "y": 80}, "data": {"label": "Data Lake", "type": "azure-data-lake"}},
+        {"id": "synapse", "type": "azure-synapse", "position": {"x": 420, "y": 180}, "data": {"label": "Synapse", "type": "azure-synapse"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "onprem", "target": "adf", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "saas", "target": "adf", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "adf", "target": "lake", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "adf", "target": "synapse", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-monitor-observability",
+      "name": "Azure Monitor Observability",
+      "description": "Full-stack monitoring with Azure Monitor, Log Analytics, and Application Insights",
+      "categories": ["azure", "devops"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/monitoring",
+      "tags": ["monitor", "observability", "logs", "metrics", "application-insights"],
+      "use_cases": ["monitoring", "alerting", "diagnostics"],
+      "nodes": [
+        {"id": "apps", "type": "azure-app-service", "position": {"x": 50, "y": 80}, "data": {"label": "Applications", "type": "azure-app-service"}},
+        {"id": "infra", "type": "azure-vm", "position": {"x": 50, "y": 180}, "data": {"label": "Infrastructure", "type": "azure-vm"}},
+        {"id": "monitor", "type": "azure-monitor", "position": {"x": 250, "y": 130}, "data": {"label": "Azure Monitor", "type": "azure-monitor"}},
+        {"id": "logs", "type": "azure-log-analytics", "position": {"x": 420, "y": 80}, "data": {"label": "Log Analytics", "type": "azure-log-analytics"}},
+        {"id": "insights", "type": "azure-app-insights", "position": {"x": 420, "y": 180}, "data": {"label": "App Insights", "type": "azure-app-insights"}},
+        {"id": "alerts", "type": "rectangle", "position": {"x": 570, "y": 130}, "data": {"label": "Alerts & Actions", "type": "rectangle"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "apps", "target": "monitor", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "infra", "target": "monitor", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "monitor", "target": "logs", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "monitor", "target": "insights", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "logs", "target": "alerts", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-static-web-apps",
+      "name": "Azure Static Web Apps",
+      "description": "Full-stack static web apps with serverless APIs",
+      "categories": ["azure", "web-app", "serverless"],
+      "complexity": "beginner",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/apps/publish-internal-apis-externally",
+      "tags": ["static-web-apps", "jamstack", "serverless", "github"],
+      "use_cases": ["static-sites", "spa", "documentation"],
+      "nodes": [
+        {"id": "github", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "GitHub Repo", "type": "rectangle"}},
+        {"id": "swa", "type": "azure-static-web-app", "position": {"x": 220, "y": 150}, "data": {"label": "Static Web App", "type": "azure-static-web-app"}},
+        {"id": "functions", "type": "azure-functions", "position": {"x": 390, "y": 150}, "data": {"label": "API Functions", "type": "azure-functions"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 550, "y": 150}, "data": {"label": "Cosmos DB", "type": "azure-cosmos"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "github", "target": "swa", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "swa", "target": "functions", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "functions", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-private-link",
+      "name": "Azure Private Link",
+      "description": "Private connectivity to Azure services over private endpoints",
+      "categories": ["azure", "networking", "security"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/private-link-hub-spoke-network",
+      "tags": ["private-link", "private-endpoint", "networking", "security"],
+      "use_cases": ["private-access", "compliance", "data-security"],
+      "nodes": [
+        {"id": "vnet", "type": "azure-vnet", "position": {"x": 150, "y": 150}, "data": {"label": "Virtual Network", "type": "azure-vnet"}},
+        {"id": "vm", "type": "azure-vm", "position": {"x": 50, "y": 150}, "data": {"label": "Virtual Machine", "type": "azure-vm"}},
+        {"id": "endpoint", "type": "azure-private-endpoint", "position": {"x": 300, "y": 150}, "data": {"label": "Private Endpoint", "type": "azure-private-endpoint"}},
+        {"id": "storage", "type": "azure-blob-storage", "position": {"x": 450, "y": 80}, "data": {"label": "Blob Storage", "type": "azure-blob-storage"}},
+        {"id": "sql", "type": "azure-sql", "position": {"x": 450, "y": 220}, "data": {"label": "Azure SQL", "type": "azure-sql"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "vm", "target": "vnet", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "vnet", "target": "endpoint", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "endpoint", "target": "storage", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "endpoint", "target": "sql", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-sentinel-siem",
+      "name": "Microsoft Sentinel SIEM",
+      "description": "Cloud-native SIEM and SOAR for security operations",
+      "categories": ["azure", "security"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/security-operations-center-modern-security",
+      "tags": ["sentinel", "siem", "soar", "security-operations"],
+      "use_cases": ["soc", "threat-detection", "incident-response"],
+      "nodes": [
+        {"id": "sources", "type": "rectangle", "position": {"x": 50, "y": 80}, "data": {"label": "Security Logs", "type": "rectangle"}},
+        {"id": "m365", "type": "rectangle", "position": {"x": 50, "y": 180}, "data": {"label": "Microsoft 365", "type": "rectangle"}},
+        {"id": "sentinel", "type": "azure-sentinel", "position": {"x": 250, "y": 130}, "data": {"label": "Microsoft Sentinel", "type": "azure-sentinel"}},
+        {"id": "analytics", "type": "rectangle", "position": {"x": 420, "y": 80}, "data": {"label": "Analytics Rules", "type": "rectangle"}},
+        {"id": "playbooks", "type": "azure-logic-apps", "position": {"x": 420, "y": 180}, "data": {"label": "Playbooks", "type": "azure-logic-apps"}},
+        {"id": "soc", "type": "users", "position": {"x": 570, "y": 130}, "data": {"label": "SOC Team", "type": "users"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "sources", "target": "sentinel", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "m365", "target": "sentinel", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "sentinel", "target": "analytics", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "sentinel", "target": "playbooks", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "analytics", "target": "soc", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-zero-trust",
+      "name": "Zero Trust Architecture",
+      "description": "Zero Trust security model implementation on Azure",
+      "categories": ["azure", "security"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/guide/security/azure-security-build-first-layer-defense",
+      "tags": ["zero-trust", "security", "identity", "conditional-access"],
+      "use_cases": ["enterprise-security", "compliance", "access-control"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Users & Devices", "type": "users"}},
+        {"id": "entra", "type": "azure-entra-id", "position": {"x": 200, "y": 150}, "data": {"label": "Entra ID", "type": "azure-entra-id"}},
+        {"id": "ca", "type": "rectangle", "position": {"x": 200, "y": 50}, "data": {"label": "Conditional Access", "type": "rectangle"}},
+        {"id": "defender", "type": "azure-defender", "position": {"x": 350, "y": 80}, "data": {"label": "Defender for Cloud", "type": "azure-defender"}},
+        {"id": "apps", "type": "azure-app-service", "position": {"x": 350, "y": 180}, "data": {"label": "Applications", "type": "azure-app-service"}},
+        {"id": "data", "type": "azure-sql", "position": {"x": 500, "y": 150}, "data": {"label": "Data", "type": "azure-sql"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "entra", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "entra", "target": "ca", "sourceHandle": "top", "targetHandle": "bottom"},
+        {"id": "e3", "source": "ca", "target": "defender", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "entra", "target": "apps", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "apps", "target": "data", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-mlops",
+      "name": "MLOps with Azure ML",
+      "description": "Machine learning operations lifecycle on Azure",
+      "categories": ["azure", "ai-ml", "devops"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/ai/mlops-python",
+      "tags": ["mlops", "machine-learning", "devops", "model-deployment"],
+      "use_cases": ["ml-lifecycle", "model-training", "model-deployment"],
+      "nodes": [
+        {"id": "devs", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Data Scientists", "type": "users"}},
+        {"id": "devops", "type": "azure-devops", "position": {"x": 200, "y": 150}, "data": {"label": "Azure DevOps", "type": "azure-devops"}},
+        {"id": "ml", "type": "azure-machine-learning", "position": {"x": 350, "y": 150}, "data": {"label": "Azure ML", "type": "azure-machine-learning"}},
+        {"id": "compute", "type": "azure-vm", "position": {"x": 350, "y": 50}, "data": {"label": "Compute Cluster", "type": "azure-vm"}},
+        {"id": "acr", "type": "azure-container-registry", "position": {"x": 500, "y": 80}, "data": {"label": "Container Registry", "type": "azure-container-registry"}},
+        {"id": "aks", "type": "azure-aks", "position": {"x": 500, "y": 180}, "data": {"label": "AKS Deployment", "type": "azure-aks"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "devs", "target": "devops", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "devops", "target": "ml", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "ml", "target": "compute", "sourceHandle": "top", "targetHandle": "bottom"},
+        {"id": "e4", "source": "ml", "target": "acr", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "acr", "target": "aks", "sourceHandle": "bottom", "targetHandle": "top"}
+      ]
+    },
+    {
+      "template_id": "azure-databricks-lakehouse",
+      "name": "Databricks Lakehouse",
+      "description": "Unified data lakehouse architecture with Azure Databricks",
+      "categories": ["azure", "data-analytics"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/azure-databricks-modern-analytics-architecture",
+      "tags": ["databricks", "lakehouse", "delta-lake", "spark"],
+      "use_cases": ["data-engineering", "data-science", "bi-analytics"],
+      "nodes": [
+        {"id": "sources", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Data Sources", "type": "rectangle"}},
+        {"id": "adf", "type": "azure-data-factory", "position": {"x": 200, "y": 150}, "data": {"label": "Data Factory", "type": "azure-data-factory"}},
+        {"id": "lake", "type": "azure-data-lake", "position": {"x": 350, "y": 80}, "data": {"label": "ADLS Gen2", "type": "azure-data-lake"}},
+        {"id": "databricks", "type": "azure-databricks", "position": {"x": 350, "y": 200}, "data": {"label": "Databricks", "type": "azure-databricks"}},
+        {"id": "synapse", "type": "azure-synapse", "position": {"x": 500, "y": 150}, "data": {"label": "Synapse", "type": "azure-synapse"}},
+        {"id": "powerbi", "type": "azure-power-bi", "position": {"x": 650, "y": 150}, "data": {"label": "Power BI", "type": "azure-power-bi"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "sources", "target": "adf", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "adf", "target": "lake", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "lake", "target": "databricks", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e4", "source": "databricks", "target": "synapse", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "synapse", "target": "powerbi", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-rag-pattern",
+      "name": "RAG Pattern with Azure OpenAI",
+      "description": "Retrieval-Augmented Generation using Azure OpenAI and AI Search",
+      "categories": ["azure", "ai-ml"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/rag/rag-solution-design-and-evaluation-guide",
+      "tags": ["rag", "openai", "ai-search", "llm", "embeddings"],
+      "use_cases": ["chatbot", "document-qa", "knowledge-base"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Users", "type": "users"}},
+        {"id": "webapp", "type": "azure-app-service", "position": {"x": 180, "y": 150}, "data": {"label": "Chat App", "type": "azure-app-service"}},
+        {"id": "openai", "type": "azure-openai", "position": {"x": 350, "y": 150}, "data": {"label": "Azure OpenAI", "type": "azure-openai"}},
+        {"id": "search", "type": "azure-cognitive-search", "position": {"x": 350, "y": 280}, "data": {"label": "AI Search", "type": "azure-cognitive-search"}},
+        {"id": "storage", "type": "azure-blob-storage", "position": {"x": 520, "y": 280}, "data": {"label": "Documents", "type": "azure-blob-storage"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "webapp", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "webapp", "target": "openai", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "openai", "target": "search", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e4", "source": "search", "target": "storage", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-cosmos-global",
+      "name": "Cosmos DB Global Distribution",
+      "description": "Globally distributed multi-region database with Cosmos DB",
+      "categories": ["azure", "data-analytics"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/globally-distributed-mission-critical-applications-using-cosmos-db",
+      "tags": ["cosmos-db", "global-distribution", "multi-region", "high-availability"],
+      "use_cases": ["global-apps", "low-latency", "disaster-recovery"],
+      "nodes": [
+        {"id": "users1", "type": "users", "position": {"x": 50, "y": 80}, "data": {"label": "US Users", "type": "users"}},
+        {"id": "users2", "type": "users", "position": {"x": 50, "y": 220}, "data": {"label": "EU Users", "type": "users"}},
+        {"id": "tm", "type": "azure-traffic-manager", "position": {"x": 200, "y": 150}, "data": {"label": "Traffic Manager", "type": "azure-traffic-manager"}},
+        {"id": "app1", "type": "azure-app-service", "position": {"x": 350, "y": 80}, "data": {"label": "App (US)", "type": "azure-app-service"}},
+        {"id": "app2", "type": "azure-app-service", "position": {"x": 350, "y": 220}, "data": {"label": "App (EU)", "type": "azure-app-service"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 500, "y": 150}, "data": {"label": "Cosmos DB (Global)", "type": "azure-cosmos"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users1", "target": "tm", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "users2", "target": "tm", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "tm", "target": "app1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "tm", "target": "app2", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "app1", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e6", "source": "app2", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-aks-baseline",
+      "name": "AKS Baseline Architecture",
+      "description": "Production-ready AKS cluster baseline configuration",
+      "categories": ["azure", "containers"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/containers/aks/baseline-aks",
+      "tags": ["aks", "kubernetes", "baseline", "production"],
+      "use_cases": ["production-k8s", "enterprise-containers", "microservices"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 180}, "data": {"label": "Users", "type": "users"}},
+        {"id": "fd", "type": "azure-front-door", "position": {"x": 170, "y": 180}, "data": {"label": "Front Door", "type": "azure-front-door"}},
+        {"id": "agw", "type": "azure-app-gateway", "position": {"x": 300, "y": 180}, "data": {"label": "App Gateway + WAF", "type": "azure-app-gateway"}},
+        {"id": "aks", "type": "azure-aks", "position": {"x": 450, "y": 180}, "data": {"label": "AKS Cluster", "type": "azure-aks"}},
+        {"id": "acr", "type": "azure-container-registry", "position": {"x": 450, "y": 60}, "data": {"label": "Container Registry", "type": "azure-container-registry"}},
+        {"id": "kv", "type": "azure-key-vault", "position": {"x": 580, "y": 100}, "data": {"label": "Key Vault", "type": "azure-key-vault"}},
+        {"id": "monitor", "type": "azure-monitor", "position": {"x": 580, "y": 260}, "data": {"label": "Monitor", "type": "azure-monitor"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "fd", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "fd", "target": "agw", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "agw", "target": "aks", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "acr", "target": "aks", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e5", "source": "aks", "target": "kv", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e6", "source": "aks", "target": "monitor", "sourceHandle": "bottom", "targetHandle": "top"}
+      ]
+    }
+  ]
+}

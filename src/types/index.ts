@@ -269,6 +269,16 @@ export interface ArchitectureTemplate {
 
   // For built-in templates
   isBuiltIn?: boolean
+
+  // Database fields (populated when fetched from Supabase)
+  dbId?: string // UUID from database
+  thumbnailUrl?: string
+  useCount?: number
+  rating?: number
+  ratingCount?: number
+  createdBy?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 // Group styling options

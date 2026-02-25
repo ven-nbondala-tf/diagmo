@@ -1,0 +1,358 @@
+{
+  "templates": [
+    {
+      "template_id": "azure-sap-s4hana",
+      "name": "SAP S/4HANA on Azure",
+      "description": "SAP S/4HANA deployment on Azure with high availability",
+      "categories": ["azure", "sap"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/sap/run-sap-hana-for-linux-virtual-machines",
+      "tags": ["sap", "s4hana", "hana", "enterprise"],
+      "use_cases": ["erp", "sap-migration", "enterprise-apps"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "SAP Users", "type": "users"}},
+        {"id": "fd", "type": "azure-front-door", "position": {"x": 180, "y": 150}, "data": {"label": "Front Door", "type": "azure-front-door"}},
+        {"id": "app", "type": "azure-vm", "position": {"x": 330, "y": 150}, "data": {"label": "SAP App Servers", "type": "azure-vm"}},
+        {"id": "hana1", "type": "azure-vm", "position": {"x": 500, "y": 80}, "data": {"label": "HANA Primary", "type": "azure-vm"}},
+        {"id": "hana2", "type": "azure-vm", "position": {"x": 500, "y": 220}, "data": {"label": "HANA Secondary", "type": "azure-vm"}},
+        {"id": "anf", "type": "azure-netapp", "position": {"x": 650, "y": 150}, "data": {"label": "Azure NetApp Files", "type": "azure-netapp"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "fd", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "fd", "target": "app", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "app", "target": "hana1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "app", "target": "hana2", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "hana1", "target": "anf", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e6", "source": "hana2", "target": "anf", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-sap-bw4hana",
+      "name": "SAP BW/4HANA on Azure",
+      "description": "SAP BW/4HANA data warehouse deployment on Azure",
+      "categories": ["azure", "sap", "data-analytics"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/sap/sap-bw4hana",
+      "tags": ["sap", "bw4hana", "data-warehouse", "analytics"],
+      "use_cases": ["bi-analytics", "sap-migration", "data-warehouse"],
+      "nodes": [
+        {"id": "sources", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Data Sources", "type": "rectangle"}},
+        {"id": "bw4", "type": "azure-vm", "position": {"x": 200, "y": 150}, "data": {"label": "BW/4HANA", "type": "azure-vm"}},
+        {"id": "hana", "type": "azure-vm", "position": {"x": 350, "y": 150}, "data": {"label": "HANA DB", "type": "azure-vm"}},
+        {"id": "storage", "type": "azure-disk", "position": {"x": 350, "y": 50}, "data": {"label": "Premium Storage", "type": "azure-disk"}},
+        {"id": "powerbi", "type": "azure-power-bi", "position": {"x": 500, "y": 150}, "data": {"label": "Power BI", "type": "azure-power-bi"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "sources", "target": "bw4", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "bw4", "target": "hana", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "storage", "target": "hana", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e4", "source": "hana", "target": "powerbi", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-healthcare-fhir",
+      "name": "Healthcare FHIR API",
+      "description": "Azure Health Data Services with FHIR API",
+      "categories": ["azure", "healthcare"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/industries/healthcare/healthcare-fhir",
+      "tags": ["fhir", "healthcare", "hl7", "hipaa"],
+      "use_cases": ["ehr-integration", "health-data", "interoperability"],
+      "nodes": [
+        {"id": "ehr", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "EHR Systems", "type": "rectangle"}},
+        {"id": "apim", "type": "azure-api-management", "position": {"x": 200, "y": 150}, "data": {"label": "API Management", "type": "azure-api-management"}},
+        {"id": "fhir", "type": "azure-health-data", "position": {"x": 370, "y": 150}, "data": {"label": "FHIR Service", "type": "azure-health-data"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 520, "y": 80}, "data": {"label": "Cosmos DB", "type": "azure-cosmos"}},
+        {"id": "ml", "type": "azure-machine-learning", "position": {"x": 520, "y": 220}, "data": {"label": "Health ML", "type": "azure-machine-learning"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "ehr", "target": "apim", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "apim", "target": "fhir", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "fhir", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "fhir", "target": "ml", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-healthcare-imaging",
+      "name": "Medical Imaging Platform",
+      "description": "Medical imaging and DICOM data management",
+      "categories": ["azure", "healthcare", "ai-ml"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/industries/healthcare/medical-image-ai",
+      "tags": ["dicom", "medical-imaging", "radiology", "ai"],
+      "use_cases": ["radiology", "pathology", "medical-ai"],
+      "nodes": [
+        {"id": "pacs", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "PACS System", "type": "rectangle"}},
+        {"id": "dicom", "type": "azure-health-data", "position": {"x": 200, "y": 150}, "data": {"label": "DICOM Service", "type": "azure-health-data"}},
+        {"id": "storage", "type": "azure-blob-storage", "position": {"x": 350, "y": 80}, "data": {"label": "Image Storage", "type": "azure-blob-storage"}},
+        {"id": "ml", "type": "azure-machine-learning", "position": {"x": 350, "y": 220}, "data": {"label": "Imaging AI", "type": "azure-machine-learning"}},
+        {"id": "viewer", "type": "azure-app-service", "position": {"x": 500, "y": 150}, "data": {"label": "DICOM Viewer", "type": "azure-app-service"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "pacs", "target": "dicom", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "dicom", "target": "storage", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "dicom", "target": "ml", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "storage", "target": "viewer", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-retail-ecommerce",
+      "name": "E-Commerce Platform",
+      "description": "Scalable e-commerce platform with personalization",
+      "categories": ["azure", "retail", "web-app"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/apps/scalable-ecommerce-web-app",
+      "tags": ["ecommerce", "retail", "personalization", "scalable"],
+      "use_cases": ["online-store", "marketplace", "d2c"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Shoppers", "type": "users"}},
+        {"id": "fd", "type": "azure-front-door", "position": {"x": 170, "y": 150}, "data": {"label": "Front Door", "type": "azure-front-door"}},
+        {"id": "web", "type": "azure-app-service", "position": {"x": 300, "y": 80}, "data": {"label": "Web App", "type": "azure-app-service"}},
+        {"id": "api", "type": "azure-app-service", "position": {"x": 300, "y": 220}, "data": {"label": "Commerce API", "type": "azure-app-service"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 450, "y": 150}, "data": {"label": "Product Catalog", "type": "azure-cosmos"}},
+        {"id": "redis", "type": "azure-redis", "position": {"x": 450, "y": 50}, "data": {"label": "Cart Cache", "type": "azure-redis"}},
+        {"id": "search", "type": "azure-cognitive-search", "position": {"x": 450, "y": 250}, "data": {"label": "Product Search", "type": "azure-cognitive-search"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "fd", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "fd", "target": "web", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "fd", "target": "api", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "api", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "api", "target": "redis", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e6", "source": "api", "target": "search", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-retail-recommendations",
+      "name": "Product Recommendations",
+      "description": "AI-powered product recommendation engine",
+      "categories": ["azure", "retail", "ai-ml"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/ai/product-recommendations",
+      "tags": ["recommendations", "personalization", "ml", "retail"],
+      "use_cases": ["product-recommendations", "personalization", "upsell"],
+      "nodes": [
+        {"id": "events", "type": "azure-event-hub", "position": {"x": 50, "y": 150}, "data": {"label": "User Events", "type": "azure-event-hub"}},
+        {"id": "databricks", "type": "azure-databricks", "position": {"x": 200, "y": 150}, "data": {"label": "ML Training", "type": "azure-databricks"}},
+        {"id": "ml", "type": "azure-machine-learning", "position": {"x": 350, "y": 150}, "data": {"label": "Model Endpoint", "type": "azure-machine-learning"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 350, "y": 50}, "data": {"label": "User Profiles", "type": "azure-cosmos"}},
+        {"id": "api", "type": "azure-functions", "position": {"x": 500, "y": 150}, "data": {"label": "Recommendations API", "type": "azure-functions"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "events", "target": "databricks", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "databricks", "target": "ml", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "cosmos", "target": "ml", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e4", "source": "ml", "target": "api", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-financial-fraud-detection",
+      "name": "Fraud Detection Platform",
+      "description": "Real-time fraud detection for financial transactions",
+      "categories": ["azure", "financial", "ai-ml"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/example-scenario/ai/real-time-fraud-detection",
+      "tags": ["fraud-detection", "real-time", "ml", "financial"],
+      "use_cases": ["payment-fraud", "transaction-monitoring", "aml"],
+      "nodes": [
+        {"id": "transactions", "type": "azure-event-hub", "position": {"x": 50, "y": 150}, "data": {"label": "Transactions", "type": "azure-event-hub"}},
+        {"id": "stream", "type": "azure-stream-analytics", "position": {"x": 200, "y": 150}, "data": {"label": "Stream Analytics", "type": "azure-stream-analytics"}},
+        {"id": "ml", "type": "azure-machine-learning", "position": {"x": 350, "y": 150}, "data": {"label": "Fraud Model", "type": "azure-machine-learning"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 500, "y": 80}, "data": {"label": "Decisions Store", "type": "azure-cosmos"}},
+        {"id": "alert", "type": "azure-logic-apps", "position": {"x": 500, "y": 220}, "data": {"label": "Alert System", "type": "azure-logic-apps"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "transactions", "target": "stream", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "stream", "target": "ml", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "ml", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "ml", "target": "alert", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-financial-trading",
+      "name": "Trading Platform",
+      "description": "Low-latency trading platform architecture",
+      "categories": ["azure", "financial"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/industries/finance/trading-platform",
+      "tags": ["trading", "low-latency", "financial", "hft"],
+      "use_cases": ["trading", "market-data", "order-management"],
+      "nodes": [
+        {"id": "market", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Market Data", "type": "rectangle"}},
+        {"id": "eventhub", "type": "azure-event-hub", "position": {"x": 200, "y": 150}, "data": {"label": "Event Hub", "type": "azure-event-hub"}},
+        {"id": "aks", "type": "azure-aks", "position": {"x": 350, "y": 150}, "data": {"label": "Trading Engine", "type": "azure-aks"}},
+        {"id": "redis", "type": "azure-redis", "position": {"x": 350, "y": 50}, "data": {"label": "Position Cache", "type": "azure-redis"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 500, "y": 150}, "data": {"label": "Order Store", "type": "azure-cosmos"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "market", "target": "eventhub", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "eventhub", "target": "aks", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "redis", "target": "aks", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e4", "source": "aks", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-gaming-multiplayer",
+      "name": "Multiplayer Game Backend",
+      "description": "Scalable multiplayer game backend with PlayFab",
+      "categories": ["azure", "gaming"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/gaming/multiplayer-game-server",
+      "tags": ["gaming", "multiplayer", "playfab", "matchmaking"],
+      "use_cases": ["multiplayer-games", "matchmaking", "leaderboards"],
+      "nodes": [
+        {"id": "players", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Players", "type": "users"}},
+        {"id": "playfab", "type": "azure-playfab", "position": {"x": 200, "y": 150}, "data": {"label": "PlayFab", "type": "azure-playfab"}},
+        {"id": "servers", "type": "azure-aks", "position": {"x": 380, "y": 80}, "data": {"label": "Game Servers", "type": "azure-aks"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 380, "y": 220}, "data": {"label": "Player Data", "type": "azure-cosmos"}},
+        {"id": "signalr", "type": "azure-signalr", "position": {"x": 530, "y": 150}, "data": {"label": "Real-time Messaging", "type": "azure-signalr"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "players", "target": "playfab", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "playfab", "target": "servers", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "playfab", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "servers", "target": "signalr", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-gaming-analytics",
+      "name": "Game Analytics Platform",
+      "description": "Player behavior analytics and telemetry",
+      "categories": ["azure", "gaming", "data-analytics"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/gaming/game-telemetry",
+      "tags": ["gaming", "analytics", "telemetry", "player-insights"],
+      "use_cases": ["game-analytics", "player-retention", "monetization"],
+      "nodes": [
+        {"id": "game", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Game Client", "type": "rectangle"}},
+        {"id": "eventhub", "type": "azure-event-hub", "position": {"x": 200, "y": 150}, "data": {"label": "Event Hub", "type": "azure-event-hub"}},
+        {"id": "databricks", "type": "azure-databricks", "position": {"x": 350, "y": 150}, "data": {"label": "Analytics", "type": "azure-databricks"}},
+        {"id": "synapse", "type": "azure-synapse", "position": {"x": 500, "y": 150}, "data": {"label": "Data Warehouse", "type": "azure-synapse"}},
+        {"id": "powerbi", "type": "azure-power-bi", "position": {"x": 650, "y": 150}, "data": {"label": "Dashboards", "type": "azure-power-bi"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "game", "target": "eventhub", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "eventhub", "target": "databricks", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "databricks", "target": "synapse", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "synapse", "target": "powerbi", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-government-compliance",
+      "name": "Government Compliance Architecture",
+      "description": "FedRAMP and government compliance architecture",
+      "categories": ["azure", "security"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/industries/government/government-compliance",
+      "tags": ["government", "fedramp", "compliance", "security"],
+      "use_cases": ["government", "compliance", "regulated-workloads"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Gov Users", "type": "users"}},
+        {"id": "entra", "type": "azure-entra-id", "position": {"x": 180, "y": 150}, "data": {"label": "Entra ID Gov", "type": "azure-entra-id"}},
+        {"id": "vnet", "type": "azure-vnet", "position": {"x": 330, "y": 150}, "data": {"label": "Isolated VNet", "type": "azure-vnet"}},
+        {"id": "apps", "type": "azure-app-service", "position": {"x": 480, "y": 80}, "data": {"label": "Applications", "type": "azure-app-service"}},
+        {"id": "keyvault", "type": "azure-key-vault", "position": {"x": 480, "y": 220}, "data": {"label": "Key Vault (HSM)", "type": "azure-key-vault"}},
+        {"id": "monitor", "type": "azure-monitor", "position": {"x": 630, "y": 150}, "data": {"label": "Compliance Logs", "type": "azure-monitor"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "entra", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "entra", "target": "vnet", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "vnet", "target": "apps", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "vnet", "target": "keyvault", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "apps", "target": "monitor", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-mainframe-migration",
+      "name": "Mainframe Migration",
+      "description": "Modernize mainframe workloads to Azure",
+      "categories": ["azure", "migration"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/migration/refactor-mainframe-applications-azure",
+      "tags": ["mainframe", "migration", "modernization", "cobol"],
+      "use_cases": ["mainframe-migration", "app-modernization", "legacy"],
+      "nodes": [
+        {"id": "mainframe", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Mainframe", "type": "rectangle"}},
+        {"id": "rehost", "type": "azure-vm", "position": {"x": 250, "y": 80}, "data": {"label": "Rehosted Apps", "type": "azure-vm"}},
+        {"id": "refactor", "type": "azure-app-service", "position": {"x": 250, "y": 220}, "data": {"label": "Refactored Apps", "type": "azure-app-service"}},
+        {"id": "data", "type": "azure-sql", "position": {"x": 450, "y": 80}, "data": {"label": "Migrated Data", "type": "azure-sql"}},
+        {"id": "api", "type": "azure-api-management", "position": {"x": 450, "y": 220}, "data": {"label": "API Layer", "type": "azure-api-management"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "mainframe", "target": "rehost", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "mainframe", "target": "refactor", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "rehost", "target": "data", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "refactor", "target": "api", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-vmware-solution",
+      "name": "Azure VMware Solution",
+      "description": "Run VMware workloads natively on Azure",
+      "categories": ["azure", "hybrid", "migration"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/vmware/azure-vmware-solution",
+      "tags": ["vmware", "avs", "hybrid", "migration"],
+      "use_cases": ["vmware-migration", "dc-extension", "disaster-recovery"],
+      "nodes": [
+        {"id": "onprem", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "On-Prem VMware", "type": "rectangle"}},
+        {"id": "er", "type": "azure-expressroute", "position": {"x": 200, "y": 150}, "data": {"label": "ExpressRoute", "type": "azure-expressroute"}},
+        {"id": "avs", "type": "azure-vmware", "position": {"x": 370, "y": 150}, "data": {"label": "Azure VMware Solution", "type": "azure-vmware"}},
+        {"id": "vnet", "type": "azure-vnet", "position": {"x": 530, "y": 80}, "data": {"label": "Azure VNet", "type": "azure-vnet"}},
+        {"id": "services", "type": "azure-app-service", "position": {"x": 530, "y": 220}, "data": {"label": "Azure Services", "type": "azure-app-service"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "onprem", "target": "er", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "er", "target": "avs", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "avs", "target": "vnet", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "avs", "target": "services", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-manufacturing-iot",
+      "name": "Manufacturing IoT Platform",
+      "description": "Industry 4.0 manufacturing IoT solution",
+      "categories": ["azure", "iot"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/industries/manufacturing/iiot-architecture",
+      "tags": ["manufacturing", "iiot", "industry4", "opc-ua"],
+      "use_cases": ["smart-factory", "predictive-maintenance", "quality-control"],
+      "nodes": [
+        {"id": "plc", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "PLCs/Machines", "type": "rectangle"}},
+        {"id": "edge", "type": "azure-iot-edge", "position": {"x": 200, "y": 150}, "data": {"label": "IoT Edge", "type": "azure-iot-edge"}},
+        {"id": "hub", "type": "azure-iot-hub", "position": {"x": 350, "y": 150}, "data": {"label": "IoT Hub", "type": "azure-iot-hub"}},
+        {"id": "twins", "type": "azure-digital-twins", "position": {"x": 500, "y": 80}, "data": {"label": "Digital Twins", "type": "azure-digital-twins"}},
+        {"id": "ml", "type": "azure-machine-learning", "position": {"x": 500, "y": 220}, "data": {"label": "Predictive Models", "type": "azure-machine-learning"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "plc", "target": "edge", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "edge", "target": "hub", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "hub", "target": "twins", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "hub", "target": "ml", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-energy-smart-grid",
+      "name": "Smart Grid Analytics",
+      "description": "Energy grid monitoring and analytics platform",
+      "categories": ["azure", "iot", "data-analytics"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/industries/energy/smart-grid",
+      "tags": ["energy", "smart-grid", "utilities", "iot"],
+      "use_cases": ["grid-monitoring", "demand-forecasting", "outage-detection"],
+      "nodes": [
+        {"id": "meters", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Smart Meters", "type": "rectangle"}},
+        {"id": "hub", "type": "azure-iot-hub", "position": {"x": 200, "y": 150}, "data": {"label": "IoT Hub", "type": "azure-iot-hub"}},
+        {"id": "stream", "type": "azure-stream-analytics", "position": {"x": 350, "y": 150}, "data": {"label": "Stream Analytics", "type": "azure-stream-analytics"}},
+        {"id": "synapse", "type": "azure-synapse", "position": {"x": 500, "y": 80}, "data": {"label": "Grid Analytics", "type": "azure-synapse"}},
+        {"id": "ml", "type": "azure-machine-learning", "position": {"x": 500, "y": 220}, "data": {"label": "Demand Forecast", "type": "azure-machine-learning"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "meters", "target": "hub", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "hub", "target": "stream", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "stream", "target": "synapse", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "stream", "target": "ml", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    }
+  ]
+}

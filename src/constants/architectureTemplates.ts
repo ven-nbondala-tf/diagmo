@@ -1691,11 +1691,890 @@ const azureServiceFabric: ArchitectureTemplate = {
 }
 
 // ============================================================================
+// Additional Azure Architecture Templates (Based on Azure Architecture Center)
+// ============================================================================
+
+// --- AI & Machine Learning Category ---
+
+const azureRAGPattern: ArchitectureTemplate = {
+  id: 'azure-rag-pattern',
+  name: 'RAG Pattern with Azure OpenAI',
+  description: 'Retrieval-Augmented Generation pattern using Azure OpenAI and AI Search for grounded responses',
+  categories: ['azure', 'ai-ml'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/rag/rag-solution-design-and-evaluation-guide',
+  tags: ['openai', 'rag', 'ai-search', 'embeddings', 'llm'],
+  useCases: ['chatbot', 'document-qa', 'enterprise-search'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'users', type: 'users', position: { x: 50, y: 150 }, data: { label: 'Users', type: 'users' } },
+    { id: 'app-service', type: 'azure-app-service', position: { x: 200, y: 150 }, data: { label: 'Web App', type: 'azure-app-service' } },
+    { id: 'openai', type: 'azure-openai', position: { x: 400, y: 100 }, data: { label: 'Azure OpenAI', type: 'azure-openai' } },
+    { id: 'ai-search', type: 'azure-cognitive-search', position: { x: 400, y: 200 }, data: { label: 'AI Search', type: 'azure-cognitive-search' } },
+    { id: 'storage', type: 'azure-storage', position: { x: 600, y: 200 }, data: { label: 'Blob Storage', type: 'azure-storage' } },
+    { id: 'cosmos', type: 'azure-cosmos', position: { x: 600, y: 100 }, data: { label: 'Cosmos DB', type: 'azure-cosmos' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'users', target: 'app-service', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'app-service', target: 'openai', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'app-service', target: 'ai-search', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'ai-search', target: 'storage', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'openai', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureMLOps: ArchitectureTemplate = {
+  id: 'azure-mlops',
+  name: 'MLOps with Azure Machine Learning',
+  description: 'End-to-end ML lifecycle management with Azure Machine Learning and DevOps integration',
+  categories: ['azure', 'ai-ml', 'devops'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/mlops-technical-paper',
+  tags: ['mlops', 'machine-learning', 'devops', 'model-training'],
+  useCases: ['ml-pipeline', 'model-deployment', 'experiment-tracking'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'devops', type: 'azure-devops', position: { x: 50, y: 150 }, data: { label: 'Azure DevOps', type: 'azure-devops' } },
+    { id: 'ml-workspace', type: 'azure-machine-learning', position: { x: 250, y: 150 }, data: { label: 'ML Workspace', type: 'azure-machine-learning' } },
+    { id: 'compute', type: 'azure-vm', position: { x: 450, y: 80 }, data: { label: 'Compute Cluster', type: 'azure-vm' } },
+    { id: 'storage', type: 'azure-storage', position: { x: 450, y: 220 }, data: { label: 'Data Storage', type: 'azure-storage' } },
+    { id: 'registry', type: 'azure-container-registry', position: { x: 650, y: 150 }, data: { label: 'Container Registry', type: 'azure-container-registry' } },
+    { id: 'aks', type: 'azure-aks', position: { x: 850, y: 150 }, data: { label: 'AKS Deployment', type: 'azure-aks' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'devops', target: 'ml-workspace', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'ml-workspace', target: 'compute', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'ml-workspace', target: 'storage', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'ml-workspace', target: 'registry', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'registry', target: 'aks', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureFoundryChat: ArchitectureTemplate = {
+  id: 'azure-foundry-chat',
+  name: 'Baseline Foundry Chat Architecture',
+  description: 'Enterprise chat application using Azure AI Foundry with OpenAI GPT models',
+  categories: ['azure', 'ai-ml'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/ai-ml/architecture/baseline-microsoft-foundry-chat',
+  tags: ['foundry', 'chat', 'openai', 'enterprise', 'ai'],
+  useCases: ['enterprise-chat', 'ai-assistant', 'copilot'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'users', type: 'users', position: { x: 50, y: 150 }, data: { label: 'Users', type: 'users' } },
+    { id: 'front-door', type: 'azure-front-door', position: { x: 200, y: 150 }, data: { label: 'Front Door', type: 'azure-front-door' } },
+    { id: 'app-service', type: 'azure-app-service', position: { x: 400, y: 150 }, data: { label: 'App Service', type: 'azure-app-service' } },
+    { id: 'foundry', type: 'azure-openai', position: { x: 600, y: 100 }, data: { label: 'AI Foundry', type: 'azure-openai' } },
+    { id: 'ai-search', type: 'azure-cognitive-search', position: { x: 600, y: 200 }, data: { label: 'AI Search', type: 'azure-cognitive-search' } },
+    { id: 'cosmos', type: 'azure-cosmos', position: { x: 800, y: 150 }, data: { label: 'Cosmos DB', type: 'azure-cosmos' } },
+    { id: 'keyvault', type: 'azure-keyvault', position: { x: 400, y: 280 }, data: { label: 'Key Vault', type: 'azure-keyvault' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'users', target: 'front-door', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'front-door', target: 'app-service', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'app-service', target: 'foundry', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'app-service', target: 'ai-search', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'foundry', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'app-service', target: 'keyvault', sourceHandle: 'bottom', targetHandle: 'top' },
+  ],
+}
+
+const azureCognitiveServices: ArchitectureTemplate = {
+  id: 'azure-cognitive-services',
+  name: 'Azure AI Services Integration',
+  description: 'Multi-modal AI application using Azure Cognitive Services for vision, speech, and language',
+  categories: ['azure', 'ai-ml'],
+  complexity: 'intermediate',
+  tags: ['cognitive-services', 'vision', 'speech', 'language', 'ai'],
+  useCases: ['document-processing', 'speech-recognition', 'image-analysis'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'app', type: 'azure-app-service', position: { x: 50, y: 150 }, data: { label: 'Application', type: 'azure-app-service' } },
+    { id: 'vision', type: 'azure-cognitive', position: { x: 250, y: 50 }, data: { label: 'Computer Vision', type: 'azure-cognitive' } },
+    { id: 'speech', type: 'azure-cognitive', position: { x: 250, y: 150 }, data: { label: 'Speech Service', type: 'azure-cognitive' } },
+    { id: 'language', type: 'azure-cognitive', position: { x: 250, y: 250 }, data: { label: 'Language Service', type: 'azure-cognitive' } },
+    { id: 'form-recognizer', type: 'azure-cognitive', position: { x: 450, y: 100 }, data: { label: 'Form Recognizer', type: 'azure-cognitive' } },
+    { id: 'translator', type: 'azure-cognitive', position: { x: 450, y: 200 }, data: { label: 'Translator', type: 'azure-cognitive' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'app', target: 'vision', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'app', target: 'speech', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'app', target: 'language', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'vision', target: 'form-recognizer', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'language', target: 'translator', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureDocumentIntelligence: ArchitectureTemplate = {
+  id: 'azure-document-intelligence',
+  name: 'Document Intelligence Pipeline',
+  description: 'Automated document processing pipeline with Azure AI Document Intelligence',
+  categories: ['azure', 'ai-ml'],
+  complexity: 'intermediate',
+  tags: ['document-intelligence', 'ocr', 'form-recognition', 'automation'],
+  useCases: ['invoice-processing', 'contract-analysis', 'form-extraction'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'storage-in', type: 'azure-storage', position: { x: 50, y: 150 }, data: { label: 'Document Upload', type: 'azure-storage' } },
+    { id: 'event-grid', type: 'azure-event-grid', position: { x: 200, y: 150 }, data: { label: 'Event Grid', type: 'azure-event-grid' } },
+    { id: 'functions', type: 'azure-functions', position: { x: 350, y: 150 }, data: { label: 'Functions', type: 'azure-functions' } },
+    { id: 'doc-intel', type: 'azure-cognitive', position: { x: 500, y: 150 }, data: { label: 'Document Intelligence', type: 'azure-cognitive' } },
+    { id: 'cosmos', type: 'azure-cosmos', position: { x: 650, y: 100 }, data: { label: 'Cosmos DB', type: 'azure-cosmos' } },
+    { id: 'logic-app', type: 'azure-logic-apps', position: { x: 650, y: 200 }, data: { label: 'Logic Apps', type: 'azure-logic-apps' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'storage-in', target: 'event-grid', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'event-grid', target: 'functions', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'functions', target: 'doc-intel', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'doc-intel', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'doc-intel', target: 'logic-app', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+// --- Analytics & Data Category ---
+
+const azureRealTimeAnalytics: ArchitectureTemplate = {
+  id: 'azure-realtime-analytics',
+  name: 'Real-Time Analytics with Data Explorer',
+  description: 'Real-time data analytics using Azure Data Explorer for IoT and telemetry data',
+  categories: ['azure', 'data-analytics'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/analytics-start-here',
+  tags: ['data-explorer', 'real-time', 'analytics', 'telemetry'],
+  useCases: ['iot-analytics', 'log-analytics', 'telemetry-analysis'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'iot-hub', type: 'azure-iot-hub', position: { x: 50, y: 150 }, data: { label: 'IoT Hub', type: 'azure-iot-hub' } },
+    { id: 'event-hub', type: 'azure-event-hub', position: { x: 200, y: 150 }, data: { label: 'Event Hubs', type: 'azure-event-hub' } },
+    { id: 'adx', type: 'azure-data-explorer', position: { x: 400, y: 150 }, data: { label: 'Data Explorer', type: 'azure-data-explorer' } },
+    { id: 'power-bi', type: 'azure-power-bi', position: { x: 600, y: 100 }, data: { label: 'Power BI', type: 'azure-power-bi' } },
+    { id: 'storage', type: 'azure-storage', position: { x: 600, y: 200 }, data: { label: 'Data Lake', type: 'azure-storage' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'iot-hub', target: 'event-hub', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'event-hub', target: 'adx', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'adx', target: 'power-bi', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'adx', target: 'storage', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureDatabricksLakehouse: ArchitectureTemplate = {
+  id: 'azure-databricks-lakehouse',
+  name: 'Databricks Lakehouse Architecture',
+  description: 'Modern lakehouse architecture using Azure Databricks for unified analytics',
+  categories: ['azure', 'data-analytics'],
+  complexity: 'advanced',
+  tags: ['databricks', 'lakehouse', 'delta-lake', 'spark'],
+  useCases: ['data-warehouse', 'ml-platform', 'bi-analytics'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'sources', type: 'rectangle', position: { x: 50, y: 150 }, data: { label: 'Data Sources', type: 'rectangle' } },
+    { id: 'data-factory', type: 'azure-data-factory', position: { x: 200, y: 150 }, data: { label: 'Data Factory', type: 'azure-data-factory' } },
+    { id: 'adls', type: 'azure-storage', position: { x: 350, y: 150 }, data: { label: 'ADLS Gen2', type: 'azure-storage' } },
+    { id: 'databricks', type: 'azure-databricks', position: { x: 500, y: 150 }, data: { label: 'Databricks', type: 'azure-databricks' } },
+    { id: 'synapse', type: 'azure-synapse', position: { x: 650, y: 100 }, data: { label: 'Synapse', type: 'azure-synapse' } },
+    { id: 'power-bi', type: 'azure-power-bi', position: { x: 800, y: 150 }, data: { label: 'Power BI', type: 'azure-power-bi' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'sources', target: 'data-factory', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'data-factory', target: 'adls', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'adls', target: 'databricks', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'databricks', target: 'synapse', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'synapse', target: 'power-bi', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureStreamAnalytics: ArchitectureTemplate = {
+  id: 'azure-stream-processing',
+  name: 'Stream Processing with Stream Analytics',
+  description: 'Real-time stream processing using Azure Stream Analytics for event-driven analytics',
+  categories: ['azure', 'data-analytics'],
+  complexity: 'intermediate',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/data/stream-processing-stream-analytics',
+  tags: ['stream-analytics', 'real-time', 'event-processing'],
+  useCases: ['fraud-detection', 'anomaly-detection', 'real-time-dashboards'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'event-hub', type: 'azure-event-hub', position: { x: 50, y: 150 }, data: { label: 'Event Hubs', type: 'azure-event-hub' } },
+    { id: 'stream-analytics', type: 'azure-stream-analytics', position: { x: 250, y: 150 }, data: { label: 'Stream Analytics', type: 'azure-stream-analytics' } },
+    { id: 'cosmos', type: 'azure-cosmos', position: { x: 450, y: 80 }, data: { label: 'Cosmos DB', type: 'azure-cosmos' } },
+    { id: 'sql', type: 'azure-sql', position: { x: 450, y: 150 }, data: { label: 'Azure SQL', type: 'azure-sql' } },
+    { id: 'power-bi', type: 'azure-power-bi', position: { x: 450, y: 220 }, data: { label: 'Power BI', type: 'azure-power-bi' } },
+    { id: 'functions', type: 'azure-functions', position: { x: 650, y: 150 }, data: { label: 'Functions', type: 'azure-functions' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'event-hub', target: 'stream-analytics', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'stream-analytics', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'stream-analytics', target: 'sql', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'stream-analytics', target: 'power-bi', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'cosmos', target: 'functions', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureModernDataWarehouse: ArchitectureTemplate = {
+  id: 'azure-modern-data-warehouse',
+  name: 'Modern Data Warehouse',
+  description: 'Enterprise data warehouse using Azure Synapse Analytics with modern architecture patterns',
+  categories: ['azure', 'data-analytics'],
+  complexity: 'advanced',
+  tags: ['synapse', 'data-warehouse', 'analytics', 'enterprise'],
+  useCases: ['enterprise-bi', 'data-consolidation', 'analytics-platform'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'erp', type: 'rectangle', position: { x: 50, y: 80 }, data: { label: 'ERP Systems', type: 'rectangle' } },
+    { id: 'crm', type: 'rectangle', position: { x: 50, y: 160 }, data: { label: 'CRM Systems', type: 'rectangle' } },
+    { id: 'files', type: 'rectangle', position: { x: 50, y: 240 }, data: { label: 'Files/APIs', type: 'rectangle' } },
+    { id: 'data-factory', type: 'azure-data-factory', position: { x: 220, y: 160 }, data: { label: 'Data Factory', type: 'azure-data-factory' } },
+    { id: 'adls', type: 'azure-storage', position: { x: 400, y: 160 }, data: { label: 'Data Lake', type: 'azure-storage' } },
+    { id: 'synapse', type: 'azure-synapse', position: { x: 580, y: 160 }, data: { label: 'Synapse Analytics', type: 'azure-synapse' } },
+    { id: 'power-bi', type: 'azure-power-bi', position: { x: 760, y: 160 }, data: { label: 'Power BI', type: 'azure-power-bi' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'erp', target: 'data-factory', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'crm', target: 'data-factory', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'files', target: 'data-factory', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'data-factory', target: 'adls', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'adls', target: 'synapse', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'synapse', target: 'power-bi', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azurePurviewGovernance: ArchitectureTemplate = {
+  id: 'azure-purview-governance',
+  name: 'Data Governance with Microsoft Purview',
+  description: 'Enterprise data governance and cataloging using Microsoft Purview',
+  categories: ['azure', 'data-analytics', 'security'],
+  complexity: 'advanced',
+  tags: ['purview', 'data-governance', 'data-catalog', 'compliance'],
+  useCases: ['data-discovery', 'data-lineage', 'compliance-reporting'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'sql', type: 'azure-sql', position: { x: 50, y: 80 }, data: { label: 'Azure SQL', type: 'azure-sql' } },
+    { id: 'synapse', type: 'azure-synapse', position: { x: 50, y: 160 }, data: { label: 'Synapse', type: 'azure-synapse' } },
+    { id: 'adls', type: 'azure-storage', position: { x: 50, y: 240 }, data: { label: 'Data Lake', type: 'azure-storage' } },
+    { id: 'purview', type: 'azure-purview', position: { x: 300, y: 160 }, data: { label: 'Microsoft Purview', type: 'azure-purview' } },
+    { id: 'entra', type: 'azure-entra-id', position: { x: 500, y: 100 }, data: { label: 'Entra ID', type: 'azure-entra-id' } },
+    { id: 'users', type: 'users', position: { x: 500, y: 220 }, data: { label: 'Data Stewards', type: 'users' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'sql', target: 'purview', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'synapse', target: 'purview', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'adls', target: 'purview', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'purview', target: 'entra', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'purview', target: 'users', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+// --- Containers & Kubernetes Category ---
+
+const azureAKSBaseline: ArchitectureTemplate = {
+  id: 'azure-aks-baseline',
+  name: 'AKS Baseline Cluster',
+  description: 'Production-ready AKS baseline cluster with security and networking best practices',
+  categories: ['azure', 'containers'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/containers/aks/baseline-aks',
+  tags: ['aks', 'kubernetes', 'baseline', 'production'],
+  useCases: ['container-platform', 'microservices', 'enterprise-kubernetes'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'users', type: 'users', position: { x: 50, y: 150 }, data: { label: 'Users', type: 'users' } },
+    { id: 'front-door', type: 'azure-front-door', position: { x: 200, y: 150 }, data: { label: 'Front Door', type: 'azure-front-door' } },
+    { id: 'app-gw', type: 'azure-app-gateway', position: { x: 350, y: 150 }, data: { label: 'App Gateway', type: 'azure-app-gateway' } },
+    { id: 'aks', type: 'azure-aks', position: { x: 500, y: 150 }, data: { label: 'AKS Cluster', type: 'azure-aks' } },
+    { id: 'acr', type: 'azure-container-registry', position: { x: 650, y: 80 }, data: { label: 'Container Registry', type: 'azure-container-registry' } },
+    { id: 'keyvault', type: 'azure-keyvault', position: { x: 650, y: 220 }, data: { label: 'Key Vault', type: 'azure-keyvault' } },
+    { id: 'monitor', type: 'azure-monitor', position: { x: 500, y: 280 }, data: { label: 'Azure Monitor', type: 'azure-monitor' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'users', target: 'front-door', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'front-door', target: 'app-gw', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'app-gw', target: 'aks', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'aks', target: 'acr', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'aks', target: 'keyvault', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'aks', target: 'monitor', sourceHandle: 'bottom', targetHandle: 'top' },
+  ],
+}
+
+const azureAKSMultiRegion: ArchitectureTemplate = {
+  id: 'azure-aks-multi-region',
+  name: 'Multi-Region AKS Architecture',
+  description: 'High availability AKS deployment across multiple Azure regions',
+  categories: ['azure', 'containers'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/containers/aks-multi-region/aks-multi-cluster',
+  tags: ['aks', 'multi-region', 'high-availability', 'disaster-recovery'],
+  useCases: ['global-applications', 'disaster-recovery', 'ha-kubernetes'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'traffic-mgr', type: 'azure-traffic-manager', position: { x: 300, y: 50 }, data: { label: 'Traffic Manager', type: 'azure-traffic-manager' } },
+    { id: 'aks-east', type: 'azure-aks', position: { x: 150, y: 180 }, data: { label: 'AKS East', type: 'azure-aks' } },
+    { id: 'aks-west', type: 'azure-aks', position: { x: 450, y: 180 }, data: { label: 'AKS West', type: 'azure-aks' } },
+    { id: 'cosmos', type: 'azure-cosmos', position: { x: 300, y: 300 }, data: { label: 'Cosmos DB\n(Global)', type: 'azure-cosmos' } },
+    { id: 'acr', type: 'azure-container-registry', position: { x: 300, y: 180 }, data: { label: 'ACR\n(Geo-Replicated)', type: 'azure-container-registry' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'traffic-mgr', target: 'aks-east', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e2', source: 'traffic-mgr', target: 'aks-west', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e3', source: 'aks-east', target: 'cosmos', sourceHandle: 'bottom', targetHandle: 'left' },
+    { id: 'e4', source: 'aks-west', target: 'cosmos', sourceHandle: 'bottom', targetHandle: 'right' },
+    { id: 'e5', source: 'aks-east', target: 'acr', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'aks-west', target: 'acr', sourceHandle: 'left', targetHandle: 'right' },
+  ],
+}
+
+const azureRedHatOpenShift: ArchitectureTemplate = {
+  id: 'azure-redhat-openshift',
+  name: 'Azure Red Hat OpenShift',
+  description: 'Enterprise Kubernetes with Azure Red Hat OpenShift for regulated workloads',
+  categories: ['azure', 'containers'],
+  complexity: 'advanced',
+  tags: ['openshift', 'redhat', 'enterprise', 'kubernetes'],
+  useCases: ['regulated-workloads', 'enterprise-platform', 'hybrid-cloud'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'users', type: 'users', position: { x: 50, y: 150 }, data: { label: 'Developers', type: 'users' } },
+    { id: 'bastion', type: 'azure-vm', position: { x: 200, y: 150 }, data: { label: 'Bastion Host', type: 'azure-vm' } },
+    { id: 'aro', type: 'azure-aks', position: { x: 400, y: 150 }, data: { label: 'ARO Cluster', type: 'azure-aks' } },
+    { id: 'storage', type: 'azure-storage', position: { x: 600, y: 100 }, data: { label: 'Azure Storage', type: 'azure-storage' } },
+    { id: 'sql', type: 'azure-sql', position: { x: 600, y: 200 }, data: { label: 'Azure SQL', type: 'azure-sql' } },
+    { id: 'entra', type: 'azure-entra-id', position: { x: 400, y: 280 }, data: { label: 'Entra ID', type: 'azure-entra-id' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'users', target: 'bastion', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'bastion', target: 'aro', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'aro', target: 'storage', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'aro', target: 'sql', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'aro', target: 'entra', sourceHandle: 'bottom', targetHandle: 'top' },
+  ],
+}
+
+const azureGitOpsAKS: ArchitectureTemplate = {
+  id: 'azure-gitops-aks',
+  name: 'GitOps for AKS with Flux',
+  description: 'GitOps workflow for AKS using Flux CD for continuous deployment',
+  categories: ['azure', 'containers', 'devops'],
+  complexity: 'intermediate',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/example-scenario/gitops-aks/gitops-blueprint-aks',
+  tags: ['gitops', 'flux', 'aks', 'continuous-deployment'],
+  useCases: ['automated-deployment', 'infrastructure-as-code', 'kubernetes-cd'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'github', type: 'rectangle', position: { x: 50, y: 150 }, data: { label: 'GitHub Repo', type: 'rectangle' } },
+    { id: 'devops', type: 'azure-devops', position: { x: 200, y: 150 }, data: { label: 'Azure DevOps', type: 'azure-devops' } },
+    { id: 'acr', type: 'azure-container-registry', position: { x: 350, y: 150 }, data: { label: 'ACR', type: 'azure-container-registry' } },
+    { id: 'aks', type: 'azure-aks', position: { x: 500, y: 150 }, data: { label: 'AKS + Flux', type: 'azure-aks' } },
+    { id: 'keyvault', type: 'azure-keyvault', position: { x: 500, y: 280 }, data: { label: 'Key Vault', type: 'azure-keyvault' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'github', target: 'devops', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'devops', target: 'acr', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'acr', target: 'aks', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'github', target: 'aks', sourceHandle: 'right', targetHandle: 'left', label: 'GitOps Sync' },
+    { id: 'e5', source: 'aks', target: 'keyvault', sourceHandle: 'bottom', targetHandle: 'top' },
+  ],
+}
+
+// --- Hybrid & Multicloud Category ---
+
+const azureArcKubernetes: ArchitectureTemplate = {
+  id: 'azure-arc-kubernetes',
+  name: 'Azure Arc-enabled Kubernetes',
+  description: 'Manage hybrid Kubernetes clusters with Azure Arc for unified governance',
+  categories: ['azure', 'containers'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/hybrid/arc-hybrid-kubernetes',
+  tags: ['arc', 'hybrid', 'kubernetes', 'multi-cloud'],
+  useCases: ['hybrid-kubernetes', 'multi-cloud-management', 'edge-kubernetes'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'azure', type: 'rectangle', position: { x: 300, y: 50 }, data: { label: 'Azure Cloud', type: 'rectangle' } },
+    { id: 'arc', type: 'azure-arc', position: { x: 300, y: 130 }, data: { label: 'Azure Arc', type: 'azure-arc' } },
+    { id: 'aks', type: 'azure-aks', position: { x: 150, y: 230 }, data: { label: 'AKS', type: 'azure-aks' } },
+    { id: 'onprem-k8s', type: 'rectangle', position: { x: 300, y: 230 }, data: { label: 'On-Prem K8s', type: 'rectangle' } },
+    { id: 'aws-eks', type: 'aws-eks', position: { x: 450, y: 230 }, data: { label: 'AWS EKS', type: 'aws-eks' } },
+    { id: 'policy', type: 'azure-policy', position: { x: 150, y: 130 }, data: { label: 'Azure Policy', type: 'azure-policy' } },
+    { id: 'monitor', type: 'azure-monitor', position: { x: 450, y: 130 }, data: { label: 'Azure Monitor', type: 'azure-monitor' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'arc', target: 'aks', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e2', source: 'arc', target: 'onprem-k8s', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e3', source: 'arc', target: 'aws-eks', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e4', source: 'policy', target: 'arc', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'arc', target: 'monitor', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureLocalBaseline: ArchitectureTemplate = {
+  id: 'azure-local-baseline',
+  name: 'Azure Local Baseline',
+  description: 'Hybrid infrastructure with Azure Local (formerly Azure Stack HCI)',
+  categories: ['azure', 'networking'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/hybrid/azure-local-baseline',
+  tags: ['azure-local', 'hybrid', 'hci', 'on-premises'],
+  useCases: ['hybrid-datacenter', 'edge-computing', 'vdi'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'azure-portal', type: 'rectangle', position: { x: 300, y: 50 }, data: { label: 'Azure Portal', type: 'rectangle' } },
+    { id: 'arc', type: 'azure-arc', position: { x: 300, y: 130 }, data: { label: 'Azure Arc', type: 'azure-arc' } },
+    { id: 'azure-local', type: 'azure-stack', position: { x: 300, y: 230 }, data: { label: 'Azure Local', type: 'azure-stack' } },
+    { id: 'storage', type: 'rectangle', position: { x: 150, y: 230 }, data: { label: 'Storage Spaces', type: 'rectangle' } },
+    { id: 'network', type: 'rectangle', position: { x: 450, y: 230 }, data: { label: 'SDN', type: 'rectangle' } },
+    { id: 'vms', type: 'azure-vm', position: { x: 300, y: 330 }, data: { label: 'VMs/AKS', type: 'azure-vm' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'azure-portal', target: 'arc', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e2', source: 'arc', target: 'azure-local', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e3', source: 'azure-local', target: 'storage', sourceHandle: 'left', targetHandle: 'right' },
+    { id: 'e4', source: 'azure-local', target: 'network', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'azure-local', target: 'vms', sourceHandle: 'bottom', targetHandle: 'top' },
+  ],
+}
+
+const azureExpressRoutePrivate: ArchitectureTemplate = {
+  id: 'azure-expressroute-private',
+  name: 'ExpressRoute Private Connectivity',
+  description: 'Private hybrid connectivity using Azure ExpressRoute with private peering',
+  categories: ['azure', 'networking'],
+  complexity: 'advanced',
+  tags: ['expressroute', 'hybrid', 'private-connectivity', 'networking'],
+  useCases: ['hybrid-connectivity', 'low-latency', 'private-network'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'onprem', type: 'rectangle', position: { x: 50, y: 150 }, data: { label: 'On-Premises DC', type: 'rectangle' } },
+    { id: 'edge-router', type: 'rectangle', position: { x: 200, y: 150 }, data: { label: 'Edge Router', type: 'rectangle' } },
+    { id: 'expressroute', type: 'azure-expressroute', position: { x: 350, y: 150 }, data: { label: 'ExpressRoute', type: 'azure-expressroute' } },
+    { id: 'vnet-hub', type: 'azure-vnet', position: { x: 500, y: 150 }, data: { label: 'Hub VNet', type: 'azure-vnet' } },
+    { id: 'vnet-spoke1', type: 'azure-vnet', position: { x: 650, y: 80 }, data: { label: 'Spoke VNet 1', type: 'azure-vnet' } },
+    { id: 'vnet-spoke2', type: 'azure-vnet', position: { x: 650, y: 220 }, data: { label: 'Spoke VNet 2', type: 'azure-vnet' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'onprem', target: 'edge-router', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'edge-router', target: 'expressroute', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'expressroute', target: 'vnet-hub', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'vnet-hub', target: 'vnet-spoke1', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'vnet-hub', target: 'vnet-spoke2', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+// --- Web Applications Category ---
+
+const azureEcommerceApp: ArchitectureTemplate = {
+  id: 'azure-ecommerce-app',
+  name: 'Scalable E-commerce Application',
+  description: 'High-performance e-commerce application with Azure services',
+  categories: ['azure', 'web-app'],
+  complexity: 'advanced',
+  tags: ['ecommerce', 'retail', 'scalable', 'web-app'],
+  useCases: ['online-store', 'retail-platform', 'marketplace'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'users', type: 'users', position: { x: 50, y: 150 }, data: { label: 'Customers', type: 'users' } },
+    { id: 'cdn', type: 'azure-cdn', position: { x: 180, y: 150 }, data: { label: 'Azure CDN', type: 'azure-cdn' } },
+    { id: 'front-door', type: 'azure-front-door', position: { x: 310, y: 150 }, data: { label: 'Front Door', type: 'azure-front-door' } },
+    { id: 'app-service', type: 'azure-app-service', position: { x: 440, y: 150 }, data: { label: 'App Service', type: 'azure-app-service' } },
+    { id: 'redis', type: 'azure-redis-cache', position: { x: 570, y: 80 }, data: { label: 'Redis Cache', type: 'azure-redis-cache' } },
+    { id: 'cosmos', type: 'azure-cosmos', position: { x: 570, y: 150 }, data: { label: 'Cosmos DB', type: 'azure-cosmos' } },
+    { id: 'search', type: 'azure-cognitive-search', position: { x: 570, y: 220 }, data: { label: 'AI Search', type: 'azure-cognitive-search' } },
+    { id: 'storage', type: 'azure-storage', position: { x: 700, y: 150 }, data: { label: 'Blob Storage', type: 'azure-storage' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'users', target: 'cdn', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'cdn', target: 'front-door', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'front-door', target: 'app-service', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'app-service', target: 'redis', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'app-service', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'app-service', target: 'search', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e7', source: 'cosmos', target: 'storage', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureMultiTierHA: ArchitectureTemplate = {
+  id: 'azure-multi-tier-ha',
+  name: 'Multi-Tier HA/DR Architecture',
+  description: 'Multi-tier application with high availability and disaster recovery',
+  categories: ['azure', 'web-app'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/example-scenario/infrastructure/multi-tier-app-disaster-recovery',
+  tags: ['high-availability', 'disaster-recovery', 'multi-tier', 'enterprise'],
+  useCases: ['enterprise-app', 'mission-critical', 'business-continuity'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'traffic-mgr', type: 'azure-traffic-manager', position: { x: 300, y: 50 }, data: { label: 'Traffic Manager', type: 'azure-traffic-manager' } },
+    { id: 'region1-app-gw', type: 'azure-app-gateway', position: { x: 150, y: 150 }, data: { label: 'App GW (Primary)', type: 'azure-app-gateway' } },
+    { id: 'region2-app-gw', type: 'azure-app-gateway', position: { x: 450, y: 150 }, data: { label: 'App GW (Secondary)', type: 'azure-app-gateway' } },
+    { id: 'region1-app', type: 'azure-app-service', position: { x: 150, y: 250 }, data: { label: 'App Service (Primary)', type: 'azure-app-service' } },
+    { id: 'region2-app', type: 'azure-app-service', position: { x: 450, y: 250 }, data: { label: 'App Service (Secondary)', type: 'azure-app-service' } },
+    { id: 'sql-primary', type: 'azure-sql', position: { x: 150, y: 350 }, data: { label: 'SQL (Primary)', type: 'azure-sql' } },
+    { id: 'sql-secondary', type: 'azure-sql', position: { x: 450, y: 350 }, data: { label: 'SQL (Secondary)', type: 'azure-sql' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'traffic-mgr', target: 'region1-app-gw', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e2', source: 'traffic-mgr', target: 'region2-app-gw', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e3', source: 'region1-app-gw', target: 'region1-app', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e4', source: 'region2-app-gw', target: 'region2-app', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e5', source: 'region1-app', target: 'sql-primary', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e6', source: 'region2-app', target: 'sql-secondary', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e7', source: 'sql-primary', target: 'sql-secondary', sourceHandle: 'right', targetHandle: 'left', label: 'Geo-Replication' },
+  ],
+}
+
+// --- IoT Category ---
+
+const azureIoTReference: ArchitectureTemplate = {
+  id: 'azure-iot-reference',
+  name: 'Azure IoT Reference Architecture',
+  description: 'Complete IoT solution with device management, analytics, and integration',
+  categories: ['azure', 'iot'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/iot',
+  tags: ['iot', 'telemetry', 'device-management', 'edge'],
+  useCases: ['industrial-iot', 'smart-building', 'asset-tracking'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'devices', type: 'rectangle', position: { x: 50, y: 150 }, data: { label: 'IoT Devices', type: 'rectangle' } },
+    { id: 'iot-edge', type: 'azure-iot-edge', position: { x: 180, y: 150 }, data: { label: 'IoT Edge', type: 'azure-iot-edge' } },
+    { id: 'iot-hub', type: 'azure-iot-hub', position: { x: 310, y: 150 }, data: { label: 'IoT Hub', type: 'azure-iot-hub' } },
+    { id: 'dps', type: 'azure-iot-dps', position: { x: 310, y: 50 }, data: { label: 'Device Provisioning', type: 'azure-iot-dps' } },
+    { id: 'stream-analytics', type: 'azure-stream-analytics', position: { x: 440, y: 100 }, data: { label: 'Stream Analytics', type: 'azure-stream-analytics' } },
+    { id: 'functions', type: 'azure-functions', position: { x: 440, y: 200 }, data: { label: 'Functions', type: 'azure-functions' } },
+    { id: 'cosmos', type: 'azure-cosmos', position: { x: 570, y: 100 }, data: { label: 'Cosmos DB', type: 'azure-cosmos' } },
+    { id: 'adls', type: 'azure-storage', position: { x: 570, y: 200 }, data: { label: 'Data Lake', type: 'azure-storage' } },
+    { id: 'power-bi', type: 'azure-power-bi', position: { x: 700, y: 150 }, data: { label: 'Power BI', type: 'azure-power-bi' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'devices', target: 'iot-edge', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'iot-edge', target: 'iot-hub', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'dps', target: 'iot-hub', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e4', source: 'iot-hub', target: 'stream-analytics', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'iot-hub', target: 'functions', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'stream-analytics', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e7', source: 'functions', target: 'adls', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e8', source: 'cosmos', target: 'power-bi', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureIndustrialIoT: ArchitectureTemplate = {
+  id: 'azure-industrial-iot',
+  name: 'Industrial IoT Analytics',
+  description: 'Industrial IoT solution for manufacturing and asset monitoring',
+  categories: ['azure', 'iot', 'data-analytics'],
+  complexity: 'advanced',
+  tags: ['iiot', 'manufacturing', 'opc-ua', 'predictive-maintenance'],
+  useCases: ['manufacturing', 'predictive-maintenance', 'quality-control'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'plc', type: 'rectangle', position: { x: 50, y: 100 }, data: { label: 'PLC/SCADA', type: 'rectangle' } },
+    { id: 'sensors', type: 'rectangle', position: { x: 50, y: 200 }, data: { label: 'Sensors', type: 'rectangle' } },
+    { id: 'iot-edge', type: 'azure-iot-edge', position: { x: 200, y: 150 }, data: { label: 'IoT Edge Gateway', type: 'azure-iot-edge' } },
+    { id: 'iot-hub', type: 'azure-iot-hub', position: { x: 350, y: 150 }, data: { label: 'IoT Hub', type: 'azure-iot-hub' } },
+    { id: 'adx', type: 'azure-data-explorer', position: { x: 500, y: 100 }, data: { label: 'Data Explorer', type: 'azure-data-explorer' } },
+    { id: 'ml', type: 'azure-machine-learning', position: { x: 500, y: 200 }, data: { label: 'ML Anomaly Detection', type: 'azure-machine-learning' } },
+    { id: 'digital-twins', type: 'azure-digital-twins', position: { x: 650, y: 150 }, data: { label: 'Digital Twins', type: 'azure-digital-twins' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'plc', target: 'iot-edge', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'sensors', target: 'iot-edge', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'iot-edge', target: 'iot-hub', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'iot-hub', target: 'adx', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'iot-hub', target: 'ml', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'adx', target: 'digital-twins', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e7', source: 'ml', target: 'digital-twins', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+// --- Security & Identity Category ---
+
+const azureZeroTrustNetwork: ArchitectureTemplate = {
+  id: 'azure-zero-trust-network',
+  name: 'Zero Trust Network Architecture',
+  description: 'Zero trust security model implementation for Azure workloads',
+  categories: ['azure', 'security', 'networking'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/example-scenario/gateway/firewall-application-gateway',
+  tags: ['zero-trust', 'security', 'firewall', 'identity'],
+  useCases: ['enterprise-security', 'secure-access', 'compliance'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'users', type: 'users', position: { x: 50, y: 150 }, data: { label: 'Users', type: 'users' } },
+    { id: 'entra', type: 'azure-entra-id', position: { x: 200, y: 100 }, data: { label: 'Entra ID', type: 'azure-entra-id' } },
+    { id: 'conditional-access', type: 'rectangle', position: { x: 200, y: 200 }, data: { label: 'Conditional Access', type: 'rectangle' } },
+    { id: 'front-door', type: 'azure-front-door', position: { x: 350, y: 150 }, data: { label: 'Front Door + WAF', type: 'azure-front-door' } },
+    { id: 'firewall', type: 'azure-firewall', position: { x: 500, y: 150 }, data: { label: 'Azure Firewall', type: 'azure-firewall' } },
+    { id: 'app', type: 'azure-app-service', position: { x: 650, y: 150 }, data: { label: 'Application', type: 'azure-app-service' } },
+    { id: 'defender', type: 'azure-security-center', position: { x: 500, y: 280 }, data: { label: 'Defender for Cloud', type: 'azure-security-center' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'users', target: 'entra', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'users', target: 'conditional-access', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'entra', target: 'front-door', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'conditional-access', target: 'front-door', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'front-door', target: 'firewall', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'firewall', target: 'app', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e7', source: 'firewall', target: 'defender', sourceHandle: 'bottom', targetHandle: 'top' },
+  ],
+}
+
+const azureIdentityBaseline: ArchitectureTemplate = {
+  id: 'azure-identity-baseline',
+  name: 'Identity and Access Management',
+  description: 'Enterprise identity baseline with Microsoft Entra ID',
+  categories: ['azure', 'security'],
+  complexity: 'intermediate',
+  tags: ['identity', 'entra-id', 'sso', 'mfa'],
+  useCases: ['enterprise-identity', 'sso', 'access-management'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'users', type: 'users', position: { x: 50, y: 150 }, data: { label: 'Users', type: 'users' } },
+    { id: 'entra', type: 'azure-entra-id', position: { x: 200, y: 150 }, data: { label: 'Microsoft Entra ID', type: 'azure-entra-id' } },
+    { id: 'conditional', type: 'rectangle', position: { x: 350, y: 80 }, data: { label: 'Conditional Access', type: 'rectangle' } },
+    { id: 'pim', type: 'rectangle', position: { x: 350, y: 150 }, data: { label: 'PIM', type: 'rectangle' } },
+    { id: 'mfa', type: 'rectangle', position: { x: 350, y: 220 }, data: { label: 'MFA', type: 'rectangle' } },
+    { id: 'apps', type: 'azure-app-service', position: { x: 500, y: 100 }, data: { label: 'Enterprise Apps', type: 'azure-app-service' } },
+    { id: 'azure', type: 'rectangle', position: { x: 500, y: 200 }, data: { label: 'Azure Resources', type: 'rectangle' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'users', target: 'entra', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'entra', target: 'conditional', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'entra', target: 'pim', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'entra', target: 'mfa', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'conditional', target: 'apps', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'pim', target: 'azure', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureSentinelSIEM: ArchitectureTemplate = {
+  id: 'azure-sentinel-siem',
+  name: 'Microsoft Sentinel SIEM/SOAR',
+  description: 'Cloud-native SIEM and SOAR solution with Microsoft Sentinel',
+  categories: ['azure', 'security'],
+  complexity: 'advanced',
+  tags: ['sentinel', 'siem', 'soar', 'security-operations'],
+  useCases: ['security-operations', 'threat-detection', 'incident-response'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'logs', type: 'rectangle', position: { x: 50, y: 80 }, data: { label: 'Security Logs', type: 'rectangle' } },
+    { id: 'azure-logs', type: 'azure-monitor', position: { x: 50, y: 150 }, data: { label: 'Azure Activity', type: 'azure-monitor' } },
+    { id: 'm365', type: 'o365-sharepoint', position: { x: 50, y: 220 }, data: { label: 'Microsoft 365', type: 'o365-sharepoint' } },
+    { id: 'log-analytics', type: 'azure-log-analytics', position: { x: 220, y: 150 }, data: { label: 'Log Analytics', type: 'azure-log-analytics' } },
+    { id: 'sentinel', type: 'azure-sentinel', position: { x: 400, y: 150 }, data: { label: 'Microsoft Sentinel', type: 'azure-sentinel' } },
+    { id: 'logic-apps', type: 'azure-logic-apps', position: { x: 580, y: 100 }, data: { label: 'Playbooks', type: 'azure-logic-apps' } },
+    { id: 'soc', type: 'users', position: { x: 580, y: 200 }, data: { label: 'SOC Team', type: 'users' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'logs', target: 'log-analytics', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'azure-logs', target: 'log-analytics', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'm365', target: 'log-analytics', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'log-analytics', target: 'sentinel', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'sentinel', target: 'logic-apps', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'sentinel', target: 'soc', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+// --- DevOps & Infrastructure Category ---
+
+const azureDevSecOps: ArchitectureTemplate = {
+  id: 'azure-devsecops',
+  name: 'DevSecOps Pipeline',
+  description: 'Secure DevOps pipeline with integrated security scanning',
+  categories: ['azure', 'devops', 'security'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/solution-ideas/articles/devsecops-in-azure',
+  tags: ['devsecops', 'security', 'ci-cd', 'scanning'],
+  useCases: ['secure-development', 'compliance', 'automated-security'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'dev', type: 'users', position: { x: 50, y: 150 }, data: { label: 'Developers', type: 'users' } },
+    { id: 'github', type: 'rectangle', position: { x: 180, y: 150 }, data: { label: 'GitHub', type: 'rectangle' } },
+    { id: 'devops', type: 'azure-devops', position: { x: 320, y: 150 }, data: { label: 'Azure DevOps', type: 'azure-devops' } },
+    { id: 'defender', type: 'azure-security-center', position: { x: 320, y: 50 }, data: { label: 'Defender for DevOps', type: 'azure-security-center' } },
+    { id: 'acr', type: 'azure-container-registry', position: { x: 460, y: 150 }, data: { label: 'Container Registry', type: 'azure-container-registry' } },
+    { id: 'aks', type: 'azure-aks', position: { x: 600, y: 150 }, data: { label: 'AKS', type: 'azure-aks' } },
+    { id: 'keyvault', type: 'azure-keyvault', position: { x: 460, y: 250 }, data: { label: 'Key Vault', type: 'azure-keyvault' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'dev', target: 'github', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'github', target: 'devops', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'devops', target: 'defender', sourceHandle: 'top', targetHandle: 'bottom' },
+    { id: 'e4', source: 'devops', target: 'acr', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'acr', target: 'aks', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'devops', target: 'keyvault', sourceHandle: 'bottom', targetHandle: 'top' },
+  ],
+}
+
+const azureInfraAsCode: ArchitectureTemplate = {
+  id: 'azure-infrastructure-as-code',
+  name: 'Infrastructure as Code Pipeline',
+  description: 'IaC deployment pipeline using Terraform/Bicep with Azure DevOps',
+  categories: ['azure', 'devops'],
+  complexity: 'intermediate',
+  tags: ['iac', 'terraform', 'bicep', 'automation'],
+  useCases: ['infrastructure-automation', 'environment-provisioning', 'drift-detection'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'repo', type: 'rectangle', position: { x: 50, y: 150 }, data: { label: 'IaC Repository', type: 'rectangle' } },
+    { id: 'devops', type: 'azure-devops', position: { x: 200, y: 150 }, data: { label: 'Azure DevOps', type: 'azure-devops' } },
+    { id: 'plan', type: 'rectangle', position: { x: 350, y: 100 }, data: { label: 'Plan Stage', type: 'rectangle' } },
+    { id: 'apply', type: 'rectangle', position: { x: 350, y: 200 }, data: { label: 'Apply Stage', type: 'rectangle' } },
+    { id: 'azure', type: 'rectangle', position: { x: 500, y: 150 }, data: { label: 'Azure Resources', type: 'rectangle' } },
+    { id: 'state', type: 'azure-storage', position: { x: 500, y: 250 }, data: { label: 'State Storage', type: 'azure-storage' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'repo', target: 'devops', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'devops', target: 'plan', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'plan', target: 'apply', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e4', source: 'apply', target: 'azure', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'apply', target: 'state', sourceHandle: 'bottom', targetHandle: 'top' },
+  ],
+}
+
+// --- Mission Critical Category ---
+
+const azureMissionCriticalBaseline: ArchitectureTemplate = {
+  id: 'azure-mission-critical-baseline',
+  name: 'Mission Critical Baseline',
+  description: 'Mission-critical application baseline with maximum reliability',
+  categories: ['azure', 'web-app'],
+  complexity: 'advanced',
+  source: 'https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/containers/aks-mission-critical/mission-critical-intro',
+  tags: ['mission-critical', 'high-availability', 'reliability', '99.999'],
+  useCases: ['critical-applications', 'zero-downtime', 'financial-services'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'users', type: 'users', position: { x: 50, y: 150 }, data: { label: 'Users', type: 'users' } },
+    { id: 'front-door', type: 'azure-front-door', position: { x: 200, y: 150 }, data: { label: 'Front Door', type: 'azure-front-door' } },
+    { id: 'region1', type: 'rectangle', position: { x: 350, y: 80 }, data: { label: 'Region 1 (Active)', type: 'rectangle' } },
+    { id: 'region2', type: 'rectangle', position: { x: 350, y: 220 }, data: { label: 'Region 2 (Active)', type: 'rectangle' } },
+    { id: 'cosmos', type: 'azure-cosmos', position: { x: 520, y: 150 }, data: { label: 'Cosmos DB\n(Multi-Region)', type: 'azure-cosmos' } },
+    { id: 'monitor', type: 'azure-monitor', position: { x: 200, y: 280 }, data: { label: 'Azure Monitor', type: 'azure-monitor' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'users', target: 'front-door', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'front-door', target: 'region1', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'front-door', target: 'region2', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'region1', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'region2', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'region1', target: 'monitor', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e7', source: 'region2', target: 'monitor', sourceHandle: 'bottom', targetHandle: 'top' },
+  ],
+}
+
+// --- Database Category ---
+
+const azureCosmosDBPatterns: ArchitectureTemplate = {
+  id: 'azure-cosmosdb-patterns',
+  name: 'Cosmos DB Multi-Model Architecture',
+  description: 'Multi-model database architecture using Azure Cosmos DB',
+  categories: ['azure', 'data-analytics'],
+  complexity: 'intermediate',
+  tags: ['cosmos-db', 'nosql', 'multi-model', 'global-distribution'],
+  useCases: ['global-apps', 'real-time-apps', 'document-storage'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'app', type: 'azure-app-service', position: { x: 50, y: 150 }, data: { label: 'Application', type: 'azure-app-service' } },
+    { id: 'cosmos', type: 'azure-cosmos', position: { x: 250, y: 150 }, data: { label: 'Cosmos DB', type: 'azure-cosmos' } },
+    { id: 'sql-api', type: 'rectangle', position: { x: 420, y: 50 }, data: { label: 'SQL API', type: 'rectangle' } },
+    { id: 'mongodb-api', type: 'rectangle', position: { x: 420, y: 120 }, data: { label: 'MongoDB API', type: 'rectangle' } },
+    { id: 'cassandra-api', type: 'rectangle', position: { x: 420, y: 190 }, data: { label: 'Cassandra API', type: 'rectangle' } },
+    { id: 'gremlin-api', type: 'rectangle', position: { x: 420, y: 260 }, data: { label: 'Gremlin API', type: 'rectangle' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'app', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'cosmos', target: 'sql-api', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'cosmos', target: 'mongodb-api', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'cosmos', target: 'cassandra-api', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'cosmos', target: 'gremlin-api', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureSQLHADR: ArchitectureTemplate = {
+  id: 'azure-sql-ha-dr',
+  name: 'Azure SQL High Availability',
+  description: 'Azure SQL Database with geo-replication and failover groups',
+  categories: ['azure', 'data-analytics'],
+  complexity: 'intermediate',
+  tags: ['sql', 'high-availability', 'disaster-recovery', 'geo-replication'],
+  useCases: ['enterprise-database', 'business-continuity', 'global-apps'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'app-primary', type: 'azure-app-service', position: { x: 100, y: 100 }, data: { label: 'Primary App', type: 'azure-app-service' } },
+    { id: 'app-secondary', type: 'azure-app-service', position: { x: 400, y: 100 }, data: { label: 'Secondary App', type: 'azure-app-service' } },
+    { id: 'sql-primary', type: 'azure-sql', position: { x: 100, y: 220 }, data: { label: 'SQL Primary', type: 'azure-sql' } },
+    { id: 'sql-secondary', type: 'azure-sql', position: { x: 400, y: 220 }, data: { label: 'SQL Secondary', type: 'azure-sql' } },
+    { id: 'failover-group', type: 'rectangle', position: { x: 250, y: 160 }, data: { label: 'Failover Group', type: 'rectangle' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'app-primary', target: 'sql-primary', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e2', source: 'app-secondary', target: 'sql-secondary', sourceHandle: 'bottom', targetHandle: 'top' },
+    { id: 'e3', source: 'sql-primary', target: 'failover-group', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'failover-group', target: 'sql-secondary', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+// --- Integration Category ---
+
+const azureAPIFirstIntegration: ArchitectureTemplate = {
+  id: 'azure-api-first',
+  name: 'API-First Integration Architecture',
+  description: 'API-first design pattern with Azure API Management',
+  categories: ['azure', 'serverless'],
+  complexity: 'intermediate',
+  tags: ['api-management', 'api-first', 'microservices', 'integration'],
+  useCases: ['api-platform', 'partner-integration', 'monetization'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'consumers', type: 'users', position: { x: 50, y: 150 }, data: { label: 'API Consumers', type: 'users' } },
+    { id: 'apim', type: 'azure-api-management', position: { x: 200, y: 150 }, data: { label: 'API Management', type: 'azure-api-management' } },
+    { id: 'functions', type: 'azure-functions', position: { x: 400, y: 80 }, data: { label: 'Functions', type: 'azure-functions' } },
+    { id: 'aks', type: 'azure-aks', position: { x: 400, y: 150 }, data: { label: 'AKS Services', type: 'azure-aks' } },
+    { id: 'logic-apps', type: 'azure-logic-apps', position: { x: 400, y: 220 }, data: { label: 'Logic Apps', type: 'azure-logic-apps' } },
+    { id: 'cosmos', type: 'azure-cosmos', position: { x: 580, y: 150 }, data: { label: 'Cosmos DB', type: 'azure-cosmos' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'consumers', target: 'apim', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'apim', target: 'functions', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'apim', target: 'aks', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'apim', target: 'logic-apps', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'functions', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'aks', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+const azureEventDrivenIntegration: ArchitectureTemplate = {
+  id: 'azure-event-driven-integration',
+  name: 'Event-Driven Integration',
+  description: 'Enterprise integration using event-driven architecture patterns',
+  categories: ['azure', 'serverless'],
+  complexity: 'advanced',
+  tags: ['event-driven', 'integration', 'service-bus', 'event-grid'],
+  useCases: ['enterprise-integration', 'decoupled-systems', 'real-time-processing'],
+  isBuiltIn: true,
+  nodes: [
+    { id: 'source1', type: 'rectangle', position: { x: 50, y: 80 }, data: { label: 'ERP System', type: 'rectangle' } },
+    { id: 'source2', type: 'rectangle', position: { x: 50, y: 180 }, data: { label: 'CRM System', type: 'rectangle' } },
+    { id: 'event-grid', type: 'azure-event-grid', position: { x: 200, y: 130 }, data: { label: 'Event Grid', type: 'azure-event-grid' } },
+    { id: 'service-bus', type: 'azure-service-bus', position: { x: 350, y: 130 }, data: { label: 'Service Bus', type: 'azure-service-bus' } },
+    { id: 'functions', type: 'azure-functions', position: { x: 500, y: 80 }, data: { label: 'Event Handlers', type: 'azure-functions' } },
+    { id: 'logic-apps', type: 'azure-logic-apps', position: { x: 500, y: 180 }, data: { label: 'Workflows', type: 'azure-logic-apps' } },
+    { id: 'cosmos', type: 'azure-cosmos', position: { x: 650, y: 130 }, data: { label: 'Event Store', type: 'azure-cosmos' } },
+  ],
+  edges: [
+    { id: 'e1', source: 'source1', target: 'event-grid', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e2', source: 'source2', target: 'event-grid', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e3', source: 'event-grid', target: 'service-bus', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e4', source: 'service-bus', target: 'functions', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e5', source: 'service-bus', target: 'logic-apps', sourceHandle: 'right', targetHandle: 'left' },
+    { id: 'e6', source: 'functions', target: 'cosmos', sourceHandle: 'right', targetHandle: 'left' },
+  ],
+}
+
+// ============================================================================
 // Export All Templates
 // ============================================================================
 
 export const ARCHITECTURE_TEMPLATES: ArchitectureTemplate[] = [
-  // Azure Templates (25 total)
+  // Azure Templates - Original (31 total)
   azureEnterpriseBIFabric,
   azure3TierWebApp,
   azureServerlessWeb,
@@ -1727,6 +2606,50 @@ export const ARCHITECTURE_TEMPLATES: ArchitectureTemplate[] = [
   azureMediaServices,
   azureBatchProcessing,
   azureServiceFabric,
+
+  // Azure Templates - Additional (30 new templates based on Azure Architecture Center)
+  // AI & Machine Learning
+  azureRAGPattern,
+  azureMLOps,
+  azureFoundryChat,
+  azureCognitiveServices,
+  azureDocumentIntelligence,
+  // Analytics & Data
+  azureRealTimeAnalytics,
+  azureDatabricksLakehouse,
+  azureStreamAnalytics,
+  azureModernDataWarehouse,
+  azurePurviewGovernance,
+  // Containers & Kubernetes
+  azureAKSBaseline,
+  azureAKSMultiRegion,
+  azureRedHatOpenShift,
+  azureGitOpsAKS,
+  // Hybrid & Multicloud
+  azureArcKubernetes,
+  azureLocalBaseline,
+  azureExpressRoutePrivate,
+  // Web Applications
+  azureEcommerceApp,
+  azureMultiTierHA,
+  // IoT
+  azureIoTReference,
+  azureIndustrialIoT,
+  // Security & Identity
+  azureZeroTrustNetwork,
+  azureIdentityBaseline,
+  azureSentinelSIEM,
+  // DevOps & Infrastructure
+  azureDevSecOps,
+  azureInfraAsCode,
+  // Mission Critical
+  azureMissionCriticalBaseline,
+  // Database
+  azureCosmosDBPatterns,
+  azureSQLHADR,
+  // Integration
+  azureAPIFirstIntegration,
+  azureEventDrivenIntegration,
 
   // AWS Templates
   aws3TierVPC,

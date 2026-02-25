@@ -67,3 +67,9 @@ export {
   useLeaveWorkspace,
   useMoveToWorkspace,
 } from './useWorkspaces'
+
+export {
+  useArchitectureTemplates,
+  useArchitectureTemplate,
+  clearTemplatesCache,
+} from './useArchitectureTemplates'

@@ -1,0 +1,239 @@
+{
+  "templates": [
+    {
+      "template_id": "azure-ai-document-processing",
+      "name": "Document Processing with AI",
+      "description": "Automated document processing using Azure Document Intelligence and Logic Apps",
+      "categories": ["azure", "ai-ml"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/ai-ml/architecture/automate-document-processing-azure-form-recognizer",
+      "tags": ["document-intelligence", "form-recognizer", "automation", "ocr"],
+      "use_cases": ["invoice-processing", "contract-analysis", "document-automation"],
+      "nodes": [
+        {"id": "upload", "type": "azure-blob-storage", "position": {"x": 50, "y": 150}, "data": {"label": "Document Upload", "type": "azure-blob-storage"}},
+        {"id": "eventgrid", "type": "azure-event-grid", "position": {"x": 200, "y": 150}, "data": {"label": "Event Grid", "type": "azure-event-grid"}},
+        {"id": "docint", "type": "azure-document-intelligence", "position": {"x": 350, "y": 150}, "data": {"label": "Document Intelligence", "type": "azure-document-intelligence"}},
+        {"id": "logicapps", "type": "azure-logic-apps", "position": {"x": 500, "y": 150}, "data": {"label": "Workflow", "type": "azure-logic-apps"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 650, "y": 150}, "data": {"label": "Results Store", "type": "azure-cosmos"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "upload", "target": "eventgrid", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "eventgrid", "target": "docint", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "docint", "target": "logicapps", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "logicapps", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-ai-speech-translation",
+      "name": "Real-time Speech Translation",
+      "description": "Real-time speech-to-text and translation using Azure Speech Services",
+      "categories": ["azure", "ai-ml"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/ai-ml/architecture/speech-services",
+      "tags": ["speech", "translation", "real-time", "transcription"],
+      "use_cases": ["live-captions", "multilingual-meetings", "accessibility"],
+      "nodes": [
+        {"id": "audio", "type": "rectangle", "position": {"x": 50, "y": 150}, "data": {"label": "Audio Input", "type": "rectangle"}},
+        {"id": "speech", "type": "azure-cognitive-services", "position": {"x": 200, "y": 150}, "data": {"label": "Speech Service", "type": "azure-cognitive-services"}},
+        {"id": "translator", "type": "azure-cognitive-services", "position": {"x": 350, "y": 150}, "data": {"label": "Translator", "type": "azure-cognitive-services"}},
+        {"id": "signalr", "type": "azure-signalr", "position": {"x": 500, "y": 150}, "data": {"label": "SignalR", "type": "azure-signalr"}},
+        {"id": "clients", "type": "users", "position": {"x": 650, "y": 150}, "data": {"label": "Clients", "type": "users"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "audio", "target": "speech", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "speech", "target": "translator", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "translator", "target": "signalr", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "signalr", "target": "clients", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-ai-vision-analytics",
+      "name": "Computer Vision Analytics",
+      "description": "Image and video analytics using Azure Computer Vision",
+      "categories": ["azure", "ai-ml"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/ai-ml/architecture/vision-analytics",
+      "tags": ["computer-vision", "image-analysis", "video-analytics", "ocr"],
+      "use_cases": ["retail-analytics", "quality-inspection", "content-moderation"],
+      "nodes": [
+        {"id": "media", "type": "azure-blob-storage", "position": {"x": 50, "y": 150}, "data": {"label": "Media Storage", "type": "azure-blob-storage"}},
+        {"id": "vision", "type": "azure-computer-vision", "position": {"x": 200, "y": 150}, "data": {"label": "Computer Vision", "type": "azure-computer-vision"}},
+        {"id": "functions", "type": "azure-functions", "position": {"x": 350, "y": 150}, "data": {"label": "Processing", "type": "azure-functions"}},
+        {"id": "cosmos", "type": "azure-cosmos", "position": {"x": 500, "y": 150}, "data": {"label": "Results", "type": "azure-cosmos"}},
+        {"id": "powerbi", "type": "azure-power-bi", "position": {"x": 650, "y": 150}, "data": {"label": "Dashboard", "type": "azure-power-bi"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "media", "target": "vision", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "vision", "target": "functions", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "functions", "target": "cosmos", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "cosmos", "target": "powerbi", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-ai-anomaly-detection",
+      "name": "Anomaly Detection Service",
+      "description": "Time-series anomaly detection for monitoring and alerting",
+      "categories": ["azure", "ai-ml"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/ai-ml/architecture/anomaly-detection",
+      "tags": ["anomaly-detection", "time-series", "monitoring", "alerting"],
+      "use_cases": ["predictive-maintenance", "fraud-detection", "monitoring"],
+      "nodes": [
+        {"id": "telemetry", "type": "azure-event-hub", "position": {"x": 50, "y": 150}, "data": {"label": "Telemetry", "type": "azure-event-hub"}},
+        {"id": "stream", "type": "azure-stream-analytics", "position": {"x": 200, "y": 150}, "data": {"label": "Stream Analytics", "type": "azure-stream-analytics"}},
+        {"id": "anomaly", "type": "azure-cognitive-services", "position": {"x": 350, "y": 150}, "data": {"label": "Anomaly Detector", "type": "azure-cognitive-services"}},
+        {"id": "logicapps", "type": "azure-logic-apps", "position": {"x": 500, "y": 150}, "data": {"label": "Alert Logic", "type": "azure-logic-apps"}},
+        {"id": "teams", "type": "rectangle", "position": {"x": 650, "y": 150}, "data": {"label": "Teams/Email", "type": "rectangle"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "telemetry", "target": "stream", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "stream", "target": "anomaly", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "anomaly", "target": "logicapps", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "logicapps", "target": "teams", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-ai-content-safety",
+      "name": "Content Safety Solution",
+      "description": "AI-powered content moderation for text, images, and video",
+      "categories": ["azure", "ai-ml", "security"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/ai-ml/architecture/content-safety",
+      "tags": ["content-safety", "moderation", "safety", "compliance"],
+      "use_cases": ["social-media", "ugc-platforms", "content-moderation"],
+      "nodes": [
+        {"id": "content", "type": "azure-blob-storage", "position": {"x": 50, "y": 150}, "data": {"label": "User Content", "type": "azure-blob-storage"}},
+        {"id": "safety", "type": "azure-cognitive-services", "position": {"x": 200, "y": 150}, "data": {"label": "Content Safety", "type": "azure-cognitive-services"}},
+        {"id": "functions", "type": "azure-functions", "position": {"x": 350, "y": 150}, "data": {"label": "Review Logic", "type": "azure-functions"}},
+        {"id": "queue", "type": "azure-service-bus", "position": {"x": 500, "y": 80}, "data": {"label": "Review Queue", "type": "azure-service-bus"}},
+        {"id": "approved", "type": "azure-cosmos", "position": {"x": 500, "y": 220}, "data": {"label": "Approved Content", "type": "azure-cosmos"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "content", "target": "safety", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "safety", "target": "functions", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "functions", "target": "queue", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "functions", "target": "approved", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-openai-enterprise",
+      "name": "Enterprise Azure OpenAI",
+      "description": "Enterprise-grade Azure OpenAI deployment with security and monitoring",
+      "categories": ["azure", "ai-ml", "security"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/ai-ml/architecture/azure-openai-baseline-landing-zone",
+      "tags": ["openai", "enterprise", "security", "governance"],
+      "use_cases": ["enterprise-ai", "secure-ai", "regulated-industries"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Enterprise Users", "type": "users"}},
+        {"id": "apim", "type": "azure-api-management", "position": {"x": 180, "y": 150}, "data": {"label": "API Management", "type": "azure-api-management"}},
+        {"id": "vnet", "type": "azure-vnet", "position": {"x": 320, "y": 150}, "data": {"label": "Private VNet", "type": "azure-vnet"}},
+        {"id": "openai", "type": "azure-openai", "position": {"x": 460, "y": 150}, "data": {"label": "Azure OpenAI", "type": "azure-openai"}},
+        {"id": "keyvault", "type": "azure-key-vault", "position": {"x": 460, "y": 50}, "data": {"label": "Key Vault", "type": "azure-key-vault"}},
+        {"id": "monitor", "type": "azure-monitor", "position": {"x": 460, "y": 250}, "data": {"label": "Monitor", "type": "azure-monitor"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "apim", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "apim", "target": "vnet", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "vnet", "target": "openai", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "keyvault", "target": "openai", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e5", "source": "openai", "target": "monitor", "sourceHandle": "bottom", "targetHandle": "top"}
+      ]
+    },
+    {
+      "template_id": "azure-ai-copilot-stack",
+      "name": "Copilot Application Stack",
+      "description": "Build custom Copilot experiences with Azure AI Studio",
+      "categories": ["azure", "ai-ml"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/ai-ml/architecture/copilot-studio",
+      "tags": ["copilot", "ai-studio", "prompt-flow", "orchestration"],
+      "use_cases": ["custom-copilot", "ai-assistant", "enterprise-ai"],
+      "nodes": [
+        {"id": "users", "type": "users", "position": {"x": 50, "y": 150}, "data": {"label": "Users", "type": "users"}},
+        {"id": "webapp", "type": "azure-app-service", "position": {"x": 180, "y": 150}, "data": {"label": "Copilot UI", "type": "azure-app-service"}},
+        {"id": "aistudio", "type": "azure-ai-studio", "position": {"x": 320, "y": 150}, "data": {"label": "AI Studio", "type": "azure-ai-studio"}},
+        {"id": "openai", "type": "azure-openai", "position": {"x": 460, "y": 80}, "data": {"label": "OpenAI", "type": "azure-openai"}},
+        {"id": "search", "type": "azure-cognitive-search", "position": {"x": 460, "y": 220}, "data": {"label": "AI Search", "type": "azure-cognitive-search"}},
+        {"id": "storage", "type": "azure-blob-storage", "position": {"x": 600, "y": 150}, "data": {"label": "Knowledge Base", "type": "azure-blob-storage"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "users", "target": "webapp", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "webapp", "target": "aistudio", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "aistudio", "target": "openai", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "aistudio", "target": "search", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "search", "target": "storage", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-ai-multi-agent",
+      "name": "Multi-Agent AI System",
+      "description": "Orchestrated multi-agent AI system with Semantic Kernel",
+      "categories": ["azure", "ai-ml"],
+      "complexity": "advanced",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/ai-ml/architecture/multi-agent-systems",
+      "tags": ["multi-agent", "semantic-kernel", "orchestration", "ai"],
+      "use_cases": ["complex-workflows", "autonomous-agents", "ai-orchestration"],
+      "nodes": [
+        {"id": "orchestrator", "type": "azure-functions", "position": {"x": 200, "y": 150}, "data": {"label": "Orchestrator Agent", "type": "azure-functions"}},
+        {"id": "agent1", "type": "azure-openai", "position": {"x": 400, "y": 50}, "data": {"label": "Research Agent", "type": "azure-openai"}},
+        {"id": "agent2", "type": "azure-openai", "position": {"x": 400, "y": 150}, "data": {"label": "Analysis Agent", "type": "azure-openai"}},
+        {"id": "agent3", "type": "azure-openai", "position": {"x": 400, "y": 250}, "data": {"label": "Writer Agent", "type": "azure-openai"}},
+        {"id": "tools", "type": "azure-functions", "position": {"x": 550, "y": 150}, "data": {"label": "Tools/Actions", "type": "azure-functions"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "orchestrator", "target": "agent1", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "orchestrator", "target": "agent2", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "orchestrator", "target": "agent3", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e4", "source": "agent1", "target": "tools", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e5", "source": "agent2", "target": "tools", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    },
+    {
+      "template_id": "azure-ml-realtime-scoring",
+      "name": "Real-time ML Scoring",
+      "description": "Real-time machine learning inference with Azure ML managed endpoints",
+      "categories": ["azure", "ai-ml"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/ai/real-time-scoring-machine-learning",
+      "tags": ["ml-inference", "real-time", "managed-endpoints", "scoring"],
+      "use_cases": ["recommendation", "fraud-detection", "personalization"],
+      "nodes": [
+        {"id": "app", "type": "azure-app-service", "position": {"x": 50, "y": 150}, "data": {"label": "Application", "type": "azure-app-service"}},
+        {"id": "apim", "type": "azure-api-management", "position": {"x": 200, "y": 150}, "data": {"label": "API Management", "type": "azure-api-management"}},
+        {"id": "endpoint", "type": "azure-machine-learning", "position": {"x": 350, "y": 150}, "data": {"label": "ML Endpoint", "type": "azure-machine-learning"}},
+        {"id": "model", "type": "azure-machine-learning", "position": {"x": 500, "y": 80}, "data": {"label": "Model Registry", "type": "azure-machine-learning"}},
+        {"id": "monitor", "type": "azure-monitor", "position": {"x": 500, "y": 220}, "data": {"label": "Model Monitor", "type": "azure-monitor"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "app", "target": "apim", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "apim", "target": "endpoint", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "model", "target": "endpoint", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e4", "source": "endpoint", "target": "monitor", "sourceHandle": "bottom", "targetHandle": "top"}
+      ]
+    },
+    {
+      "template_id": "azure-ai-batch-scoring",
+      "name": "Batch ML Scoring",
+      "description": "Large-scale batch inference using Azure ML pipelines",
+      "categories": ["azure", "ai-ml", "data-analytics"],
+      "complexity": "intermediate",
+      "source": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/ai/batch-scoring-python",
+      "tags": ["batch-scoring", "ml-pipelines", "large-scale", "inference"],
+      "use_cases": ["batch-predictions", "offline-scoring", "large-datasets"],
+      "nodes": [
+        {"id": "data", "type": "azure-data-lake", "position": {"x": 50, "y": 150}, "data": {"label": "Input Data", "type": "azure-data-lake"}},
+        {"id": "adf", "type": "azure-data-factory", "position": {"x": 200, "y": 150}, "data": {"label": "Data Factory", "type": "azure-data-factory"}},
+        {"id": "ml", "type": "azure-machine-learning", "position": {"x": 350, "y": 150}, "data": {"label": "ML Pipeline", "type": "azure-machine-learning"}},
+        {"id": "compute", "type": "azure-vm", "position": {"x": 350, "y": 50}, "data": {"label": "Compute Cluster", "type": "azure-vm"}},
+        {"id": "output", "type": "azure-data-lake", "position": {"x": 500, "y": 150}, "data": {"label": "Predictions", "type": "azure-data-lake"}}
+      ],
+      "edges": [
+        {"id": "e1", "source": "data", "target": "adf", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e2", "source": "adf", "target": "ml", "sourceHandle": "right", "targetHandle": "left"},
+        {"id": "e3", "source": "compute", "target": "ml", "sourceHandle": "bottom", "targetHandle": "top"},
+        {"id": "e4", "source": "ml", "target": "output", "sourceHandle": "right", "targetHandle": "left"}
+      ]
+    }
+  ]
+}
